@@ -1,0 +1,141 @@
+.fieldWrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.asterisk {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+/* Common Input */
+.inputField {
+  height: 40px;
+  width: 100%;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease;
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-accent-light);
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.08);
+  }
+}
+
+.inputFieldError {
+  border-color: #ef4444;
+
+  &:hover,
+  &:focus {
+    border-color: #ef4444;
+  }
+}
+
+/* Password */
+.passwordField {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease;
+
+  &:hover,
+  &:focus,
+  &:global(.ant-input-affix-wrapper-focused) {
+    border-color: var(--color-accent-light);
+  }
+}
+
+.passwordFieldError {
+  border-color: #ef4444;
+
+  &:hover,
+  &:focus,
+  &:global(.ant-input-affix-wrapper-focused) {
+    border-color: #ef4444;
+  }
+}
+
+/* Textarea */
+.textareaField {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease;
+
+  &:hover,
+  &:focus {
+    border-color: var(--color-accent-light);
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.08);
+  }
+}
+
+.textareaFieldError {
+  border-color: #ef4444;
+
+  &:hover,
+  &:focus {
+    border-color: #ef4444;
+  }
+}
+
+/* Number */
+.numberField {
+  width: 100%;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-accent-light);
+  }
+
+  &:global(.ant-input-number-focused) {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.08);
+  }
+}
+
+.numberFieldError {
+  border-color: #ef4444;
+
+  &:hover,
+  &:global(.ant-input-number-focused) {
+    border-color: #ef4444;
+  }
+}
+
+/* Error Message */
+.errorContainer {
+  margin-top: 4px;
+}
+
+.errorMessage {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+  margin: 0;
+}

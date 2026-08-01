@@ -1,0 +1,110 @@
+.card {
+  border-radius: 10px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: all 0.25s ease;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Gradient variant (dashboard) */
+.gradient {
+  color: #fff;
+  min-height: 90px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.gradient:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.gradient .title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.gradient .value {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* Bordered variant (ledger cards) */
+.bordered {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  min-height: 70px;
+}
+
+.bordered:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.bordered .title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.bordered .value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.gradient .subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Decorative circles (gradient only) */
+.circle1 {
+  position: absolute;
+  top: -30px;
+  right: -20px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: transform 0.4s ease;
+}
+
+.card:hover .circle1 {
+  transform: scale(1.2);
+}
+
+.circle2 {
+  position: absolute;
+  bottom: -25px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 14px;
+  }
+
+  .gradient .value {
+    font-size: 18px;
+  }
+}

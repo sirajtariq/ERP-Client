@@ -1,0 +1,441 @@
+.printModal :global(.ant-modal-content) {
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+.printModal :global(.ant-modal-body) {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Sticky Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  background: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.printBtn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.printBtn:hover { opacity: 0.88; }
+
+.pdfBtn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.pdfBtn:hover { opacity: 0.88; }
+
+.closeBtn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.closeBtn:hover { background: #dc2626; }
+
+/* Scrollable */
+.scrollArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #e9ecef;
+}
+
+/* Print Page */
+.printPage {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* Company Header */
+.companyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.companyLeft {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.companyLogo {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.companyName {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.companyDetail {
+  font-size: 12px;
+  color: #475569;
+  margin: 2px 0;
+}
+
+.companyRight {
+  text-align: right;
+}
+
+.ledgerLabel {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin: 0 0 8px;
+}
+
+.periodText {
+  font-size: 12px;
+  color: #475569;
+  margin: 2px 0;
+}
+
+/* Details Row */
+.detailsRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.customerBox {
+  flex: 1;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.boxTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 10px;
+}
+
+.boxTitleDark {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-white);
+  background: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: -16px -16px 12px;
+  padding: 8px 16px;
+  border-radius: 6px 6px 0 0;
+}
+
+.customerName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.detailLine {
+  font-size: 12px;
+  color: #475569;
+  margin: 3px 0;
+}
+
+/* Summary Box */
+.summaryBox {
+  flex: 1.5;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+
+.summaryCell {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.summaryCell:nth-child(3n) { border-right: none; }
+.summaryCell:nth-last-child(-n+3) { border-bottom: none; }
+
+.summaryLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.summaryValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.summaryValueBlue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.summaryValueGreen {
+  font-size: 13px;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.summaryValueRed {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.summaryFormula {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Statement Note */
+.statementNote {
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 16px;
+}
+
+/* Ledger Table */
+.ledgerTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.tableHead {
+  background: var(--color-primary);
+}
+
+.th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-white);
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.thRight {
+  composes: th;
+  text-align: right;
+}
+
+.tableRow {
+  transition: background 0.1s ease;
+}
+.tableRow:hover {
+  background: #f8fafc;
+}
+
+.td {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.tdRight {
+  composes: td;
+  text-align: right;
+}
+
+.balanceCell {
+  font-weight: 700;
+}
+
+.balanceDr {
+  color: var(--color-text);
+}
+
+.balanceCr {
+  color: #22c55e;
+}
+
+/* Final Payment */
+.finalTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin: 0 0 8px;
+}
+
+.finalGrid {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-top: none;
+}
+.finalGrid:first-of-type {
+  border-top: 1px solid var(--color-border);
+}
+
+.finalCell {
+  flex: 1;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--color-border);
+}
+.finalCell:last-child { border-right: none; }
+
+.finalLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.finalValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.finalValueBlue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.finalValueGreen {
+  font-size: 13px;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.finalValueRed {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+/* Generated Info */
+.generatedBox {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 20px 0;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.7;
+}
+
+/* Signature */
+.signatureRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.signatureBlock {
+  text-align: center;
+}
+
+.signatureImg {
+  width: 160px;
+  height: 60px;
+  object-fit: contain;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.signatureLine {
+  width: 160px;
+  border-bottom: 1px solid var(--color-text);
+  margin-bottom: 6px;
+}
+
+.signaturePadSection {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 900px;
+  margin: 16px auto 0;
+}

@@ -1,0 +1,39 @@
+.pageHeader {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0 !important;
+  font-weight: 800 !important;
+  font-size: 24px !important;
+  color: var(--color-text) !important;
+}
+
+.subtitle {
+  color: var(--color-text-secondary) !important;
+  font-size: 14px;
+  margin-top: 2px;
+  display: block;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .pageHeader :global(.ant-row) {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .title {
+    font-size: 20px !important;
+  }
+}

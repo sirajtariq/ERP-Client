@@ -1,0 +1,64 @@
+.fieldWrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.asterisk {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+/* Select */
+.selectField {
+  width: 100%;
+
+  :global(.ant-select-selector) {
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    padding: 0 12px;
+    transition: border-color 0.2s ease;
+  }
+
+  &:hover :global(.ant-select-selector) {
+    border-color: var(--color-accent-light);
+  }
+
+  &:global(.ant-select-focused) :global(.ant-select-selector) {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.08);
+  }
+}
+
+.selectFieldError {
+  :global(.ant-select-selector) {
+    border-color: #ef4444;
+  }
+
+  &:hover :global(.ant-select-selector) {
+    border-color: #ef4444;
+  }
+
+  &:global(.ant-select-focused) :global(.ant-select-selector) {
+    border-color: #ef4444;
+  }
+}
+
+/* Error Message */
+.errorContainer {
+  margin-top: 4px;
+}
+
+.errorMessage {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+  margin: 0;
+}

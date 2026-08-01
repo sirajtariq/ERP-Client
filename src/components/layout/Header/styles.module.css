@@ -1,0 +1,117 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px !important;
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border-light);
+  height: 56px !important;
+  flex-shrink: 0;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.searchWrapper {
+  flex: 1;
+  max-width: 280px;
+  min-width: 0;
+  margin-left: 4px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.dateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  border-radius: 8px;
+  height: 36px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dateChip :global(.anticon) {
+  font-size: 12px;
+}
+
+.notifBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--color-bg);
+  flex-shrink: 0;
+}
+
+.notifBtn:hover {
+  background: var(--color-accent-bg);
+}
+
+.actionIcon {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+.notifBtn:hover .actionIcon {
+  color: #7c5cfc;
+}
+
+.userChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px 0 4px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--color-bg);
+  flex-shrink: 0;
+}
+
+.userChip:hover {
+  background: var(--color-accent-bg);
+}
+
+.headerAvatar {
+  background: linear-gradient(135deg, #7c5cfc, #a78bfa) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+@media (max-width: 900px) {
+  .userName { display: none; }
+  .userChip { padding: 3px; }
+}
+
+@media (max-width: 600px) {
+  .dateChip { display: none; }
+}

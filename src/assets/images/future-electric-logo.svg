@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="ringG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1F3A"/>
+      <stop offset="50%" stop-color="#0E5FA8"/>
+      <stop offset="100%" stop-color="#29B6F6"/>
+    </linearGradient>
+    <linearGradient id="letterG" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#12457D"/>
+      <stop offset="100%" stop-color="#0B1F3A"/>
+    </linearGradient>
+    <linearGradient id="boltG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="45%" stop-color="#FFC107"/>
+      <stop offset="100%" stop-color="#FF9800"/>
+    </linearGradient>
+    <radialGradient id="centerWash" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- text paths -->
+    <path id="topArc" d="M 65,300 A 235,235 0 0 1 535,300"/>
+    <path id="bottomArc" d="M 535,300 A 235,235 0 0 1 65,300"/>
+  </defs>
+
+  <!-- outer premium double ring -->
+  <circle cx="300" cy="300" r="294" fill="none" stroke="#B0BEC5" stroke-width="1.5" opacity="0.55"/>
+  <circle cx="300" cy="300" r="280" fill="none" stroke="url(#ringG)" stroke-width="12"/>
+  <circle cx="300" cy="300" r="205" fill="none" stroke="#90A4AE" stroke-width="1" opacity="0.4"/>
+  <circle cx="300" cy="300" r="255" fill="url(#centerWash)"/>
+
+  <!-- separators between top and bottom text arcs -->
+  <g fill="#FFC107">
+    <rect x="60" y="295" width="10" height="10" transform="rotate(45 65 300)"/>
+    <rect x="530" y="295" width="10" height="10" transform="rotate(45 535 300)"/>
+  </g>
+
+  <!-- circular company name -->
+  <g font-family="'Montserrat','Segoe UI',Arial,sans-serif" font-weight="600" font-size="27" letter-spacing="3.2" fill="#12457D">
+    <text>
+      <textPath href="#topArc" startOffset="50%" text-anchor="middle">FUTURE ELECTRIC</textPath>
+    </text>
+    <text>
+      <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">CONCERN &amp; SERVICES</textPath>
+    </text>
+  </g>
+
+  <!-- FEC monogram -->
+  <g>
+    <!-- F -->
+    <rect x="135" y="230" width="26" height="140" fill="url(#letterG)"/>
+    <rect x="135" y="230" width="90" height="26" fill="url(#letterG)"/>
+    <rect x="135" y="288" width="68" height="26" fill="url(#letterG)"/>
+
+    <!-- E -->
+    <rect x="245" y="230" width="26" height="140" fill="url(#letterG)"/>
+    <rect x="245" y="230" width="90" height="26" fill="url(#letterG)"/>
+    <rect x="245" y="344" width="90" height="26" fill="url(#letterG)"/>
+
+    <!-- lightning bolt integrated as E's middle stroke -->
+    <g transform="translate(290,300) rotate(90) scale(0.55) translate(-152.5,-152.5)">
+      <polygon points="150,80 115,150 138,150 120,225 190,135 155,135"
+               fill="url(#boltG)" stroke="#0B1F3A" stroke-width="4" stroke-linejoin="round"/>
+    </g>
+
+    <!-- C -->
+    <path d="M 440.97,344.24 A 54,54 0 1 1 440.97,255.76"
+          fill="none" stroke="url(#letterG)" stroke-width="32" stroke-linecap="round"/>
+  </g>
+</svg>

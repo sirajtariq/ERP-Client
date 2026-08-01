@@ -1,0 +1,188 @@
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a14;
+  position: relative;
+  overflow: hidden;
+}
+
+.bgOrbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.4;
+}
+
+.orb1 {
+  width: 400px;
+  height: 400px;
+  background: #7c3aed;
+  top: -100px;
+  right: -80px;
+  animation: float 7s ease-in-out infinite;
+}
+
+.orb2 {
+  width: 350px;
+  height: 350px;
+  background: #ec4899;
+  bottom: -80px;
+  left: -60px;
+  animation: float 9s ease-in-out infinite reverse;
+}
+
+.orb3 {
+  width: 250px;
+  height: 250px;
+  background: #06b6d4;
+  top: 40%;
+  left: 10%;
+  animation: float 8s ease-in-out infinite 1s;
+}
+
+.orb4 {
+  width: 200px;
+  height: 200px;
+  background: #3b82f6;
+  top: 15%;
+  right: 15%;
+  animation: float 10s ease-in-out infinite 0.5s;
+}
+
+.loginContainer {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  z-index: 2;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loginCard {
+  background: rgba(30, 30, 46, 0.85);
+  backdrop-filter: blur(24px);
+  border-radius: 28px;
+  padding: 44px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.5),
+    0 0 60px rgba(139, 92, 246, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.logoSection {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logoIcon {
+  width: 76px;
+  height: 76px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logoIcon:hover {
+  transform: rotate(-8deg) scale(1.08);
+  box-shadow: 0 14px 50px rgba(139, 92, 246, 0.5);
+}
+
+.appName {
+  margin: 0 0 6px 0 !important;
+  font-weight: 900 !important;
+  font-size: 32px !important;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #e2e8f0, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tagline {
+  color: #64748b !important;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.loginForm {
+  margin-top: 8px;
+}
+
+.input {
+  border-radius: 14px !important;
+  height: 50px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+  font-size: 14px !important;
+  transition: all 0.3s ease !important;
+}
+
+.input:hover {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.input:focus,
+.input:focus-within {
+  border-color: #8b5cf6 !important;
+  background: rgba(139, 92, 246, 0.06) !important;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), 0 0 30px rgba(139, 92, 246, 0.05) !important;
+}
+
+.inputIcon {
+  color: #64748b;
+  font-size: 16px;
+}
+
+.loginBtn {
+  height: 50px !important;
+  border-radius: 14px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+  border: none !important;
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  letter-spacing: 0.3px;
+}
+
+.loginBtn:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 14px 40px rgba(139, 92, 246, 0.5) !important;
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;
+}
+
+.loginBtn:active {
+  transform: translateY(0) scale(0.97) !important;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.footerText {
+  color: #475569 !important;
+  font-size: 12px;
+}

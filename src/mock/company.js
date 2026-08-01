@@ -1,0 +1,15 @@
+export const companyInfo = {
+  id: "comp_001",
+  name: "Future Electric Concern & Services",
+  category: "General Trading",
+  owner: "Kaleem Ullah",
+  contact: "+92 321 7230753",
+  whatsapp: "+92 321 7230753",
+  email: "mirza.kaleemullah86@gmail.com",
+  address: "Shop # 2, Choudhary Center, Old Motor Market, Jhang Road, Faisalabad",
+  city: "Faisalabad",
+  ntn: "",
+  logo: null,
+  currency: "PKR",
+  createdAt: "2026-01-01",
+};

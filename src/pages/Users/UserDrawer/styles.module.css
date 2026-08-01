@@ -1,0 +1,38 @@
+.formSection {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c5cfc;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eef0f6;
+}
+
+.dateWrapper {
+  margin-bottom: 16px;
+}
+
+.dateLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.asterisk {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.errorMsg {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+  margin: 4px 0 0;
+}

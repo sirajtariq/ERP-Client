@@ -1,0 +1,9 @@
+.reports {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.balanceCard {
+  height: 100%;
+}

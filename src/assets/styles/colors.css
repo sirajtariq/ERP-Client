@@ -1,0 +1,38 @@
+:root {
+  --color-primary: #141423;
+  --color-primary-light: #1e1e38;
+  --color-accent: #7c5cfc;
+  --color-accent-light: #a78bfa;
+  --color-accent-bg: #f0ecff;
+  --color-active: #ff7930;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  --color-warning: #f59e0b;
+  --color-text: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-light: #eef0f6;
+  --color-bg: #f4f6fb;
+  --color-white: #ffffff;
+  --color-surface: #ffffff;
+}
+
+/* ===== Dark theme overrides ===== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-accent-bg: #241f3d;
+  --color-text: #e9edf5;
+  --color-text-secondary: #a4acc4;
+  --color-text-muted: #767e99;
+  --color-border: #2b3149;
+  --color-border-light: #232840;
+  --color-bg: #0e1120;
+  --color-surface: #171b2e;
+  /* --color-white intentionally NOT overridden here — it's used across the
+     app as a literal white (button text on always-dark buttons, print/paper
+     backgrounds, text on colored badges). --color-surface is the token that
+     adapts to theme (cards, modals, page chrome). */
+}

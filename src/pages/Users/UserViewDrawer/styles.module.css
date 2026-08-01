@@ -1,0 +1,132 @@
+/* Avatar banner at top */
+.banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 20px 24px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 14px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 70% 20%, rgba(124, 92, 252, 0.25) 0%, transparent 60%);
+    pointer-events: none;
+  }
+}
+
+.avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 18px rgba(124, 92, 252, 0.45);
+  position: relative;
+  z-index: 1;
+}
+
+.bannerName {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.2px;
+  position: relative;
+  z-index: 1;
+}
+
+.bannerEmail {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+  position: relative;
+  z-index: 1;
+}
+
+.bannerSub {
+  font-size: 12px;
+  font-weight: 400;
+  color: #94a3b8;
+  position: relative;
+  z-index: 1;
+}
+
+.roleBadge {
+  position: relative;
+  z-index: 1;
+  margin-top: 2px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c5cfc;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 8px;
+}
+
+/* Info card */
+.card {
+  background: #f8fafc;
+  border: 1px solid #eef0f6;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 13px 18px;
+  gap: 12px;
+  border-bottom: 1px solid #eef0f6;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.iconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+  min-width: 80px;
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: right;
+  word-break: break-all;
+}

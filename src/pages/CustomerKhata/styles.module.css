@@ -1,0 +1,15 @@
+.addBtn {
+  height: 38px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 0 20px !important;
+  background: #141423 !important;
+  border-color: #141423 !important;
+  box-shadow: 0 2px 8px rgba(20, 20, 35, 0.25) !important;
+}
+
+.addBtn:hover {
+  background: #1e1e35 !important;
+  border-color: #1e1e35 !important;
+}
