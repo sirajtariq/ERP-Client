@@ -1,102 +1,187 @@
 import { useEffect, useState } from "react";
-import { Space, Tag, message, Typography } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined, SwapOutlined, EyeOutlined } from "@ant-design/icons";
+import { message, Typography } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/components/common";
-import { formatCurrency, formatDate } from "@/utils";
 import { useSearch } from "@/context/SearchContext";
 import { filterConfig } from "@/utils/filterConfig";
-import { buildFilterQueryParams } from "@/utils/filterUtils";
 import { QUOTATION_STATUS_OPTIONS } from "@/constants/filterOptions";
+import {
+  getAllQuotations,
+  getQuotationById,
+  deleteQuotation,
+  convertQuotationToInvoice,
+  normalizeQuotation,
+  normalizeQuotationDetail,
+  buildCustomerDataPayload,
+} from "@/services/quotationService";
+import { getQuotationColumns } from "./columns";
 import QuotationDrawer from "./QuotationDrawer";
 import PreviewModal from "./PreviewModal";
 
 const { Text } = Typography;
 
-const mockQuotations = [
-  { id: 1, quotationNo: "QT-0001", customerName: "Ahmed Electronics", total: 29000, date: "2026-06-20", validDays: "30", status: "pending" },
-  { id: 2, quotationNo: "QT-0002", customerName: "Bilal Store", total: 42000, date: "2026-06-18", validDays: "15", status: "accepted" },
-  { id: 3, quotationNo: "QT-0003", customerName: "Farooq Traders", total: 21500, date: "2026-06-15", validDays: "7", status: "rejected" },
-];
-
 const Quotation = () => {
-  const [quotations, setQuotations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [quotations, setQuotations]         = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [drawerOpen, setDrawerOpen]         = useState(false);
   const [editingQuotation, setEditingQuotation] = useState(null);
-  const [deleteModal, setDeleteModal] = useState({ open: false, quotation: null });
-  const [viewQuotation, setViewQuotation] = useState(null);
+  const [viewQuotation, setViewQuotation]   = useState(null);
+  const [deleteModal, setDeleteModal]       = useState({ open: false, quotation: null });
+  const [deleteLoading, setDeleteLoading]   = useState(false);
+  const [convertModal, setConvertModal]     = useState({ open: false, quotation: null });
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [viewLoadingId, setViewLoadingId]   = useState(null);
+  const [editLoadingId, setEditLoadingId]   = useState(null);
   const [appliedFilters, setAppliedFilters] = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
-  const fetchQuotations = () => {
+  // GET /sales/quotations/ only supports page/page_size — search & filters (below)
+  // are collected but not sent to the API; there's no backend param for them yet.
+  const fetchQuotations = async (pageNo = 1, pageSize = 10) => {
     setLoading(true);
-    setTimeout(() => { setQuotations(mockQuotations); setLoading(false); }, 300);
+    try {
+      const res = await getAllQuotations({ page: pageNo, pageSize });
+      setQuotations((res.results || []).map(normalizeQuotation));
+      setPage((prev) => ({
+        ...prev,
+        current: pageNo,
+        size:    pageSize,
+        total:   res.count || 0,
+        totalPages: Math.ceil((res.count || 0) / pageSize),
+      }));
+    } catch {
+      message.error("Failed to load quotations");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    setPlaceholder("Search by quotation, customer...");
-    fetchQuotations();
+    setPlaceholder("Search quotation number, customer...");
+    fetchQuotations(1, page.size);
     return () => clearSearch();
   }, []);
 
+  const handlePagination = (pageNo, pageSize) => {
+    const size = pageSize || page.size;
+    fetchQuotations(pageNo, size);
+  };
+
   const handleCreate = () => { setEditingQuotation(null); setDrawerOpen(true); };
 
-  // Filters are collected and turned into a query-param string here, but NOT sent to
-  // the API yet — backend doesn't support these params.
   const handleApplyFilters = (filters) => {
     setAppliedFilters(filters);
-    const filterQuery = buildFilterQueryParams(filters); // eslint-disable-line no-unused-vars
-    fetchQuotations();
+    fetchQuotations(1, page.size);
   };
 
   const handleResetFilters = () => {
     setAppliedFilters({});
-    fetchQuotations();
+    fetchQuotations(1, page.size);
   };
-  const handleEdit = (record) => { setEditingQuotation(record); setDrawerOpen(true); };
-  const handleDeleteClick = (record) => { setDeleteModal({ open: true, quotation: record }); };
 
-  const handleDeleteConfirm = () => {
-    message.success(`"${deleteModal.quotation.quotationNo}" deleted`);
-    setDeleteModal({ open: false, quotation: null });
-    fetchQuotations();
+  const handleView = async (id) => {
+    setViewLoadingId(id);
+    try {
+      const detail = await getQuotationById(id);
+      setViewQuotation(normalizeQuotationDetail(detail));
+    } catch {
+      message.error("Failed to load quotation details");
+    } finally {
+      setViewLoadingId(null);
+    }
+  };
+
+  const handleEdit = async (id) => {
+    setEditLoadingId(id);
+    try {
+      const detail = await getQuotationById(id);
+      setEditingQuotation(normalizeQuotationDetail(detail));
+      setDrawerOpen(true);
+    } catch {
+      message.error("Failed to load quotation details");
+    } finally {
+      setEditLoadingId(null);
+    }
+  };
+
+  const handleDeleteClick = (record) => setDeleteModal({ open: true, quotation: record });
+
+  const handleDeleteConfirm = async () => {
+    setDeleteLoading(true);
+    try {
+      await deleteQuotation(deleteModal.quotation.id);
+      message.success(`"${deleteModal.quotation.quotationNo}" deleted`);
+      setDeleteModal({ open: false, quotation: null });
+      fetchQuotations(page.current, page.size);
+    } catch (err) {
+      message.error(err.response?.data?.detail || "Failed to delete quotation");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleConvertClick = (record) => setConvertModal({ open: true, quotation: record });
+
+  const handleConvertConfirm = async () => {
+    setConvertLoading(true);
+    try {
+      const detail = await getQuotationById(convertModal.quotation.id);
+      const d = normalizeQuotationDetail(detail);
+      const payload = {
+        customer_data: buildCustomerDataPayload(d.customer),
+        date:                d.date,
+        valid_days:          d.validDays,
+        payment_term:        d.paymentTerm,
+        discount_percentage: String(d.discountPercentage || 0),
+        vat_percentage:      String(d.vatPercentage || 0),
+        status:              d.status,
+        items: d.items.map((item) => ({
+          item_name: item.name,
+          unit:      item.unit || "",
+          qty:       String(item.qty),
+          rate:      String(item.rate),
+          discount:  String(item.discount || 0),
+        })),
+      };
+      await convertQuotationToInvoice(convertModal.quotation.id, payload);
+      message.success(`"${convertModal.quotation.quotationNo}" converted to invoice`);
+      setConvertModal({ open: false, quotation: null });
+      fetchQuotations(page.current, page.size);
+    } catch (err) {
+      const errorMsg = err.response?.data
+        ? Object.values(err.response.data).flat().join(", ")
+        : err.message || "Failed to convert quotation";
+      message.error(errorMsg);
+    } finally {
+      setConvertLoading(false);
+    }
   };
 
   const handleDrawerSubmit = () => {
     message.success(editingQuotation ? "Quotation updated" : "Quotation created");
     setDrawerOpen(false);
-    fetchQuotations();
+    fetchQuotations(page.current, page.size);
   };
 
-  const statusColors = { pending: "orange", accepted: "green", rejected: "red", expired: "default" };
+  const columns = getQuotationColumns({
+    onView:    handleView,
+    onEdit:    handleEdit,
+    onDelete:  handleDeleteClick,
+    onConvert: handleConvertClick,
+    viewLoadingId,
+    editLoadingId,
+    convertLoadingId: convertLoading ? convertModal.quotation?.id : null,
+  });
 
-  const columns = [
-    { title: "Quotation No", dataIndex: "quotationNo", key: "quotationNo", width: "15%", render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val}</span> },
-    { title: "Customer", dataIndex: "customerName", key: "customerName", width: "25%", ellipsis: true, render: (val) => <span style={{ fontWeight: 600, color: "var(--color-text)" }}>{val || "-"}</span> },
-    { title: "Total", dataIndex: "total", key: "total", width: "15%", render: (val) => <span style={{ fontWeight: 600 }}>{formatCurrency(val || 0)}</span> },
-    { title: "Valid Days", dataIndex: "validDays", key: "validDays", width: "10%", render: (val) => `${val || "-"} days` },
-    { title: "Status", dataIndex: "status", key: "status", width: "12%", render: (val) => <Tag color={statusColors[val] || "default"} style={{ borderRadius: 6, fontWeight: 600, textTransform: "capitalize" }}>{val}</Tag> },
-    { title: "Date", dataIndex: "date", key: "date", width: "12%", render: (val) => <span style={{ color: "var(--color-text-secondary)" }}>{val ? formatDate(val) : "-"}</span> },
-    {
-      title: "Action", key: "actions", width: "16%",
-      render: (_, record) => (
-        <Space size={4}>
-          <AppButton type="text" icon={<EyeOutlined />} size="small" onClick={() => setViewQuotation(record)} />
-          <AppButton type="text" icon={<SwapOutlined />} size="small" title="Convert to Invoice" onClick={() => message.success(`"${record.quotationNo}" converted to invoice`)} />
-          <AppButton type="text" icon={<EditOutlined />} size="small" onClick={() => handleEdit(record)} />
-          <AppButton type="text" icon={<DeleteOutlined />} size="small" danger onClick={() => handleDeleteClick(record)} />
-        </Space>
-      ),
-    },
-  ];
-
-  const filteredData = quotations.filter((q) =>
+  // No backend search param exists for quotations — filter the currently loaded page client-side.
+  const filteredQuotations = quotations.filter((q) =>
     (q.quotationNo || "").toLowerCase().includes(searchText.toLowerCase()) ||
     (q.customerName || "").toLowerCase().includes(searchText.toLowerCase())
   );
 
   return (
-    <div>
+    <section>
       <PageHeader
         title="Quotations"
         subtitle="Create and manage quotations"
@@ -109,38 +194,87 @@ const Quotation = () => {
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
             />
-            <AppButton type="primary" icon={<PlusOutlined />} onClick={handleCreate} className="btn-dark">Create Quotation</AppButton>
+            <AppButton type="primary" icon={<PlusOutlined />} onClick={handleCreate} className="btn-dark">
+              Create Quotation
+            </AppButton>
           </>
         }
       />
 
-      <AppTable columns={columns} dataSource={filteredData} loading={loading} scroll={{ y: "calc(100vh - 320px)" }} />
+      <AppTable
+        columns={columns}
+        dataSource={filteredQuotations}
+        loading={loading}
+        scroll={{ y: "calc(100vh - 320px)" }}
+        page={page}
+        handlePagination={handlePagination}
+      />
 
-      <QuotationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSubmit={handleDrawerSubmit} editingQuotation={editingQuotation} />
+      <QuotationDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSubmit={handleDrawerSubmit}
+        editingQuotation={editingQuotation}
+      />
 
-      <AppModal title="Delete this quotation?" open={deleteModal.open} onClose={() => setDeleteModal({ open: false, quotation: null })} onSubmit={handleDeleteConfirm} submitText="Delete quotation" cancelText="Keep quotation" danger width={460}>
+      <AppModal
+        title="Delete this quotation?"
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, quotation: null })}
+        onSubmit={handleDeleteConfirm}
+        submitText="Delete quotation"
+        cancelText="Keep quotation"
+        loading={deleteLoading}
+        danger
+        width={460}
+      >
         <Text style={{ fontSize: 14, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
-          This will permanently remove <strong style={{ color: "var(--color-text)" }}>"{deleteModal.quotation?.quotationNo}"</strong>. Are you sure?
+          This will permanently remove{" "}
+          <strong style={{ color: "var(--color-text)" }}>"{deleteModal.quotation?.quotationNo}"</strong>. Are you sure?
+        </Text>
+      </AppModal>
+
+      <AppModal
+        title="Convert to invoice?"
+        open={convertModal.open}
+        onClose={() => setConvertModal({ open: false, quotation: null })}
+        onSubmit={handleConvertConfirm}
+        submitText="Convert"
+        cancelText="Cancel"
+        loading={convertLoading}
+        width={460}
+      >
+        <Text style={{ fontSize: 14, color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+          This will convert{" "}
+          <strong style={{ color: "var(--color-text)" }}>"{convertModal.quotation?.quotationNo}"</strong>{" "}
+          into a sale invoice. This cannot be undone.
         </Text>
       </AppModal>
 
       <PreviewModal
         open={!!viewQuotation}
         onClose={() => setViewQuotation(null)}
-        data={{
-          customer: { name: viewQuotation?.customerName || "N/A" },
-          date: viewQuotation?.date,
-          validDays: viewQuotation?.validDays,
-          paymentTerms: "",
-          vatPercent: 0,
-          vatAmount: 0,
-          discount: 0,
-          items: [],
-          itemsTotal: viewQuotation?.total || 0,
-          grandTotal: viewQuotation?.total || 0,
-        }}
+        data={viewQuotation ? {
+          quotationNo:     viewQuotation.quotationNo,
+          customer:        viewQuotation.customer,
+          date:            viewQuotation.date,
+          validDays:       viewQuotation.validDays,
+          validUntil:      viewQuotation.validUntil,
+          validityDisplay: viewQuotation.validityDisplay,
+          paymentTerm:     viewQuotation.paymentTerm,
+          vatPercent:      viewQuotation.vatPercentage,
+          vatAmount:       viewQuotation.vatAmount,
+          discountPercent: viewQuotation.discountPercentage,
+          discountAmount:  viewQuotation.discountAmount,
+          status:          viewQuotation.status,
+          effectiveStatus: viewQuotation.effectiveStatus,
+          convertedInvoice: viewQuotation.convertedInvoice,
+          items:       viewQuotation.items,
+          itemsTotal:  viewQuotation.subtotal,
+          grandTotal:  viewQuotation.total,
+        } : null}
       />
-    </div>
+    </section>
   );
 };
 
