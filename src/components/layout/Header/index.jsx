@@ -60,7 +60,7 @@ const Header = () => {
         <span>
           {user?.name}
           <Tag
-            color={userRole === "SUPER_ADMIN" ? "purple" : userRole === "SALE_PERSON" ? "green" : userRole === "PURCHASE_PERSON" ? "orange" : "blue"}
+            color={userRole === "SUPER_ADMIN" ? "purple" : userRole === "SALES_USER" ? "green" : userRole === "PURCHASE_USER" ? "orange" : "blue"}
             style={{ marginLeft: 8, fontSize: 10 }}
           >
             {userRole}

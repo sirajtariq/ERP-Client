@@ -15,7 +15,8 @@ const MIN_FILTER_DATE = dayjs("2026-01-01");
 // config: filterConfig[pageKey] — which fields to show
 // options: { [fieldKey]: [{label, value}] } — select options, per page
 // values: currently applied filters — { [fieldKey]: value }
-// onApply(filters) / onReset() — filters object is NOT sent to any API yet (backend pending)
+// onApply(filters) / onReset() — whether `filters` reaches the API depends on the
+// caller's fetch function; some pages don't have backend support for every field yet.
 const FilterPanel = ({ config = {}, options = {}, values = {}, onApply, onReset }) => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(values);

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import _ from "lodash";
 import { message, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/components/common";
@@ -36,12 +37,10 @@ const Quotation = () => {
   const { searchText, setPlaceholder, clearSearch } = useSearch();
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
-  // GET /sales/quotations/ only supports page/page_size — search & filters (below)
-  // are collected but not sent to the API; there's no backend param for them yet.
-  const fetchQuotations = async (pageNo = 1, pageSize = 10) => {
+  const fetchQuotations = async (pageNo = 1, pageSize = 10, customerName = "", quotationNumber = "", status = "", startDate = "", endDate = "") => {
     setLoading(true);
     try {
-      const res = await getAllQuotations({ page: pageNo, pageSize });
+      const res = await getAllQuotations({ page: pageNo, pageSize, customerName, quotationNumber, status, startDate, endDate });
       setQuotations((res.results || []).map(normalizeQuotation));
       setPage((prev) => ({
         ...prev,
@@ -58,26 +57,39 @@ const Quotation = () => {
   };
 
   useEffect(() => {
-    setPlaceholder("Search quotation number, customer...");
+    setPlaceholder("Search by customer name...");
     fetchQuotations(1, page.size);
     return () => clearSearch();
   }, []);
 
+  useEffect(() => {
+    if (searchText !== undefined) handleSearchDebounce(searchText);
+  }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSearchDebounce = useCallback(
+    _.debounce((value) => {
+      fetchQuotations(1, page.size, value, appliedFilters.quotationNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
+    }, 500),
+    [page.size, appliedFilters]
+  );
+
   const handlePagination = (pageNo, pageSize) => {
     const size = pageSize || page.size;
-    fetchQuotations(pageNo, size);
+    fetchQuotations(pageNo, size, searchText, appliedFilters.quotationNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
   };
 
   const handleCreate = () => { setEditingQuotation(null); setDrawerOpen(true); };
 
   const handleApplyFilters = (filters) => {
     setAppliedFilters(filters);
-    fetchQuotations(1, page.size);
+    setPage((prev) => ({ ...prev, current: 1 }));
+    fetchQuotations(1, page.size, searchText, filters.quotationNumber, filters.status, filters.startDate, filters.endDate);
   };
 
   const handleResetFilters = () => {
     setAppliedFilters({});
-    fetchQuotations(1, page.size);
+    setPage((prev) => ({ ...prev, current: 1 }));
+    fetchQuotations(1, page.size, searchText);
   };
 
   const handleView = async (id) => {
@@ -113,7 +125,7 @@ const Quotation = () => {
       await deleteQuotation(deleteModal.quotation.id);
       message.success(`"${deleteModal.quotation.quotationNo}" deleted`);
       setDeleteModal({ open: false, quotation: null });
-      fetchQuotations(page.current, page.size);
+      fetchQuotations(page.current, page.size, searchText, appliedFilters.quotationNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
     } catch (err) {
       message.error(err.response?.data?.detail || "Failed to delete quotation");
     } finally {
@@ -147,7 +159,7 @@ const Quotation = () => {
       await convertQuotationToInvoice(convertModal.quotation.id, payload);
       message.success(`"${convertModal.quotation.quotationNo}" converted to invoice`);
       setConvertModal({ open: false, quotation: null });
-      fetchQuotations(page.current, page.size);
+      fetchQuotations(page.current, page.size, searchText, appliedFilters.quotationNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
     } catch (err) {
       const errorMsg = err.response?.data
         ? Object.values(err.response.data).flat().join(", ")
@@ -161,7 +173,7 @@ const Quotation = () => {
   const handleDrawerSubmit = () => {
     message.success(editingQuotation ? "Quotation updated" : "Quotation created");
     setDrawerOpen(false);
-    fetchQuotations(page.current, page.size);
+    fetchQuotations(page.current, page.size, searchText, appliedFilters.quotationNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
   };
 
   const columns = getQuotationColumns({
@@ -173,12 +185,6 @@ const Quotation = () => {
     editLoadingId,
     convertLoadingId: convertLoading ? convertModal.quotation?.id : null,
   });
-
-  // No backend search param exists for quotations — filter the currently loaded page client-side.
-  const filteredQuotations = quotations.filter((q) =>
-    (q.quotationNo || "").toLowerCase().includes(searchText.toLowerCase()) ||
-    (q.customerName || "").toLowerCase().includes(searchText.toLowerCase())
-  );
 
   return (
     <section>
@@ -203,7 +209,7 @@ const Quotation = () => {
 
       <AppTable
         columns={columns}
-        dataSource={filteredQuotations}
+        dataSource={quotations}
         loading={loading}
         scroll={{ y: "calc(100vh - 320px)" }}
         page={page}

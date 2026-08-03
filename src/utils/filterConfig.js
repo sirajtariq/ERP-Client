@@ -4,6 +4,9 @@
 export const filterConfig = {
   saleInvoice: {
     showInvoiceNumber: true,
+    showStatus: true,
+    showStartDate: true,
+    showEndDate: true,
   },
   customers: {
     showCustomerType: true,

@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo, AppInput, AppSelect, AppButton } from "@/components/common";
 import { receiveCustomerPayment } from "@/services/customerService";
 import { createVendorPayment } from "@/services/supplierService";
+import { createSalesReturn, getReturnedQuantitiesForInvoice } from "@/services/salesReturnService";
 import styles from "./styles.module.css";
 
 const PAYMENT_METHODS = [
@@ -20,6 +21,16 @@ const PAYMENT_METHODS = [
   { label: "Cheque",        value: "Cheque" },
 ];
 
+const REFUND_TYPE_OPTIONS = [
+  { label: "Cash",         value: "CASH" },
+  { label: "Store Credit", value: "STORE_CREDIT" },
+];
+
+const RETURN_STATUS_OPTIONS = [
+  { label: "Draft", value: "Draft" },
+  { label: "Saved", value: "Saved" },
+];
+
 const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh }) => {
   const printRef = useRef();
   const { user } = useAuth();
@@ -27,31 +38,111 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [returnItems, setReturnItems] = useState(new Set());
+  const [returnOpen, setReturnOpen]         = useState(false);
+  const [returnItemEdits, setReturnItemEdits] = useState({});
+  const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [returnedQtyByItem, setReturnedQtyByItem] = useState({});
 
   const receiveForm = useForm({
     mode: "onTouched",
     defaultValues: { amountReceived: "", method: "Cash", note: "", date: dayjs() },
   });
 
+  const returnForm = useForm({
+    mode: "onTouched",
+    defaultValues: { date: dayjs(), refundType: "CASH", status: "Saved", reason: "", notes: "" },
+  });
+
   useEffect(() => {
     if (!open) {
       setReceiveOpen(false);
       receiveForm.reset({ amountReceived: "", method: "Cash", note: "", date: dayjs() });
+      setReturnOpen(false);
+      returnForm.reset({ date: dayjs(), refundType: "CASH", status: "Saved", reason: "", notes: "" });
     }
     setReturnItems(new Set());
+    setReturnItemEdits({});
+    setReturnedQtyByItem({});
   }, [open, invoiceData?.id]);
 
-  const toggleReturnItem = (idx) => {
+  // Sum previously-returned quantities per line item, so the Qty input can be capped to
+  // what's actually still returnable instead of defaulting to the full original quantity.
+  useEffect(() => {
+    if (open && invoiceData?.type !== "purchase" && invoiceData?.invoiceNo) {
+      getReturnedQuantitiesForInvoice(invoiceData.invoiceNo)
+        .then(setReturnedQtyByItem)
+        .catch(() => setReturnedQtyByItem({}));
+    }
+  }, [open, invoiceData?.id]);
+
+  const getRemainingQty = (item) => Math.max(0, (item.qty || 0) - (returnedQtyByItem[item.id] || 0));
+
+  const toggleReturnItem = (idx, item) => {
     setReturnItems((prev) => {
       const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
+      if (next.has(idx)) {
+        next.delete(idx);
+        setReturnItemEdits((prevEdits) => {
+          const { [idx]: _removed, ...rest } = prevEdits;
+          return rest;
+        });
+      } else {
+        next.add(idx);
+        setReturnItemEdits((prevEdits) => ({
+          ...prevEdits,
+          [idx]: { quantity: getRemainingQty(item), rate: item.rate || 0, discount: item.discount || 0 },
+        }));
+      }
       return next;
     });
   };
 
+  const handleReturnItemEdit = (idx, field, value) => {
+    setReturnItemEdits((prev) => ({ ...prev, [idx]: { ...prev[idx], [field]: value } }));
+  };
+
   const handleCreateReturnEntry = () => {
-    message.info(`${returnItems.size} item(s) marked for return. Return processing will be enabled once the backend is ready.`);
+    setReturnOpen(true);
+  };
+
+  const handleReturnSubmit = async (values) => {
+    setReturnSubmitting(true);
+    try {
+      const payload = {
+        invoice:      invoiceData.id,
+        status:       values.status,
+        refund_type:  values.refundType,
+        return_date:  values.date ? values.date.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+        reason:       values.reason || "",
+        notes:        values.notes  || "",
+        items: [...returnItems].map((idx) => {
+          const item = validItems[idx];
+          const edit = returnItemEdits[idx] || {};
+          return {
+            sales_item: item.id || null,
+            item_name:  item.name,
+            quantity:   String(edit.quantity ?? item.qty ?? 0),
+            rate:       String(edit.rate ?? item.rate ?? 0),
+            discount:   String(edit.discount ?? item.discount ?? 0),
+          };
+        }),
+      };
+      await createSalesReturn(payload);
+      message.success("Return entry created successfully");
+      setReturnOpen(false);
+      setReturnItems(new Set());
+      setReturnItemEdits({});
+      returnForm.reset({ date: dayjs(), refundType: "CASH", status: "Saved", reason: "", notes: "" });
+      onClose();
+      onRefresh?.();
+    } catch (err) {
+      const errorMsg = err.response?.data
+        ? Object.values(err.response.data).flat().join(", ")
+        : err.message || "Failed to create return entry";
+      message.error(errorMsg);
+    } finally {
+      setReturnSubmitting(false);
+    }
   };
 
   const handleReceiveSubmit = async (values) => {
@@ -63,7 +154,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
         const payload = {
           date: formDate,
           vendor: {
-            vendorId:   invoiceData.customer?.vendorId,
+            id:         invoiceData.customer?.id,
             vendorName: invoiceData.customer?.name  || "",
             phone:      invoiceData.customer?.phone || "",
           },
@@ -76,7 +167,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
       } else {
         const payload = {
           date:            formDate,
-          customer:        invoiceData.customer?.customerId,
+          customer:        invoiceData.customer?.id,
           invoice:         invoiceData.id,
           amount_received: String(values.amountReceived),
           method:          values.method,
@@ -108,6 +199,8 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   } = invoiceData;
   const isPurchase = type === "purchase";
   const showReturnColumn = !isPurchase;
+  // Backend only allows returns against invoices that are already 'Saved'.
+  const canReturn = showReturnColumn && invoiceStatus === "Saved";
   const invoiceLabel = isPurchase ? "PURCHASE INVOICE" : "SALE INVOICE";
   const customerName = customer?.name || customer?.customerName || "N/A";
   const customerPhone = customer?.phone || "N/A";
@@ -392,15 +485,26 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
               </tr>
             </thead>
             <tbody>
-              {validItems.length > 0 ? validItems.map((item, i) => (
+              {validItems.length > 0 ? validItems.map((item, i) => {
+                const remainingQty = getRemainingQty(item);
+                const returnDisabled = !canReturn || remainingQty <= 0;
+                const returnTooltip = !canReturn
+                  ? "Returns are only allowed once the invoice status is 'Saved'"
+                  : remainingQty <= 0
+                    ? "All units of this item have already been returned"
+                    : "";
+                return (
                 <tr key={i} className={`${styles.tableRow} ${showReturnColumn && returnItems.has(i) ? styles.returnRow : ""}`}>
                   {showReturnColumn && (
                     <td className={styles.tdCenter}>
-                      <Checkbox
-                        checked={returnItems.has(i)}
-                        onChange={() => toggleReturnItem(i)}
-                        aria-label={`Mark "${item.name}" for return`}
-                      />
+                      <Tooltip title={returnTooltip}>
+                        <Checkbox
+                          checked={returnItems.has(i)}
+                          disabled={returnDisabled}
+                          onChange={() => toggleReturnItem(i, item)}
+                          aria-label={`Mark "${item.name}" for return`}
+                        />
+                      </Tooltip>
                     </td>
                   )}
                   <td className={styles.tdCenter}>{i + 1}</td>
@@ -421,13 +525,20 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                     </button>
                   </td>
                 </tr>
-              )) : (
+                );
+              }) : (
                 <tr><td colSpan={isPurchase ? 7 : (showReturnColumn ? 9 : 8)} className={styles.emptyRow}>No items added yet</td></tr>
               )}
             </tbody>
           </table>
 
-          {showReturnColumn && returnItems.size > 0 && (
+          {showReturnColumn && !canReturn && (
+            <section style={{ padding: "10px 14px", marginBottom: 16, border: "1px solid #fde68a", borderRadius: 6, background: "#fffbeb", fontSize: 12, color: "#92400e" }}>
+              Returns can only be created once this invoice's status is <strong>Saved</strong>{invoiceStatus ? ` (currently ${invoiceStatus})` : ""}.
+            </section>
+          )}
+
+          {canReturn && returnItems.size > 0 && !returnOpen && (
             <section className={styles.returnBar}>
               <span className={styles.returnBarText}>
                 <RollbackOutlined /> {returnItems.size} item{returnItems.size > 1 ? "s" : ""} marked for return
@@ -435,6 +546,109 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
               <AppButton size="small" className={styles.returnBarBtn} onClick={handleCreateReturnEntry}>
                 Create Return Entry
               </AppButton>
+            </section>
+          )}
+
+          {canReturn && returnOpen && (
+            <section style={{ padding: 16, marginBottom: 16, border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc" }}>
+              <h4 style={{ fontWeight: 700, fontSize: 14, color: "var(--color-text)", marginBottom: 12 }}>
+                <RollbackOutlined /> Create Return Entry ({returnItems.size} item{returnItems.size > 1 ? "s" : ""})
+              </h4>
+
+              {[...returnItems].map((idx) => {
+                const item = validItems[idx];
+                const edit = returnItemEdits[idx] || {};
+                const remainingQty = getRemainingQty(item);
+                return (
+                  <section key={idx} style={{ marginBottom: 14 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 2 }}>{item.name}</p>
+                    <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 6 }}>
+                      Max returnable: {remainingQty} of {item.qty}
+                      {returnedQtyByItem[item.id] > 0 ? ` (${returnedQtyByItem[item.id]} already returned)` : ""}
+                    </p>
+                    <section style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                      <section style={{ width: 100 }}>
+                        <AppInput label="Qty" inputType="number" min={0} max={remainingQty} value={edit.quantity} onChange={(val) => handleReturnItemEdit(idx, "quantity", val)} />
+                      </section>
+                      <section style={{ width: 100 }}>
+                        <AppInput label="Rate" inputType="number" min={0} value={edit.rate} onChange={(val) => handleReturnItemEdit(idx, "rate", val)} disabled />
+                      </section>
+                      <section style={{ width: 100 }}>
+                        <AppInput label="Disc (%)" inputType="number" min={0} max={100} value={edit.discount} onChange={(val) => handleReturnItemEdit(idx, "discount", val)} disabled />
+                      </section>
+                    </section>
+                  </section>
+                );
+              })}
+
+              <section style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginTop: 8 }}>
+                <section style={{ flex: 1, minWidth: 150 }}>
+                  <Controller
+                    name="date"
+                    control={returnForm.control}
+                    render={({ field }) => (
+                      <section>
+                        <label style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", display: "block", marginBottom: 4 }}>Return Date</label>
+                        <DatePicker {...field} style={{ width: "100%" }} />
+                      </section>
+                    )}
+                  />
+                </section>
+                <section style={{ flex: 1, minWidth: 150 }}>
+                  <Controller
+                    name="refundType"
+                    control={returnForm.control}
+                    render={({ field }) => (
+                      <AppSelect {...field} label="Refund Type" name="refundType" options={REFUND_TYPE_OPTIONS} />
+                    )}
+                  />
+                </section>
+                <section style={{ flex: 1, minWidth: 150 }}>
+                  <Controller
+                    name="status"
+                    control={returnForm.control}
+                    render={({ field }) => (
+                      <AppSelect {...field} label="Status" name="status" options={RETURN_STATUS_OPTIONS} />
+                    )}
+                  />
+                </section>
+              </section>
+
+              <section style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <section style={{ flex: 1, minWidth: 200 }}>
+                  <Controller
+                    name="reason"
+                    control={returnForm.control}
+                    rules={{ required: "Reason is required" }}
+                    render={({ field }) => (
+                      <AppInput {...field} label="Reason" name="reason" placeholder="e.g. Damaged item" required errors={returnForm.formState.errors} />
+                    )}
+                  />
+                </section>
+                <section style={{ flex: 1, minWidth: 200 }}>
+                  <Controller
+                    name="notes"
+                    control={returnForm.control}
+                    render={({ field }) => (
+                      <AppInput {...field} label="Notes" name="notes" placeholder="Optional" />
+                    )}
+                  />
+                </section>
+              </section>
+
+              <section style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+                <AppButton type="default" size="small" onClick={() => setReturnOpen(false)}>Cancel</AppButton>
+                <AppButton
+                  type="primary"
+                  size="small"
+                  className="btn-dark"
+                  loading={returnSubmitting}
+                  disabled={!returnForm.formState.isValid || returnSubmitting}
+                  onClick={returnForm.handleSubmit(handleReturnSubmit)}
+                >
+                  Save Return
+                </AppButton>
+              </section>
             </section>
           )}
 

@@ -37,6 +37,13 @@ export const PURCHASE_INVOICE_STATUS_OPTIONS = [
   { label: "Saved", value: "Saved" },
 ];
 
+// Matches SalesInvoice.invoiceStatus enum in the backend (Draft/Saved) — the real
+// `status` query param on GET /sales/invoices/.
+export const SALE_INVOICE_STATUS_OPTIONS = [
+  { label: "Draft", value: "Draft" },
+  { label: "Saved", value: "Saved" },
+];
+
 // Matches PurchaseInvoice.paymentTerm enum in the backend.
 export const PAYMENT_TERM_OPTIONS = [
   { label: "Cash", value: "Cash" },

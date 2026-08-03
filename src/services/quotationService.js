@@ -1,10 +1,16 @@
 import api from "./api";
 
-// GET /sales/quotations/ — list only supports page/page_size, no filter/search params
-export const getAllQuotations = async ({ page = 1, pageSize = 10 } = {}) => {
+// GET /sales/quotations/
+export const getAllQuotations = async ({ page = 1, pageSize = 10, customerName = "", quotationNumber = "", status = "", startDate = "", endDate = "", ordering = "" } = {}) => {
   const params = new URLSearchParams();
   params.append("page", page);
   params.append("page_size", pageSize);
+  if (customerName) params.append("customer_name", customerName);
+  if (quotationNumber) params.append("quotation_number", quotationNumber);
+  if (status) params.append("status", status);
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+  if (ordering) params.append("ordering", ordering);
 
   const response = await api.get(`/sales/quotations/?${params.toString()}`);
   return response.data;

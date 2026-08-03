@@ -135,7 +135,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
     try {
       await createVendorPayment({
         vendor: {
-          vendorId:   supplier.vendorId,
+          id:         supplier.id,
           vendorName: supplier.name,
           phone:      supplier.phone,
         },
