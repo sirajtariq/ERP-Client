@@ -11,33 +11,25 @@ import {
   ArrowUpOutlined, ArrowDownOutlined, HistoryOutlined, UserAddOutlined, ThunderboltOutlined,
 } from "@ant-design/icons";
 import { CompanyLogo } from "@/components/common";
-import { dashboardCards, recentTransactions } from "@/mock/dashboard";
+import { recentTransactions } from "@/mock/dashboard";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency, formatDate } from "@/utils";
+import { getDashboardCards, getDashboardCharts } from "@/services/dashboardService";
+import { useDashboardFilter } from "@/context/DashboardFilterContext";
 import styles from "./styles.module.css";
 
-const monthlyData = [
-  { month: "Jan", income: 420000, expense: 180000 },
-  { month: "Feb", income: 380000, expense: 210000 },
-  { month: "Mar", income: 510000, expense: 160000 },
-  { month: "Apr", income: 470000, expense: 230000 },
-  { month: "May", income: 620000, expense: 195000 },
-  { month: "Jun", income: 580000, expense: 250000 },
-  { month: "Jul", income: 540000, expense: 175000 },
+const CARD_META = [
+  { id: 1, title: "Total Sales",       color: "#7c5cfc", gradient: "linear-gradient(135deg, #7c5cfc, #a78bfa)", icon: <ShoppingCartOutlined /> },
+  { id: 2, title: "Cash Sales",        color: "#22c55e", gradient: "linear-gradient(135deg, #22c55e, #4ade80)", icon: <WalletOutlined /> },
+  { id: 3, title: "Credit Sales",      color: "#3b82f6", gradient: "linear-gradient(135deg, #3b82f6, #60a5fa)", icon: <CreditCardOutlined /> },
+  { id: 4, title: "Receivable",        color: "#f59e0b", gradient: "linear-gradient(135deg, #f59e0b, #fbbf24)", icon: <ClockCircleOutlined /> },
+  { id: 5, title: "Outgoing Expense",  color: "#ef4444", gradient: "linear-gradient(135deg, #ef4444, #f87171)", icon: <FallOutlined /> },
+  { id: 6, title: "Profit",            color: "#10b981", gradient: "linear-gradient(135deg, #10b981, #34d399)", icon: <RiseOutlined /> },
+  { id: 7, title: "Supplier Payable",  color: "#f43f5e", gradient: "linear-gradient(135deg, #f43f5e, #fb7185)", icon: <ShopOutlined /> },
+  { id: 8, title: "Supplier Paid",     color: "#06b6d4", gradient: "linear-gradient(135deg, #06b6d4, #22d3ee)", icon: <CheckCircleOutlined /> },
+  { id: 9, title: "Incoming Cash",     color: "#8b5cf6", gradient: "linear-gradient(135deg, #8b5cf6, #c084fc)", icon: <BankOutlined /> },
 ];
-
-const CARD_ICONS = {
-  1: <ShoppingCartOutlined />,
-  2: <WalletOutlined />,
-  3: <CreditCardOutlined />,
-  4: <ClockCircleOutlined />,
-  5: <FallOutlined />,
-  6: <RiseOutlined />,
-  7: <ShopOutlined />,
-  8: <CheckCircleOutlined />,
-  9: <BankOutlined />,
-};
 
 const HERO_IDS = [1, 6, 4]; // Total Sales, Profit, Receivable
 
@@ -62,20 +54,38 @@ const getGreeting = () => {
   return "Good evening";
 };
 
-// Derives a real (not fabricated) trend from the same monthly series shown in the chart below.
-const calcTrend = (key) => {
-  if (monthlyData.length < 2) return null;
-  const last = monthlyData[monthlyData.length - 1];
-  const prev = monthlyData[monthlyData.length - 2];
+const calcTrend = (data, key) => {
+  if (!data || data.length < 2) return null;
+  const last = data[data.length - 1];
+  const prev = data[data.length - 2];
   const lastVal = key === "profit" ? last.income - last.expense : last[key];
   const prevVal = key === "profit" ? prev.income - prev.expense : prev[key];
   if (!prevVal) return null;
   return ((lastVal - prevVal) / Math.abs(prevVal)) * 100;
 };
 
-const TREND_BY_ID = {
-  1: calcTrend("income"),  // Total Sales
-  6: calcTrend("profit"),  // Profit
+const normalizeCards = (data) => {
+  const n = (v) => parseFloat(v) || 0;
+  return [
+    { ...CARD_META[0], value: n(data.totalSales      ?? data.total_sales) },
+    { ...CARD_META[1], value: n(data.cashSales        ?? data.cash_sales) },
+    { ...CARD_META[2], value: n(data.creditSales      ?? data.credit_sales) },
+    { ...CARD_META[3], value: n(data.receivable       ?? data.total_receivable) },
+    { ...CARD_META[4], value: n(data.outgoingExpense  ?? data.outgoing_expense  ?? data.totalExpense ?? data.total_expense) },
+    { ...CARD_META[5], value: n(data.profit           ?? data.net_profit) },
+    { ...CARD_META[6], value: n(data.supplierPayable  ?? data.supplier_payable) },
+    { ...CARD_META[7], value: n(data.supplierPaid     ?? data.supplier_paid) },
+    { ...CARD_META[8], value: n(data.incomingCash     ?? data.incoming_cash) },
+  ];
+};
+
+const normalizeCharts = (data) => {
+  const rows = Array.isArray(data) ? data : (data.monthly ?? data.chartData ?? data.data ?? data.results ?? []);
+  return rows.map((item) => ({
+    month:   item.month   || item.period || item.label || "",
+    income:  parseFloat(item.income  ?? item.total_income  ?? 0) || 0,
+    expense: parseFloat(item.expense ?? item.total_expense ?? 0) || 0,
+  }));
 };
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -93,21 +103,38 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cards, setCards]         = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const { dateRange } = useDashboardFilter();
   const companyInfo = getCompanyInfo();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    setTimeout(() => {
-      setCards(dashboardCards);
-      setLoading(false);
-    }, 300);
-  }, []);
+    const fetchAll = async () => {
+      setLoading(true);
+      const fromDate = dateRange?.[0] ? dateRange[0].format("YYYY-MM-DD") : "";
+      const toDate   = dateRange?.[1] ? dateRange[1].format("YYYY-MM-DD") : "";
+      try {
+        const [cardsRes, chartsRes] = await Promise.all([
+          getDashboardCards({ fromDate, toDate }),
+          getDashboardCharts({ fromDate, toDate }),
+        ]);
+        setCards(normalizeCards(cardsRes));
+        setChartData(normalizeCharts(chartsRes));
+      } catch {
+        // keep empty state on error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, [dateRange]);
 
-  const heroCards = cards.filter((c) => HERO_IDS.includes(c.id));
-  const gridCards = cards.filter((c) => !HERO_IDS.includes(c.id));
+  const heroCards  = cards.filter((c) => HERO_IDS.includes(c.id));
+  const gridCards  = cards.filter((c) => !HERO_IDS.includes(c.id));
+  const trendById  = { 1: calcTrend(chartData, "income"), 6: calcTrend(chartData, "profit") };
   const today = new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -126,14 +153,14 @@ const Dashboard = () => {
       {/* Hero stats */}
       <Row gutter={[14, 14]}>
         {heroCards.map((card, index) => {
-          const trend = TREND_BY_ID[card.id];
+          const trend = trendById[card.id];
           return (
             <Col xs={24} sm={12} lg={8} key={card.id}>
               <section
                 className={`${styles.heroCard} animate-fade-in-up`}
                 style={{ animationDelay: `${index * 0.05}s`, "--accent": card.color, background: card.gradient }}
               >
-                <span className={styles.heroIcon}>{CARD_ICONS[card.id]}</span>
+                <span className={styles.heroIcon}>{card.icon}</span>
                 <span className={styles.heroLabel}>{card.title}</span>
                 <span className={styles.heroValue}>{formatCurrency(card.value)}</span>
                 {trend !== null && trend !== undefined && (
@@ -175,7 +202,7 @@ const Dashboard = () => {
               className={`${styles.kpiCard} animate-fade-in-up`}
               style={{ animationDelay: `${index * 0.04}s`, "--accent": card.color }}
             >
-              <span className={styles.kpiIcon}>{CARD_ICONS[card.id]}</span>
+              <span className={styles.kpiIcon}>{card.icon}</span>
               <span className={styles.kpiBody}>
                 <span className={styles.kpiLabel}>{card.title}</span>
                 <span className={styles.kpiValue}>{formatCurrency(card.value)}</span>
@@ -191,13 +218,13 @@ const Dashboard = () => {
             title={
               <span className={styles.chartTitleWrap}>
                 <span className={styles.chartTitle}>Income vs Expense</span>
-                <span className={styles.chartSubtitle}>Last 7 months</span>
+                <span className={styles.chartSubtitle}>Last {chartData.length || "—"} months</span>
               </span>
             }
             className={styles.chartCard}
           >
             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor="#7c5cfc" stopOpacity={0.25} />
@@ -225,13 +252,13 @@ const Dashboard = () => {
             title={
               <span className={styles.chartTitleWrap}>
                 <span className={styles.chartTitle}>Monthly Breakdown</span>
-                <span className={styles.chartSubtitle}>Last 7 months</span>
+                <span className={styles.chartSubtitle}>Last {chartData.length || "—"} months</span>
               </span>
             }
             className={styles.chartCard}
           >
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }} barSize={14} barGap={4}>
+              <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }} barSize={14} barGap={4}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={48} />

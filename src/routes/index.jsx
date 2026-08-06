@@ -21,7 +21,7 @@ const getDefaultRoute = (userRole) => {
   if (userRole === "SALES_USER") return "/sale-invoice";
   if (userRole === "PURCHASE_USER") return "/purchase-invoice";
   if (userRole === "SUPER_ADMIN") return "/users";
-  if (userRole === "ADMIN") return "/";
+  if (userRole === "ADMIN") return "/dashboard";
   return "/settings";
 };
 
@@ -43,7 +43,8 @@ const AppRoutes = () => {
         path="/login"
         element={user ? <Navigate to="/" replace /> : <Login />}
       />
-      <Route path="/" element={<ProtectedRoute roles={ADMIN_ONLY}><Dashboard /></ProtectedRoute>} />
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/dashboard" element={<ProtectedRoute roles={ADMIN_ONLY}><Dashboard /></ProtectedRoute>} />
       <Route path="/stock" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
       <Route path="/sale-invoice" element={<ProtectedRoute roles={ADMIN_SALES}><SaleInvoice /></ProtectedRoute>} />
       <Route path="/quotations" element={<ProtectedRoute roles={ADMIN_SALES}><Quotation /></ProtectedRoute>} />

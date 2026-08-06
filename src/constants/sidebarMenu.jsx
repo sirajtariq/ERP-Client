@@ -23,7 +23,7 @@ export const USERS_ACCESS  = ["ADMIN", "SUPER_ADMIN"];
 
 export const SIDEBAR_MENU = [
   {
-    key: "/",
+    key: "/dashboard",
     icon: <DashboardOutlined />,
     label: "Dashboard",
     roles: ADMIN_ONLY,

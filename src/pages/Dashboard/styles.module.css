@@ -26,6 +26,12 @@
     color: var(--color-text-secondary);
   }
 
+  & .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   & .companyChip {
     display: flex;
     align-items: center;
