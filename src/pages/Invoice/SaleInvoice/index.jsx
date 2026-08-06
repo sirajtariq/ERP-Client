@@ -6,6 +6,7 @@ import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/compon
 import { useSearch } from "@/context/SearchContext";
 import { getAllSaleInvoices, getSaleInvoiceById, normalizeSaleInvoice, normalizeSaleInvoiceDetail, deleteSaleInvoice, updateSaleInvoiceStatus } from "@/services/saleInvoiceService";
 import { filterConfig } from "@/utils/filterConfig";
+import { SALE_INVOICE_STATUS_OPTIONS } from "@/constants/filterOptions";
 import { getSaleInvoiceColumns } from "./columns";
 import InvoiceDrawer from "./SaleInvoiceDrawer";
 import InvoicePreview from "./SaleInvoiceModal";
@@ -26,10 +27,10 @@ const SaleInvoice = () => {
   const { searchText, setPlaceholder, clearSearch } = useSearch();
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
-  const fetchInvoices = async (pageNo = 1, pageSize = 10, name = "", invoiceNumber = "") => {
+  const fetchInvoices = async (pageNo = 1, pageSize = 10, name = "", invoiceNumber = "", status = "", startDate = "", endDate = "") => {
     setLoading(true);
     try {
-      const res = await getAllSaleInvoices({ page: pageNo, pageSize, name, invoiceNumber });
+      const res = await getAllSaleInvoices({ page: pageNo, pageSize, name, invoiceNumber, status, startDate, endDate });
       setInvoices((res.results || []).map(normalizeSaleInvoice));
       setPage((prev) => ({
         ...prev,
@@ -57,7 +58,7 @@ const SaleInvoice = () => {
 
   const handleSearchDebounce = useCallback(
     _.debounce((value) => {
-      fetchInvoices(1, page.size, value, appliedFilters.invoiceNumber);
+      fetchInvoices(1, page.size, value, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
     }, 500),
     [page.size, appliedFilters]
   );
@@ -65,7 +66,7 @@ const SaleInvoice = () => {
   const handlePagination = (pageNo, pageSize) => {
     const size = pageSize || page.size;
     setPage((prev) => ({ ...prev, current: pageNo, size }));
-    fetchInvoices(pageNo, size, searchText, appliedFilters.invoiceNumber);
+    fetchInvoices(pageNo, size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
   };
 
   const handleCreate = () => {
@@ -76,7 +77,7 @@ const SaleInvoice = () => {
   const handleApplyFilters = (filters) => {
     setAppliedFilters(filters);
     setPage((prev) => ({ ...prev, current: 1 }));
-    fetchInvoices(1, page.size, searchText, filters.invoiceNumber);
+    fetchInvoices(1, page.size, searchText, filters.invoiceNumber, filters.status, filters.startDate, filters.endDate);
   };
 
   const handleResetFilters = () => {
@@ -119,7 +120,7 @@ const SaleInvoice = () => {
     try {
       await updateSaleInvoiceStatus(record.id, "Saved");
       message.success(`"${record.invoiceNo}" marked as Saved`);
-      fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber);
+      fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
     } catch (err) {
       message.error(err.response?.data?.detail || "Failed to update invoice status");
     } finally {
@@ -132,7 +133,7 @@ const SaleInvoice = () => {
       await deleteSaleInvoice(deleteModal.invoice.id);
       message.success(`"${deleteModal.invoice.invoiceNo}" deleted`);
       setDeleteModal({ open: false, invoice: null });
-      fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber);
+      fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
     } catch (err) {
       message.error(err.response?.data?.detail || "Failed to delete invoice");
     }
@@ -141,7 +142,7 @@ const SaleInvoice = () => {
   const handleDrawerSubmit = () => {
     message.success(editingInvoice ? "Invoice updated successfully" : "Invoice created successfully");
     setDrawerOpen(false);
-    fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber);
+    fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
   };
 
   const columns = getSaleInvoiceColumns({
@@ -163,6 +164,7 @@ const SaleInvoice = () => {
           <>
             <FilterPanel
               config={filterConfig.saleInvoice}
+              options={{ status: SALE_INVOICE_STATUS_OPTIONS }}
               values={appliedFilters}
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
@@ -220,10 +222,11 @@ const SaleInvoice = () => {
           payment:      { paidAmount: viewInvoice.paid, method: viewInvoice.paymentMethod, terms: viewInvoice.paymentTerm },
           grandTotal:   viewInvoice.total,
           paymentStatus: viewInvoice.paymentStatus,
+          invoiceStatus: viewInvoice.invoiceStatus,
           notes:        viewInvoice.notes,
           type:         "sale",
         } : null}
-        onRefresh={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber)}
+        onRefresh={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate)}
       />
     </section>
   );

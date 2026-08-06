@@ -1,12 +1,15 @@
 import api from "./api";
 
 // GET /sales/invoices/
-export const getAllSaleInvoices = async ({ page = 1, pageSize = 10, name = "", invoiceNumber = "", ordering = "" } = {}) => {
+export const getAllSaleInvoices = async ({ page = 1, pageSize = 10, name = "", invoiceNumber = "", status = "", startDate = "", endDate = "", ordering = "" } = {}) => {
   const params = new URLSearchParams();
   params.append("page", page);
   params.append("page_size", pageSize);
   if (name) params.append("name", name);
   if (invoiceNumber) params.append("invoice_number", invoiceNumber);
+  if (status) params.append("status", status);
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
   if (ordering) params.append("ordering", ordering);
 
   const response = await api.get(`/sales/invoices/?${params.toString()}`);

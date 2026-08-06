@@ -97,8 +97,8 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     if (isPurchase) {
       const vendor = invoice.vendor || {};
       const vendorObj = {
-        id:       vendor.vendorId,
-        vendorId: vendor.vendorId,
+        id:       vendor.id,
+        vendorId: vendor.id,
         name:     vendor.vendorName || "",
         phone:    vendor.phone      || "",
       };
@@ -271,8 +271,8 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     if (isPurchase) {
       payload = {
         vendor: {
-          vendorId:   selectedCustomer?.vendorId || selectedCustomer?.id,
-          vendorName: selectedCustomer?.name     || newCustomerName,
+          id:         selectedCustomer?.id,
+          vendorName: selectedCustomer?.name || newCustomerName,
           phone:      formValues.phone || selectedCustomer?.phone || null,
         },
         billNumber:       formValues.billNumber   || null,

@@ -80,7 +80,7 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
     try {
       const payload = {
         date:             values.date ? values.date.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
-        customer:         ledgerData?.customer?.customerId,
+        customer:         customer?.id,
         invoice:          selectedInvoice || null,
         amount_received:  String(values.amountReceived),
         method:           values.method,

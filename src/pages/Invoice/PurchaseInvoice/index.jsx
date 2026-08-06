@@ -218,9 +218,9 @@ const PurchaseInvoice = () => {
         invoiceData={viewInvoice ? {
           id:         viewInvoice.id,
           customer: {
-            vendorId: viewInvoice.vendor?.vendorId,
-            name:     viewInvoice.vendor?.vendorName || "N/A",
-            phone:    viewInvoice.vendor?.phone      || "",
+            id:    viewInvoice.vendor?.id,
+            name:  viewInvoice.vendor?.vendorName || "N/A",
+            phone: viewInvoice.vendor?.phone      || "",
           },
           invoiceNo:  viewInvoice.invoiceNumber || "",
           billNumber: viewInvoice.billNumber    || "",

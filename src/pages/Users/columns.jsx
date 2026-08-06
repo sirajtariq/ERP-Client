@@ -2,7 +2,9 @@ import { Space, Tag } from "antd";
 import { EyeOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
 
-const ROLE_COLORS = { Admin: "blue", Sales: "green", Purchase: "purple" };
+// Matches the resolved role constants the backend returns (ADMIN/SUPER_ADMIN/SALES_USER/PURCHASE_USER).
+const ROLE_COLORS = { ADMIN: "blue", SUPER_ADMIN: "purple", SALES_USER: "green", PURCHASE_USER: "orange" };
+const ROLE_LABELS = { ADMIN: "Admin", SUPER_ADMIN: "Super Admin", SALES_USER: "Sale", PURCHASE_USER: "Purchase" };
 
 export const getUserColumns = ({ onView, onEdit, onDelete }) => [
   {
@@ -43,7 +45,7 @@ export const getUserColumns = ({ onView, onEdit, onDelete }) => [
     width: "13%",
     render: (val) => (
       <Tag color={ROLE_COLORS[val] || "default"} style={{ borderRadius: 6, fontWeight: 600 }}>
-        {val || "-"}
+        {ROLE_LABELS[val] || val || "-"}
       </Tag>
     ),
   },

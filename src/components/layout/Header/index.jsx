@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { Layout, Avatar, Dropdown, Badge, Tag } from "antd";
-import { useNavigate } from "react-router-dom";
+import { Layout, Avatar, Dropdown, Badge, Tag, DatePicker, message } from "antd";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDashboardFilter } from "@/context/DashboardFilterContext";
+
+const { RangePicker } = DatePicker;
 import {
   BellOutlined,
   UserOutlined,
@@ -33,7 +36,10 @@ const formatDateTime = () => {
 const Header = () => {
   const { user, logout, userRole } = useAuth();
   const { searchText, setSearchText, placeholder } = useSearch();
+  const { dateRange, setDateRange } = useDashboardFilter();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isDashboard = pathname === "/dashboard";
   const [dateTime, setDateTime] = useState(formatDateTime);
 
   useEffect(() => {
@@ -60,7 +66,7 @@ const Header = () => {
         <span>
           {user?.name}
           <Tag
-            color={userRole === "SUPER_ADMIN" ? "purple" : userRole === "SALE_PERSON" ? "green" : userRole === "PURCHASE_PERSON" ? "orange" : "blue"}
+            color={userRole === "SUPER_ADMIN" ? "purple" : userRole === "SALES_USER" ? "green" : userRole === "PURCHASE_USER" ? "orange" : "blue"}
             style={{ marginLeft: 8, fontSize: 10 }}
           >
             {userRole}
@@ -83,13 +89,32 @@ const Header = () => {
 
   return (
     <AntHeader className={styles.header}>
-      <div className={styles.searchWrapper}>
-        <SearchBar
-          placeholder={placeholder}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-      </div>
+      {isDashboard ? (
+        <div className={styles.searchWrapper} style={{ maxWidth: 280 }}>
+          <RangePicker
+            value={dateRange}
+            onChange={(range) => setDateRange(range ?? [null, null])}
+            onCalendarChange={(dates) => {
+              if (dates?.[0] && !dates?.[1]) {
+                message.info("Please select an end date");
+              } else if (!dates?.[0] && dates?.[1]) {
+                message.info("Please select a start date");
+              }
+            }}
+            format="DD MMM YYYY"
+            allowClear
+            style={{ width: "100%", borderRadius: 8 }}
+          />
+        </div>
+      ) : (
+        <div className={styles.searchWrapper}>
+          <SearchBar
+            placeholder={placeholder}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className={styles.right}>
         <div className={styles.dateChip}>
