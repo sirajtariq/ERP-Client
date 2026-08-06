@@ -2,19 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Row, Col, Card } from "antd";
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts";
 import {
   ShoppingCartOutlined, WalletOutlined, CreditCardOutlined, ClockCircleOutlined,
   FallOutlined, RiseOutlined, ShopOutlined, CheckCircleOutlined, BankOutlined,
-  ArrowUpOutlined, ArrowDownOutlined, HistoryOutlined, UserAddOutlined, ThunderboltOutlined,
+  ArrowUpOutlined, ArrowDownOutlined, UserAddOutlined, ThunderboltOutlined,
 } from "@ant-design/icons";
 import { CompanyLogo } from "@/components/common";
-import { recentTransactions } from "@/mock/dashboard";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
 import { useAuth } from "@/context/AuthContext";
-import { formatCurrency, formatDate } from "@/utils";
+import { formatCurrency } from "@/utils";
 import { getDashboardCards, getDashboardCharts } from "@/services/dashboardService";
 import { useDashboardFilter } from "@/context/DashboardFilterContext";
 import styles from "./styles.module.css";
@@ -93,11 +92,17 @@ const CustomTooltip = ({ active, payload, label }) => {
   return (
     <div className={styles.tooltip}>
       <p className={styles.tooltipLabel}>{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.name} style={{ color: entry.color, margin: "2px 0", fontSize: 13, fontWeight: 600 }}>
-          {entry.name}: Rs {entry.value.toLocaleString("en-PK")}
-        </p>
-      ))}
+      {payload.map((entry) => {
+        const isProfit = entry.dataKey === "profit";
+        const color = isProfit
+          ? (entry.value >= 0 ? "#10b981" : "#ef4444")
+          : entry.fill || entry.color;
+        return (
+          <p key={entry.name} style={{ color, margin: "2px 0", fontSize: 13, fontWeight: 600 }}>
+            {entry.name}: {entry.value < 0 ? "-" : ""}Rs {Math.abs(entry.value).toLocaleString("en-PK")}
+          </p>
+        );
+      })}
     </div>
   );
 };
@@ -135,6 +140,10 @@ const Dashboard = () => {
   const heroCards  = cards.filter((c) => HERO_IDS.includes(c.id));
   const gridCards  = cards.filter((c) => !HERO_IDS.includes(c.id));
   const trendById  = { 1: calcTrend(chartData, "income"), 6: calcTrend(chartData, "profit") };
+  const enrichedChartData = chartData.map((d) => ({ ...d, profit: d.income - d.expense }));
+  const totalIncome  = chartData.reduce((s, d) => s + d.income,  0);
+  const totalExpense = chartData.reduce((s, d) => s + d.expense, 0);
+  const netProfit    = totalIncome - totalExpense;
   const today = new Date().toLocaleDateString("en-PK", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
@@ -160,8 +169,12 @@ const Dashboard = () => {
                 className={`${styles.heroCard} animate-fade-in-up`}
                 style={{ animationDelay: `${index * 0.05}s`, "--accent": card.color, background: card.gradient }}
               >
-                <span className={styles.heroIcon}>{card.icon}</span>
-                <span className={styles.heroLabel}>{card.title}</span>
+                <span className={styles.heroGlow} />
+                <span className={styles.heroShine} />
+                <section className={styles.heroTop}>
+                  <span className={styles.heroLabel}>{card.title}</span>
+                  <span className={styles.heroIcon}>{card.icon}</span>
+                </section>
                 <span className={styles.heroValue}>{formatCurrency(card.value)}</span>
                 {trend !== null && trend !== undefined && (
                   <span className={`${styles.heroTrend} ${trend >= 0 ? styles.trendUp : styles.trendDown}`}>
@@ -169,7 +182,6 @@ const Dashboard = () => {
                     {Math.abs(trend).toFixed(1)}% vs last month
                   </span>
                 )}
-                <span className={styles.heroGlow} />
               </section>
             </Col>
           );
@@ -213,95 +225,99 @@ const Dashboard = () => {
       </Row>
 
       <Row gutter={[14, 14]}>
-        <Col xs={24} lg={14}>
-          <Card
-            title={
-              <span className={styles.chartTitleWrap}>
-                <span className={styles.chartTitle}>Income vs Expense</span>
-                <span className={styles.chartSubtitle}>Last {chartData.length || "—"} months</span>
-              </span>
-            }
-            className={styles.chartCard}
-          >
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#7c5cfc" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#7c5cfc" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#ef4444" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={48} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
-                <Area type="monotone" dataKey="income" name="Income" stroke="#7c5cfc" strokeWidth={2.5} fill="url(#incomeGrad)" dot={{ r: 3, fill: "#7c5cfc" }} activeDot={{ r: 5 }} />
-                <Area type="monotone" dataKey="expense" name="Expense" stroke="#ef4444" strokeWidth={2.5} fill="url(#expenseGrad)" dot={{ r: 3, fill: "#ef4444" }} activeDot={{ r: 5 }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={10}>
-          <Card
-            title={
-              <span className={styles.chartTitleWrap}>
-                <span className={styles.chartTitle}>Monthly Breakdown</span>
-                <span className={styles.chartSubtitle}>Last {chartData.length || "—"} months</span>
-              </span>
-            }
-            className={styles.chartCard}
-          >
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }} barSize={14} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={48} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
-                <Bar dataKey="income"  name="Income"  fill="#7c5cfc" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" name="Expense" fill="#f97316" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row gutter={[14, 14]}>
         <Col xs={24}>
           <Card
-            title={<span className={styles.chartTitle}><HistoryOutlined /> Recent Activity</span>}
             className={styles.chartCard}
-          >
-            <ul className={styles.activityList}>
-              {recentTransactions.map((t) => (
-                <li key={`${t.category}-${t.id}`} className={styles.activityItem}>
-                  <span className={`${styles.activityIcon} ${t.type === "credit" ? styles.iconUp : styles.iconDown}`}>
-                    {t.type === "credit" ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
-                  </span>
-                  <span className={styles.activityInfo}>
-                    <span className={styles.activityName}>{t.partyName}</span>
-                    <span className={styles.activityMeta}>
-                      {t.category === "received" ? "Payment received" : "Payment made"} · {formatDate(t.date)}
+            title={
+              <section className={styles.chartHeader}>
+                <section>
+                  <p className={styles.chartTitle}>Financial Overview</p>
+                  <p className={styles.chartSubtitle}>Income · Expense · Net Profit — last {enrichedChartData.length || "—"} months</p>
+                </section>
+                <section className={styles.chartSummary}>
+                  <section className={styles.summaryItem}>
+                    <span className={styles.summaryDot} style={{ background: "#7c5cfc" }} />
+                    <span className={styles.summaryLabel}>Income</span>
+                    <span className={styles.summaryValue}>{formatCurrency(totalIncome)}</span>
+                  </section>
+                  <section className={styles.summaryItem}>
+                    <span className={styles.summaryDot} style={{ background: "#ef4444" }} />
+                    <span className={styles.summaryLabel}>Expense</span>
+                    <span className={styles.summaryValue}>{formatCurrency(totalExpense)}</span>
+                  </section>
+                  <section className={styles.summaryItem}>
+                    <span className={styles.summaryDot} style={{ background: netProfit >= 0 ? "#10b981" : "#f43f5e" }} />
+                    <span className={styles.summaryLabel}>Net</span>
+                    <span className={styles.summaryValue} style={{ color: netProfit >= 0 ? "#10b981" : "#ef4444" }}>
+                      {netProfit < 0 ? "-" : ""}{ formatCurrency(Math.abs(netProfit)) }
                     </span>
-                  </span>
-                  <span className={`${styles.activityAmount} ${t.type === "credit" ? styles.amountGreen : styles.amountRed}`}>
-                    {t.type === "credit" ? "+" : "-"}{formatCurrency(t.amount)}
-                  </span>
-                </li>
-              ))}
-              {recentTransactions.length === 0 && (
-                <li className={styles.activityEmpty}>No recent activity</li>
-              )}
-            </ul>
+                  </section>
+                </section>
+              </section>
+            }
+          >
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={enrichedChartData} margin={{ top: 10, right: 56, left: 0, bottom: 0 }} barGap={4}>
+                <defs>
+                  <linearGradient id="incomeBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#7c5cfc" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.8} />
+                  </linearGradient>
+                  <linearGradient id="expenseBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#ef4444" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="#f87171" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                {/* Left axis — Income & Expense bars */}
+                <YAxis
+                  yAxisId="bars"
+                  orientation="left"
+                  tickFormatter={formatK}
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={52}
+                />
+                {/* Right axis — Net Profit line (own scale, can go negative) */}
+                <YAxis
+                  yAxisId="profit"
+                  orientation="right"
+                  tickFormatter={formatK}
+                  tick={{ fontSize: 11, fill: "#10b981" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={52}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-border-light)", opacity: 0.5 }} />
+                <Legend
+                  wrapperStyle={{ fontSize: 12, paddingTop: 16 }}
+                  formatter={(value) => <span style={{ color: "var(--color-text-secondary)", fontWeight: 500 }}>{value}</span>}
+                />
+                <ReferenceLine yAxisId="profit" y={0} stroke="#10b981" strokeDasharray="4 4" strokeWidth={1} strokeOpacity={0.5} />
+                <Bar yAxisId="bars" dataKey="income"  name="Income"  fill="url(#incomeBarGrad)" radius={[5, 5, 0, 0]} barSize={18} />
+                <Bar yAxisId="bars" dataKey="expense" name="Expense" fill="url(#expenseBarGrad)" radius={[5, 5, 0, 0]} barSize={18} />
+                <Line
+                  yAxisId="profit"
+                  type="monotone"
+                  dataKey="profit"
+                  name="Net Profit"
+                  strokeWidth={2.5}
+                  dot={(props) => {
+                    const { cx, cy, payload } = props;
+                    const color = payload.profit >= 0 ? "#10b981" : "#ef4444";
+                    return <circle key={cx} cx={cx} cy={cy} r={4} fill={color} stroke="#fff" strokeWidth={2} />;
+                  }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: "#fff" }}
+                  stroke="#10b981"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           </Card>
         </Col>
       </Row>
+
     </section>
   );
 };
