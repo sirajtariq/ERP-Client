@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/components/common";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { AppTable, AppButton, AppModal, PageHeader, FilterPanel, TrashDrawer } from "@/components/common";
 import { useSearch } from "@/context/SearchContext";
-import { getAllSaleInvoices, getSaleInvoiceById, normalizeSaleInvoice, normalizeSaleInvoiceDetail, deleteSaleInvoice, updateSaleInvoiceStatus } from "@/services/saleInvoiceService";
+import { useAuth } from "@/context/AuthContext";
+import { getAllSaleInvoices, getSaleInvoiceById, normalizeSaleInvoice, normalizeSaleInvoiceDetail, deleteSaleInvoice, updateSaleInvoiceStatus, getTrashedSaleInvoices, restoreSaleInvoice, permanentDeleteSaleInvoice } from "@/services/saleInvoiceService";
 import { filterConfig } from "@/utils/filterConfig";
 import { SALE_INVOICE_STATUS_OPTIONS } from "@/constants/filterOptions";
 import { getSaleInvoiceColumns } from "./columns";
@@ -20,11 +21,14 @@ const SaleInvoice = () => {
   const [viewInvoice, setViewInvoice]       = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [deleteModal, setDeleteModal]       = useState({ open: false, invoice: null });
+  const [trashOpen, setTrashOpen]           = useState(false);
   const [viewLoadingId, setViewLoadingId]   = useState(null);
   const [editLoadingId, setEditLoadingId]   = useState(null);
   const [saveLoadingId, setSaveLoadingId]   = useState(null);
   const [appliedFilters, setAppliedFilters]     = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const { userRole } = useAuth();
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
   const fetchInvoices = async (pageNo = 1, pageSize = 10, name = "", invoiceNumber = "", status = "", startDate = "", endDate = "") => {
@@ -169,6 +173,11 @@ const SaleInvoice = () => {
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
             />
+            {isAdmin && (
+              <AppButton icon={<DeleteOutlined />} onClick={() => setTrashOpen(true)} danger>
+                Trash
+              </AppButton>
+            )}
             <AppButton type="primary" icon={<PlusOutlined />} onClick={handleCreate} className="btn-dark">
               Create Sale Invoice
             </AppButton>
@@ -228,6 +237,30 @@ const SaleInvoice = () => {
         } : null}
         onRefresh={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate)}
       />
+
+      {isAdmin && (
+        <TrashDrawer
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          title="Sale Invoices"
+          fetchFn={getTrashedSaleInvoices}
+          restoreFn={restoreSaleInvoice}
+          permanentDeleteFn={permanentDeleteSaleInvoice}
+          onSuccess={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate)}
+          rowKey="id"
+          searchPlaceholder="Search by name..."
+          showDateFilter
+
+          columns={[
+            { title: "Invoice #", key: "inv", width: 130, render: (_, r) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{r.invoiceNumber || r.invoice_number || "-"}</span> },
+            { title: "Customer",  key: "cust", ellipsis: true, render: (_, r) => (r.customerData || r.customer_data)?.customerName || r.customerName || "-" },
+            { title: "Total",     key: "tot",  width: 120, render: (_, r) => <span style={{ fontWeight: 700 }}>Rs {parseFloat(r.netTotal || r.net_total || 0).toLocaleString()}</span> },
+            { title: "Date",      dataIndex: "date",          key: "date",          width: 110 },
+            { title: "Status",    dataIndex: "invoiceStatus", key: "invoiceStatus", width: 100 },
+          ]}
+        />
+      )}
+
     </section>
   );
 };

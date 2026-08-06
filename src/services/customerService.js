@@ -62,6 +62,24 @@ export const getCustomerLedger = async (customerId) => {
   // Response: { summary, ledger: [...], finalPaymentDetails }
 };
 
+export const getTrashedCustomers = async ({ page = 1, pageSize = 10, search = "" } = {}) => {
+  const params = new URLSearchParams({ page, page_size: pageSize });
+  if (search) params.append("name", search);
+  const res = await api.get(`/sales/customers/trash/?${params}`);
+  return res.data;
+};
+export const restoreCustomer = async (id) => {
+  const res = await api.post(`/sales/customers/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeleteCustomer = async (id) => {
+  await api.delete(`/sales/customers/${id}/permanent-delete/`);
+};
+export const convertCustomerToPermanent = async (id) => {
+  const res = await api.post(`/sales/customers/${id}/convert-to-permanent/`);
+  return res.data;
+};
+
 export const normalizeCustomer = (apiCustomer) => ({
   id:            apiCustomer.id,
   customerId:    apiCustomer.customerId || apiCustomer.id,

@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { AppTable, AppButton, AppModal, PageHeader } from "@/components/common";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { AppTable, AppButton, AppModal, PageHeader, TrashDrawer } from "@/components/common";
 import { useSearch } from "@/context/SearchContext";
-import { getAllVendors, normalizeVendor, deleteVendor } from "@/services/supplierService";
+import { useAuth } from "@/context/AuthContext";
+import { getAllVendors, normalizeVendor, deleteVendor, getTrashedVendors, restoreVendor, permanentDeleteVendor } from "@/services/supplierService";
 import { getVendorColumns } from "./columns";
 import LedgerDrawer from "./LedgerDrawer";
 import LedgerModal from "./LedgerModal";
@@ -18,7 +19,10 @@ const SupplierLedger = () => {
   const [editingVendor, setEditingVendor]   = useState(null);
   const [viewVendor, setViewVendor]         = useState(null);
   const [deleteModal, setDeleteModal]       = useState({ open: false, vendor: null });
+  const [trashOpen, setTrashOpen]           = useState(false);
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const { userRole } = useAuth();
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
   const fetchVendors = async (pageNo = 1, pageSize = 10, name = "") => {
@@ -96,9 +100,16 @@ const SupplierLedger = () => {
         title="Supplier Ledger"
         subtitle="Manage your suppliers"
         extra={
-          <AppButton type="primary" icon={<PlusOutlined />} onClick={handleAdd} className="btn-dark">
-            Add Supplier
-          </AppButton>
+          <>
+            {isAdmin && (
+              <AppButton icon={<DeleteOutlined />} onClick={() => setTrashOpen(true)} danger>
+                Trash
+              </AppButton>
+            )}
+            <AppButton type="primary" icon={<PlusOutlined />} onClick={handleAdd} className="btn-dark">
+              Add Supplier
+            </AppButton>
+          </>
         }
       />
 
@@ -143,6 +154,27 @@ const SupplierLedger = () => {
           <strong style={{ color: "var(--color-text)" }}>"{deleteModal.vendor?.name}"</strong>. Are you sure?
         </Text>
       </AppModal>
+
+      {isAdmin && (
+        <TrashDrawer
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          title="Suppliers"
+          fetchFn={getTrashedVendors}
+          restoreFn={restoreVendor}
+          permanentDeleteFn={permanentDeleteVendor}
+          onSuccess={() => fetchVendors(page.current, page.size, searchText)}
+          rowKey="vendorId"
+          searchPlaceholder="Search by name..."
+          columns={[
+            { title: "ID",    dataIndex: "vendorId",   key: "vendorId",   width: 80,  render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v}</span> },
+            { title: "Name",  dataIndex: "vendorName", key: "vendorName", ellipsis: true, render: (v) => <span style={{ fontWeight: 600 }}>{v || "-"}</span> },
+            { title: "Phone", dataIndex: "phone",      key: "phone",      width: 130 },
+            { title: "Email", dataIndex: "email",      key: "email",      ellipsis: true, render: (v) => v || "-" },
+          ]}
+        />
+      )}
+
     </section>
   );
 };

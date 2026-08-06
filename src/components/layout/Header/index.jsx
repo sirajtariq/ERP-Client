@@ -76,7 +76,9 @@ const Header = () => {
       disabled: true,
     },
     { type: "divider" },
-    { key: "settings", icon: <SettingOutlined />, label: "Settings" },
+    ...(["ADMIN", "SUPER_ADMIN"].includes(userRole)
+      ? [{ key: "settings", icon: <SettingOutlined />, label: "Settings" }]
+      : []),
     { key: "logout", icon: <LogoutOutlined />, label: "Logout", danger: true },
   ];
 

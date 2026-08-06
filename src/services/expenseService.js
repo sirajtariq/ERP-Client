@@ -37,6 +37,22 @@ export const deleteExpense = async (id) => {
   await api.delete(`/purchase/expenses/${id}/`);
 };
 
+export const getTrashedExpenses = async ({ page = 1, pageSize = 10, search = "", startDate = "", endDate = "" } = {}) => {
+  const params = new URLSearchParams({ page, page_size: pageSize });
+  if (search)    params.append("expense_number", search);
+  if (startDate) params.append("date_from", startDate);
+  if (endDate)   params.append("date_to", endDate);
+  const res = await api.get(`/purchase/expenses/trash/?${params}`);
+  return res.data;
+};
+export const restoreExpense = async (id) => {
+  const res = await api.post(`/purchase/expenses/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeleteExpense = async (id) => {
+  await api.delete(`/purchase/expenses/${id}/permanent-delete/`);
+};
+
 export const normalizeExpense = (e) => ({
   id:            e.id,
   voucher:       e.expenseNumber   || "",

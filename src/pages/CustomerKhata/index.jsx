@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
 import { useForm, Controller } from "react-hook-form";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
   AppTable,
   AppButton,
@@ -11,10 +11,12 @@ import {
   AppModal,
   PageHeader,
   FilterPanel,
+  TrashDrawer,
 } from "@/components/common";
-import { getAllCustomers, createCustomer, updateCustomer, deleteCustomer, normalizeCustomer } from "@/services/customerService";
+import { getAllCustomers, createCustomer, updateCustomer, deleteCustomer, normalizeCustomer, getTrashedCustomers, restoreCustomer, permanentDeleteCustomer, convertCustomerToPermanent } from "@/services/customerService";
 import { customerFormSchema } from "@/utils/validation";
 import { useSearch } from "@/context/SearchContext";
+import { useAuth } from "@/context/AuthContext";
 import { filterConfig } from "@/utils/filterConfig";
 import { CUSTOMER_TYPE_OPTIONS } from "@/constants/filterOptions";
 import { getCustomerColumns } from "./columns";
@@ -29,11 +31,14 @@ const CustomerKhata = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, customer: null });
+  const [trashOpen, setTrashOpen]     = useState(false);
   const [ledgerCustomer, setLedgerCustomer] = useState(null);
   const [printCustomer, setPrintCustomer] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const { userRole } = useAuth();
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
 
   // Pagination: API uses 1-based page numbers
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
@@ -212,6 +217,11 @@ const CustomerKhata = () => {
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
             />
+            {isAdmin && (
+              <AppButton icon={<DeleteOutlined />} onClick={() => setTrashOpen(true)} danger>
+                Trash
+              </AppButton>
+            )}
             <AppButton type="primary" icon={<PlusOutlined />} onClick={handleAdd} className="btn-dark">
               Add Customer
             </AppButton>
@@ -318,6 +328,28 @@ const CustomerKhata = () => {
         onClose={() => setPrintCustomer(null)}
         customer={printCustomer}
       />
+
+      {isAdmin && (
+        <TrashDrawer
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          title="Customers"
+          fetchFn={getTrashedCustomers}
+          restoreFn={restoreCustomer}
+          permanentDeleteFn={permanentDeleteCustomer}
+          convertFn={convertCustomerToPermanent}
+          onSuccess={() => fetchCustomers(page.current, page.size, searchText)}
+          rowKey="customerId"
+          searchPlaceholder="Search by name..."
+
+          columns={[
+            { title: "ID",    dataIndex: "customerId", key: "customerId", width: 80,  render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v}</span> },
+            { title: "Name",  dataIndex: "customerName", key: "customerName", ellipsis: true, render: (v) => <span style={{ fontWeight: 600 }}>{v || "-"}</span> },
+            { title: "Type",  dataIndex: "customerType", key: "customerType", width: 100, render: (v) => v ? <span style={{ textTransform: "capitalize" }}>{v}</span> : "-" },
+            { title: "Phone", dataIndex: "Phone", key: "phone", width: 130 },
+          ]}
+        />
+      )}
     </section>
   );
 };

@@ -10,3 +10,4 @@ export { default as SearchBar } from "./SearchBar";
 export { default as CompanyLogo } from "./CompanyLogo";
 export { default as SignaturePad } from "./SignaturePad";
 export { default as FilterPanel } from "./FilterPanel";
+export { default as TrashDrawer } from "./TrashDrawer";

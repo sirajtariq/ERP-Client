@@ -13,16 +13,12 @@ import DailyExpense from "@/pages/CashFlow/DailyExpense";
 import SupplierLedger from "@/pages/Supplier/SupplierLedger";
 import DailyReceive from "@/pages/CashFlow/DailyReceive";
 
-// Where to send a user who hits a route their role can't see. Must never point to a
-// route that itself is role-restricted against them, or it loops (e.g. "/" is admin-only,
-// so Sales/Purchase/Super Admin can't bounce there). Anything unrecognized falls back to
-// "/settings", which has no role restriction, so the redirect always terminates.
 const getDefaultRoute = (userRole) => {
   if (userRole === "SALES_USER") return "/sale-invoice";
   if (userRole === "PURCHASE_USER") return "/purchase-invoice";
   if (userRole === "SUPER_ADMIN") return "/users";
   if (userRole === "ADMIN") return "/dashboard";
-  return "/settings";
+  return "/login";
 };
 
 const ProtectedRoute = ({ children, roles }) => {
@@ -57,7 +53,7 @@ const AppRoutes = () => {
       <Route path="/employees" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
       <Route path="/salary" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute roles={USERS_ACCESS}><Users /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute roles={USERS_ACCESS}><Settings /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

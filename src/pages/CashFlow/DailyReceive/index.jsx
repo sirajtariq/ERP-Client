@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/components/common";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { AppTable, AppButton, AppModal, PageHeader, FilterPanel, TrashDrawer } from "@/components/common";
 import { useSearch } from "@/context/SearchContext";
-import { getAllPayments, normalizePayment, deletePayment } from "@/services/paymentService";
+import { useAuth } from "@/context/AuthContext";
+import { getAllPayments, normalizePayment, deletePayment, getTrashedPayments, restorePayment } from "@/services/paymentService";
 import { filterConfig } from "@/utils/filterConfig";
 import { getDailyReceiveColumns } from "./columns";
 import ReceiveDrawer from "./ReceiveDrawer";
@@ -18,9 +19,12 @@ const DailyReceive = () => {
   const [drawerOpen, setDrawerOpen]         = useState(false);
   const [editingReceive, setEditingReceive] = useState(null);
   const [deleteModal, setDeleteModal]       = useState({ open: false, receive: null });
+  const [trashOpen, setTrashOpen]           = useState(false);
   const [viewReceive, setViewReceive]       = useState(null);
   const [appliedFilters, setAppliedFilters] = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const { userRole } = useAuth();
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
   const fetchPayments = async (pageNo = 1, pageSize = 10, customer = "", from = "", to = "") => {
@@ -118,6 +122,11 @@ const DailyReceive = () => {
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
             />
+            {isAdmin && (
+              <AppButton icon={<DeleteOutlined />} onClick={() => setTrashOpen(true)} danger>
+                Trash
+              </AppButton>
+            )}
             <AppButton type="primary" icon={<PlusOutlined />} onClick={handleCreate} className="btn-dark">
               Receive Payment
             </AppButton>
@@ -178,6 +187,28 @@ const DailyReceive = () => {
             : null
         }
       />
+
+      {isAdmin && (
+        <TrashDrawer
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          title="Daily Income"
+          fetchFn={getTrashedPayments}
+          restoreFn={restorePayment}
+          onSuccess={() => fetchPayments(page.current, page.size, searchText, appliedFilters.startDate, appliedFilters.endDate)}
+          rowKey="id"
+          searchPlaceholder="Search by name..."
+          showDateFilter
+
+          columns={[
+            { title: "Receipt #", key: "rec", width: 120, render: (_, r) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{r.receiptNumber || r.receipt_number || "-"}</span> },
+            { title: "Customer",  dataIndex: "customerName", key: "customerName", ellipsis: true },
+            { title: "Amount",    key: "amt", width: 110, render: (_, r) => <span style={{ fontWeight: 700, color: "#22c55e" }}>Rs {parseFloat(r.amountReceived || r.amount_received || 0).toLocaleString()}</span> },
+            { title: "Method",    dataIndex: "method",       key: "method",       width: 100 },
+            { title: "Date",        dataIndex: "date",           key: "date",           width: 110 },
+          ]}
+        />
+      )}
     </section>
   );
 };
