@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/components/common";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { AppTable, AppButton, AppModal, PageHeader, FilterPanel, TrashDrawer } from "@/components/common";
 import { useSearch } from "@/context/SearchContext";
-import { getAllPurchaseInvoices, getPurchaseInvoice, deletePurchaseInvoice, updatePurchaseInvoiceStatus, normalizePurchaseInvoice } from "@/services/purchaseInvoiceService";
+import { useAuth } from "@/context/AuthContext";
+import { getAllPurchaseInvoices, getPurchaseInvoice, deletePurchaseInvoice, updatePurchaseInvoiceStatus, normalizePurchaseInvoice, getTrashedPurchaseInvoices, restorePurchaseInvoice, permanentDeletePurchaseInvoice } from "@/services/purchaseInvoiceService";
 import { filterConfig } from "@/utils/filterConfig";
 import { PURCHASE_INVOICE_STATUS_OPTIONS, PAYMENT_TERM_OPTIONS } from "@/constants/filterOptions";
 import { getPurchaseInvoiceColumns } from "./columns";
@@ -20,10 +21,13 @@ const PurchaseInvoice = () => {
   const [viewInvoice, setViewInvoice]       = useState(null);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [deleteModal, setDeleteModal]       = useState({ open: false, invoice: null });
+  const [trashOpen, setTrashOpen]           = useState(false);
   const [deleteLoading, setDeleteLoading]   = useState(false);
   const [saveLoadingId, setSaveLoadingId]   = useState(null);
   const [appliedFilters, setAppliedFilters] = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const { userRole } = useAuth();
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
   const fetchInvoices = async (pageNo = 1, pageSize = 10, search = "", billNumber = "", status = "", paymentTerm = "", filterInvoiceNumber = "") => {
@@ -169,6 +173,11 @@ const PurchaseInvoice = () => {
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
             />
+            {isAdmin && (
+              <AppButton icon={<DeleteOutlined />} onClick={() => setTrashOpen(true)} danger>
+                Trash
+              </AppButton>
+            )}
             <AppButton type="primary" icon={<PlusOutlined />} onClick={handleCreate} className="btn-dark">
               Create Purchase Invoice
             </AppButton>
@@ -252,6 +261,29 @@ const PurchaseInvoice = () => {
           type: "purchase",
         } : null}
       />
+
+      {isAdmin && (
+        <TrashDrawer
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          title="Purchase Invoices"
+          fetchFn={getTrashedPurchaseInvoices}
+          restoreFn={restorePurchaseInvoice}
+          permanentDeleteFn={permanentDeletePurchaseInvoice}
+          onSuccess={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.billNumber, appliedFilters.status, appliedFilters.paymentTerm, appliedFilters.invoiceNumber)}
+          rowKey="id"
+          searchPlaceholder="Search by invoice #, bill #..."
+          showDateFilter
+
+          columns={[
+            { title: "Invoice #", dataIndex: "invoiceNumber", key: "invoiceNumber", width: 130, render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v || "-"}</span> },
+            { title: "Bill #",    dataIndex: "billNumber",    key: "billNumber",    width: 110 },
+            { title: "Supplier",  dataIndex: "vendor",        key: "vendor",        ellipsis: true, render: (v) => v?.vendorName || "-" },
+            { title: "Total",     dataIndex: "netTotal",      key: "netTotal",      width: 120, render: (v) => <span style={{ fontWeight: 700 }}>Rs {parseFloat(v || 0).toLocaleString()}</span> },
+            { title: "Date",      dataIndex: "date",          key: "date",          width: 110 },
+          ]}
+        />
+      )}
     </section>
   );
 };

@@ -34,3 +34,15 @@ export const getReturnedQuantitiesForInvoice = async (invoiceNumber) => {
   });
   return totals;
 };
+
+export const getTrashedSalesReturns = async ({ page = 1, pageSize = 10 } = {}) => {
+  const res = await api.get(`/sales/returns/trash/?page=${page}&page_size=${pageSize}`);
+  return res.data;
+};
+export const restoreSalesReturn = async (id) => {
+  const res = await api.post(`/sales/returns/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeleteSalesReturn = async (id) => {
+  await api.delete(`/sales/returns/${id}/permanent-delete/`);
+};

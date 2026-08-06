@@ -26,6 +26,19 @@ export const getAllPayments = async ({ page = 1, pageSize = 10, customer = "", f
   return response.data;
 };
 
+export const getTrashedPayments = async ({ page = 1, pageSize = 10, search = "", startDate = "", endDate = "" } = {}) => {
+  const params = new URLSearchParams({ page, page_size: pageSize });
+  if (search)    params.append("customer", search);
+  if (startDate) params.append("from", startDate);
+  if (endDate)   params.append("to", endDate);
+  const res = await api.get(`/sales/payments/trash/?${params}`);
+  return res.data;
+};
+export const restorePayment = async (id) => {
+  const res = await api.post(`/sales/payments/${id}/restore/`);
+  return res.data;
+};
+
 export const normalizePayment = (p) => ({
   id: p.id,
   receiptNumber: p.receipt_number || "",

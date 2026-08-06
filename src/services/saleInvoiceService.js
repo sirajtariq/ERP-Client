@@ -46,6 +46,22 @@ export const updateSaleInvoiceStatus = async (id, invoiceStatus) => {
   return response.data;
 };
 
+export const getTrashedSaleInvoices = async ({ page = 1, pageSize = 10, search = "", startDate = "", endDate = "" } = {}) => {
+  const params = new URLSearchParams({ page, page_size: pageSize });
+  if (search)    params.append("name", search);
+  if (startDate) params.append("start_date", startDate);
+  if (endDate)   params.append("end_date", endDate);
+  const res = await api.get(`/sales/invoices/trash/?${params}`);
+  return res.data;
+};
+export const restoreSaleInvoice = async (id) => {
+  const res = await api.post(`/sales/invoices/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeleteSaleInvoice = async (id) => {
+  await api.delete(`/sales/invoices/${id}/permanent-delete/`);
+};
+
 // Used for list view — new API returns flat camelCase fields
 export const normalizeSaleInvoice = (inv) => ({
   id:            inv.id,

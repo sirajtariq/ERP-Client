@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo, AppInput, AppSelect, AppButton } from "@/components/common";
 import { receiveCustomerPayment } from "@/services/customerService";
 import { createVendorPayment } from "@/services/supplierService";
-import { createSalesReturn, getReturnedQuantitiesForInvoice } from "@/services/salesReturnService";
+import { createSalesReturn } from "@/services/salesReturnService";
 import styles from "./styles.module.css";
 
 const PAYMENT_METHODS = [
@@ -41,7 +41,6 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   const [returnOpen, setReturnOpen]         = useState(false);
   const [returnItemEdits, setReturnItemEdits] = useState({});
   const [returnSubmitting, setReturnSubmitting] = useState(false);
-  const [returnedQtyByItem, setReturnedQtyByItem] = useState({});
 
   const receiveForm = useForm({
     mode: "onTouched",
@@ -62,20 +61,9 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
     }
     setReturnItems(new Set());
     setReturnItemEdits({});
-    setReturnedQtyByItem({});
   }, [open, invoiceData?.id]);
 
-  // Sum previously-returned quantities per line item, so the Qty input can be capped to
-  // what's actually still returnable instead of defaulting to the full original quantity.
-  useEffect(() => {
-    if (open && invoiceData?.type !== "purchase" && invoiceData?.invoiceNo) {
-      getReturnedQuantitiesForInvoice(invoiceData.invoiceNo)
-        .then(setReturnedQtyByItem)
-        .catch(() => setReturnedQtyByItem({}));
-    }
-  }, [open, invoiceData?.id]);
-
-  const getRemainingQty = (item) => Math.max(0, (item.qty || 0) - (returnedQtyByItem[item.id] || 0));
+  const getRemainingQty = (item) => item.qty || 0;
 
   const toggleReturnItem = (idx, item) => {
     setReturnItems((prev) => {
@@ -481,7 +469,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                 <th className={styles.thRight} style={{ width: isPurchase ? "15%" : "13%" }}>Rate</th>
                 {!isPurchase && <th className={styles.thRight} style={{ width: "13%" }}>Discount</th>}
                 <th className={styles.thRight} style={{ width: isPurchase ? "18%" : "17%" }}>Total</th>
-                <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>
+                {onDeleteItem && <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -519,15 +507,17 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                   <td className={styles.tdRight}>{formatCurrency(item.rate || 0)}</td>
                   {!isPurchase && <td className={styles.tdRight}>{item.discount || 0}%</td>}
                   <td className={`${styles.tdRight} ${styles.bold}`}>{formatCurrency(item.total || 0)}</td>
-                  <td className={styles.tdCenter}>
-                    <button className={styles.deleteItemBtn} onClick={() => onDeleteItem && onDeleteItem(i)}>
-                      <DeleteOutlined />
-                    </button>
-                  </td>
+                  {onDeleteItem && (
+                    <td className={styles.tdCenter}>
+                      <button className={styles.deleteItemBtn} onClick={() => onDeleteItem(i)}>
+                        <DeleteOutlined />
+                      </button>
+                    </td>
+                  )}
                 </tr>
                 );
               }) : (
-                <tr><td colSpan={isPurchase ? 7 : (showReturnColumn ? 9 : 8)} className={styles.emptyRow}>No items added yet</td></tr>
+                <tr><td colSpan={(isPurchase ? 6 : showReturnColumn ? 8 : 7) + (onDeleteItem ? 1 : 0)} className={styles.emptyRow}>No items added yet</td></tr>
               )}
             </tbody>
           </table>
@@ -563,8 +553,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                   <section key={idx} style={{ marginBottom: 14 }}>
                     <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 2 }}>{item.name}</p>
                     <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 6 }}>
-                      Max returnable: {remainingQty} of {item.qty}
-                      {returnedQtyByItem[item.id] > 0 ? ` (${returnedQtyByItem[item.id]} already returned)` : ""}
+                      Max returnable: {remainingQty}
                     </p>
                     <section style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                       <section style={{ width: 100 }}>

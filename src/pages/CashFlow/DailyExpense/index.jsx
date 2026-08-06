@@ -2,11 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import _ from "lodash";
 import { Space, Tag, message, Typography } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
-import { AppTable, AppButton, AppModal, PageHeader, FilterPanel } from "@/components/common";
+import { AppTable, AppButton, AppModal, PageHeader, FilterPanel, TrashDrawer } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
 import { useSearch } from "@/context/SearchContext";
+import { useAuth } from "@/context/AuthContext";
 import { filterConfig } from "@/utils/filterConfig";
-import { getAllExpenses, getExpenseById, deleteExpense, normalizeExpense } from "@/services/expenseService";
+import { getAllExpenses, getExpenseById, deleteExpense, normalizeExpense, getTrashedExpenses, restoreExpense, permanentDeleteExpense } from "@/services/expenseService";
 import ExpenseDrawer from "./ExpenseDrawer";
 import ExpenseModal from "./ExpenseModal";
 
@@ -18,12 +19,15 @@ const DailyExpense = () => {
   const [drawerOpen, setDrawerOpen]         = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [deleteModal, setDeleteModal]       = useState({ open: false, expense: null });
+  const [trashOpen, setTrashOpen]           = useState(false);
   const [deleteLoading, setDeleteLoading]   = useState(false);
   const [viewExpense, setViewExpense]       = useState(null);
   const [editLoadingId, setEditLoadingId]   = useState(null);
   const [viewLoadingId, setViewLoadingId]   = useState(null);
   const [appliedFilters, setAppliedFilters] = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
+  const { userRole } = useAuth();
+  const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
   const fetchExpenses = async (pageNo = 1, pageSize = 10, category = "", dateFrom = "", dateTo = "") => {
@@ -161,6 +165,9 @@ const DailyExpense = () => {
               onApply={handleApplyFilters}
               onReset={handleResetFilters}
             />
+            {isAdmin && (
+              <AppButton icon={<DeleteOutlined />} onClick={() => setTrashOpen(true)} danger>Trash</AppButton>
+            )}
             <AppButton type="primary" icon={<PlusOutlined />} onClick={handleCreate} className="btn-dark">Add Expense</AppButton>
           </>
         }
@@ -208,6 +215,29 @@ const DailyExpense = () => {
           totalAmount:   viewExpense?.amount        || 0,
         }}
       />
+
+      {isAdmin && (
+        <TrashDrawer
+          open={trashOpen}
+          onClose={() => setTrashOpen(false)}
+          title="Daily Expenses"
+          fetchFn={getTrashedExpenses}
+          restoreFn={restoreExpense}
+          permanentDeleteFn={permanentDeleteExpense}
+          onSuccess={() => fetchExpenses(page.current, page.size, searchText, appliedFilters.startDate, appliedFilters.endDate)}
+          rowKey="id"
+          searchPlaceholder="Search by voucher..."
+          showDateFilter
+
+          columns={[
+            { title: "Voucher",  dataIndex: "expenseNumber", key: "expenseNumber", width: 120, render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v || "-"}</span> },
+            { title: "Category", dataIndex: "category",      key: "category",      width: 130 },
+            { title: "Supplier", dataIndex: "personSupplier",key: "personSupplier",ellipsis: true, render: (v) => v || "-" },
+            { title: "Amount",   dataIndex: "amount",        key: "amount",        width: 110, render: (v) => <span style={{ fontWeight: 700, color: "#ef4444" }}>Rs {parseFloat(v || 0).toLocaleString()}</span> },
+            { title: "Date",     dataIndex: "date",          key: "date",          width: 110 },
+          ]}
+        />
+      )}
     </section>
   );
 };

@@ -8,7 +8,7 @@ export const getDailyReceiveColumns = ({ onView, onEdit, onDelete }) => [
     title: "Date",
     dataIndex: "date",
     key: "date",
-    width: "11%",
+    width: "10%",
     render: (val) => <span style={{ color: "#64748b" }}>{val ? formatDate(val) : "-"}</span>,
   },
   {
@@ -22,7 +22,7 @@ export const getDailyReceiveColumns = ({ onView, onEdit, onDelete }) => [
     title: "Customer",
     dataIndex: "customerName",
     key: "customerName",
-    width: "22%",
+    width: "20%",
     ellipsis: true,
     render: (val) => <span style={{ fontWeight: 600, color: "var(--color-text)" }}>{val || "-"}</span>,
   },
@@ -55,7 +55,7 @@ export const getDailyReceiveColumns = ({ onView, onEdit, onDelete }) => [
     title: "Method",
     dataIndex: "method",
     key: "method",
-    width: "10%",
+    width: "9%",
     render: (val) => (
       <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600 }}>
         {val || "-"}
@@ -65,7 +65,7 @@ export const getDailyReceiveColumns = ({ onView, onEdit, onDelete }) => [
   {
     title: "Action",
     key: "actions",
-    width: "5%",
+    width: "9%",
     render: (_, record) => (
       <Space size={4}>
         <AppButton type="text" icon={<EyeOutlined />} size="small" onClick={() => onView(record)} />

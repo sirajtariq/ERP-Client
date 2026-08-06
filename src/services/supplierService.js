@@ -95,6 +95,32 @@ export const normalizeVendor = (v) => ({
   invoices:       v.invoices || [],
 });
 
+export const getTrashedVendors = async ({ page = 1, pageSize = 10, search = "" } = {}) => {
+  const params = new URLSearchParams({ page, page_size: pageSize });
+  if (search) params.append("name", search);
+  const res = await api.get(`/purchase/vendors/trash/?${params}`);
+  return res.data;
+};
+export const restoreVendor = async (id) => {
+  const res = await api.post(`/purchase/vendors/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeleteVendor = async (id) => {
+  await api.delete(`/purchase/vendors/${id}/permanent-delete/`);
+};
+
+export const getTrashedVendorPayments = async ({ page = 1, pageSize = 10 } = {}) => {
+  const res = await api.get(`/purchase/vendor-payments/trash/?page=${page}&page_size=${pageSize}`);
+  return res.data;
+};
+export const restoreVendorPayment = async (id) => {
+  const res = await api.post(`/purchase/vendor-payments/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeleteVendorPayment = async (id) => {
+  await api.delete(`/purchase/vendor-payments/${id}/permanent-delete/`);
+};
+
 // POST /purchase/vendor-payments/
 export const createVendorPayment = async (payload) => {
   const response = await api.post("/purchase/vendor-payments/", payload);
