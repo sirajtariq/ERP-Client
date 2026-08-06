@@ -43,6 +43,22 @@ export const updatePurchaseInvoiceStatus = async (id, status) => {
   return response.data;
 };
 
+export const getTrashedPurchaseInvoices = async ({ page = 1, pageSize = 10, search = "", startDate = "", endDate = "" } = {}) => {
+  const params = new URLSearchParams({ page, page_size: pageSize });
+  if (search)    params.append("invoice_number", search);
+  if (startDate) params.append("start_date", startDate);
+  if (endDate)   params.append("end_date", endDate);
+  const res = await api.get(`/purchase/invoices/trash/?${params}`);
+  return res.data;
+};
+export const restorePurchaseInvoice = async (id) => {
+  const res = await api.post(`/purchase/invoices/${id}/restore/`);
+  return res.data;
+};
+export const permanentDeletePurchaseInvoice = async (id) => {
+  await api.delete(`/purchase/invoices/${id}/permanent-delete/`);
+};
+
 export const normalizePurchaseInvoice = (inv) => {
   const total   = parseFloat(inv.netTotal)   || 0;
   const pending = parseFloat(inv.balanceDue) || 0;

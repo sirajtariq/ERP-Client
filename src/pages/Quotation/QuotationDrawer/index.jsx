@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { Drawer, Steps, DatePicker, Row, Col, Typography, message } from "antd";
+import { Drawer, Steps, DatePicker, Row, Col, Typography, message, Tooltip, Tag } from "antd";
 import { useForm, Controller } from "react-hook-form";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, TeamOutlined } from "@ant-design/icons";
 import _ from "lodash";
 import dayjs from "dayjs";
 import { AppButton, AppInput, AppSelect } from "@/components/common";
@@ -176,7 +176,8 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
     ...customers.map((c) => ({ label: `${c.customerId} - ${c.name}`, value: c.id })),
   ];
 
-  const itemsTotal        = items.reduce((sum, item) => sum + (item.total || 0), 0);
+  const isWalkin   = isNewCustomer || selectedCustomer?.customerType === "walkin";
+  const itemsTotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
   const discountPercentage = parseFloat(formValues.discountPercentage) || 0;
   const vatPercentage      = parseFloat(formValues.vatPercentage) || 0;
   const discountAmount     = itemsTotal * discountPercentage / 100;
@@ -317,14 +318,22 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                 <Col span={12}>
                   {isNewCustomer ? (
                     <AppInput
-                      label="Customer Name"
+                      label={
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          Customer Name
+                          <Tag color="green" style={{ fontSize: 10, padding: "0 5px", lineHeight: "16px", marginLeft: 2 }}>New</Tag>
+                        </span>
+                      }
                       placeholder="Enter new customer name"
                       value={newCustomerName}
                       onChange={(e) => setNewCustomerName(e.target.value)}
                       suffix={
-                        <span style={{ color: "#7c5cfc", cursor: "pointer", fontSize: 12, fontWeight: 600 }} onClick={handleNewCustomerToggle}>
-                          Select Existing
-                        </span>
+                        <Tooltip title="Select existing customer">
+                          <TeamOutlined
+                            style={{ color: "#7c5cfc", cursor: "pointer", fontSize: 15 }}
+                            onClick={handleNewCustomerToggle}
+                          />
+                        </Tooltip>
                       }
                     />
                   ) : (
@@ -337,6 +346,17 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                       loading={customerLoading}
                       onSearch={handleCustomerSearchDebounce}
                       onPopupScroll={handleCustomerScroll}
+                      optionRender={(option) =>
+                        option.value === "__new__" ? (
+                          <span style={{
+                            display: "block", margin: "-5px -12px", padding: "5px 12px",
+                            background: "rgba(124, 92, 252, 0.1)",
+                            color: "#7c5cfc", fontWeight: 600,
+                          }}>
+                            {option.label}
+                          </span>
+                        ) : option.label
+                      }
                       onChange={(val) => {
                         if (val === "__new__") {
                           setIsNewCustomer(true);
@@ -356,7 +376,7 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
               <Row gutter={16}>
                 <Col span={12}>
                   <Controller name="phone" control={control} render={({ field }) => (
-                    <AppInput {...field} label="Phone" name="phone" placeholder="Phone number" />
+                    <AppInput {...field} label="Phone" name="phone" placeholder="Phone number" disabled={!isWalkin && !!selectedCustomer} />
                   )} />
                 </Col>
                 <Col span={12}>

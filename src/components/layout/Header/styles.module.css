@@ -3,8 +3,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px !important;
-  background: var(--color-surface) !important;
-  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-primary) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   height: 56px !important;
   flex-shrink: 0;
   z-index: 10;
@@ -16,6 +16,59 @@
   max-width: 280px;
   min-width: 0;
   margin-left: 4px;
+}
+
+/* ── Search bar on dark header ── */
+.searchWrapper :global(.ant-input-affix-wrapper) {
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  border-radius: 8px !important;
+}
+.searchWrapper :global(.ant-input-affix-wrapper:hover),
+.searchWrapper :global(.ant-input-affix-wrapper-focused) {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: none !important;
+}
+.searchWrapper :global(.ant-input) {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+.searchWrapper :global(.ant-input::placeholder) {
+  color: #ffffff !important;
+}
+.searchWrapper :global(.ant-input-prefix .anticon) {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+.searchWrapper :global(.ant-input-clear-icon) {
+  color: #ffffff !important;
+}
+.searchWrapper :global(.ant-input-suffix .anticon) {
+  color: #ffffff !important;
+}
+
+/* ── Range picker (dashboard) on dark header ── */
+.searchWrapper :global(.ant-picker) {
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  border-radius: 8px !important;
+}
+.searchWrapper :global(.ant-picker:hover),
+.searchWrapper :global(.ant-picker-focused) {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: none !important;
+}
+.searchWrapper :global(.ant-picker-input input) {
+  color: #ffffff !important;
+}
+.searchWrapper :global(.ant-picker-input input::placeholder) {
+  color: #ffffff !important;
+}
+.searchWrapper :global(.ant-picker-suffix),
+.searchWrapper :global(.ant-picker-clear),
+.searchWrapper :global(.ant-picker-separator) {
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .right {
@@ -34,8 +87,8 @@
   padding: 0 12px;
   border-radius: 8px;
   height: 36px;
-  background: var(--color-primary);
-  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -54,21 +107,21 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--color-bg);
+  background: rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
 }
 
 .notifBtn:hover {
-  background: var(--color-accent-bg);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .actionIcon {
   font-size: 15px;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .notifBtn:hover .actionIcon {
-  color: #7c5cfc;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .userChip {
@@ -80,12 +133,12 @@
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: var(--color-bg);
+  background: rgba(255, 255, 255, 0.07);
   flex-shrink: 0;
 }
 
 .userChip:hover {
-  background: var(--color-accent-bg);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .headerAvatar {
@@ -101,7 +154,7 @@
 .userName {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-text);
+  color: rgba(255, 255, 255, 0.9);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
