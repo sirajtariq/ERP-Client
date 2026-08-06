@@ -130,15 +130,14 @@ const DailyExpense = () => {
   };
 
   const columns = [
-    { title: "Voucher", dataIndex: "voucher", key: "voucher", width: "10%", render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val}</span> },
-    { title: "Category", dataIndex: "category", key: "category", width: "12%", render: (val) => <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600 }}>{val}</Tag> },
-    { title: "Description", dataIndex: "notes", key: "notes", width: "18%", ellipsis: true, render: (val) => <span style={{ fontWeight: 500, color: "var(--color-text)" }}>{val || "-"}</span> },
-    { title: "Supplier", dataIndex: "supplier", key: "supplier", width: "14%", ellipsis: true, render: (val) => <span style={{ fontWeight: 500 }}>{val || "-"}</span> },
-    { title: "Amount", dataIndex: "amount", key: "amount", width: "10%", render: (val) => <span style={{ fontWeight: 700, color: "#ef4444" }}>{formatCurrency(val || 0)}</span> },
-    { title: "Paid By", dataIndex: "paidBy", key: "paidBy", width: "13%", ellipsis: true, render: (val) => <span style={{ fontWeight: 500 }}>{val || "-"}</span> },
-    { title: "Date", dataIndex: "date", key: "date", width: "10%", render: (val) => <span style={{ color: "var(--color-text-secondary)" }}>{val ? formatDate(val) : "-"}</span> },
+    { title: "Voucher",   dataIndex: "voucher",   key: "voucher",   width: "12%", render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val}</span> },
+    { title: "Category",  dataIndex: "category",  key: "category",  width: "14%", render: (val) => <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600 }}>{val}</Tag> },
+    { title: "Supplier",  dataIndex: "supplier",  key: "supplier",  width: "20%", ellipsis: true, render: (val) => <span style={{ fontWeight: 500 }}>{val || "-"}</span> },
+    { title: "Amount",    dataIndex: "amount",    key: "amount",    width: "12%", render: (val) => <span style={{ fontWeight: 700, color: "#ef4444" }}>{formatCurrency(val || 0)}</span> },
+    { title: "Paid By",   dataIndex: "paidBy",    key: "paidBy",    width: "17%", ellipsis: true, render: (val) => <span style={{ fontWeight: 500 }}>{val || "-"}</span> },
+    { title: "Date",      dataIndex: "date",      key: "date",      width: "13%", render: (val) => <span style={{ color: "var(--color-text-secondary)" }}>{val ? formatDate(val) : "-"}</span> },
     {
-      title: "Action", key: "actions", width: "9%",
+      title: "Action", key: "actions", width: "12%",
       render: (_, record) => (
         <Space size={4}>
           <AppButton type="text" icon={<EyeOutlined />} size="small" loading={viewLoadingId === record.id} onClick={() => handleView(record)} />

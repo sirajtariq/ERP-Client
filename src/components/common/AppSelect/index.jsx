@@ -28,6 +28,7 @@ const CommonSelect = (props) => {
     notFoundContent,
     popupClassName,
     onPopupScroll,
+    optionRender,
   } = props;
 
   const [searchValue, setSearchValue] = useState("");
@@ -79,6 +80,7 @@ const CommonSelect = (props) => {
         loading={loading}
         notFoundContent={notFoundContent}
         onPopupScroll={onPopupScroll}
+        optionRender={optionRender}
         virtual={false}
       />
 

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { Drawer, Steps, DatePicker, Row, Col, Divider, Typography, message } from "antd";
+import { Drawer, Steps, DatePicker, Row, Col, Divider, Typography, message, Tooltip, Tag } from "antd";
 import dayjs from "dayjs";
 import { useForm, Controller } from "react-hook-form";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, TeamOutlined, UserAddOutlined } from "@ant-design/icons";
 import _ from "lodash";
 import { AppButton, AppInput, AppSelect } from "@/components/common";
 import { getAllCustomers, normalizeCustomer } from "@/services/customerService";
@@ -410,25 +410,31 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                 <Col span={12}>
                   <AppInput
                     label="Code"
-                    placeholder="Enter code"
+                    placeholder="—"
                     value={isPurchase ? (selectedCustomer?.vendorId || "") : (selectedCustomer?.customerId || "")}
                     onChange={() => {}}
+                    disabled
                   />
                 </Col>
                 <Col span={12}>
                   {isNewCustomer ? (
                     <AppInput
-                      label={`${entityName} Name`}
+                      label={
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          {entityName} Name
+                          <Tag color="green" style={{ fontSize: 10, padding: "0 5px", lineHeight: "16px", marginLeft: 2 }}>New</Tag>
+                        </span>
+                      }
                       placeholder={`Enter new ${entityName.toLowerCase()} name`}
                       value={newCustomerName}
                       onChange={(e) => setNewCustomerName(e.target.value)}
                       suffix={
-                        <span
-                          style={{ color: "#7c5cfc", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
-                          onClick={handleNewCustomerToggle}
-                        >
-                          Select Existing {entityName}
-                        </span>
+                        <Tooltip title={`Select existing ${entityName.toLowerCase()}`}>
+                          <TeamOutlined
+                            style={{ color: "#7c5cfc", cursor: "pointer", fontSize: 15 }}
+                            onClick={handleNewCustomerToggle}
+                          />
+                        </Tooltip>
                       }
                     />
                   ) : (
@@ -441,6 +447,17 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                       loading={customerLoading}
                       onSearch={handleCustomerSearchDebounce}
                       onPopupScroll={handleCustomerScroll}
+                      optionRender={(option) =>
+                        option.value === "__new__" ? (
+                          <span style={{
+                            display: "block", margin: "-5px -12px", padding: "5px 12px",
+                            background: "rgba(124, 92, 252, 0.1)",
+                            color: "#7c5cfc", fontWeight: 600,
+                          }}>
+                            {option.label}
+                          </span>
+                        ) : option.label
+                      }
                       onChange={(val) => {
                         if (val === "__new__") {
                           setIsNewCustomer(true);
@@ -462,7 +479,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
               <Row gutter={16}>
                 <Col span={12}>
                   <Controller name="phone" control={control} render={({ field }) => (
-                    <AppInput {...field} label="Phone" name="phone" placeholder="Phone number" />
+                    <AppInput {...field} label="Phone" name="phone" placeholder="Phone number" disabled={!isWalkin && !!selectedCustomer} />
                   )} />
                 </Col>
                 {!isPurchase && (
@@ -488,7 +505,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                 </Col>
                 <Col span={12}>
                   <Controller name="taxNumber" control={control} render={({ field }) => (
-                    <AppInput {...field} label="Tax Number / NTN" name="taxNumber" placeholder="Tax number" disabled={isPurchase} />
+                    <AppInput {...field} label="Tax Number / NTN" name="taxNumber" placeholder="Tax number" disabled={isPurchase || (!isWalkin && !!selectedCustomer)} />
                   )} />
                 </Col>
               </Row>

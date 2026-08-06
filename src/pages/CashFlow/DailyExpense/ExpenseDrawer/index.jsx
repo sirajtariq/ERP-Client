@@ -192,7 +192,27 @@ const ExpenseDrawer = ({ open, onClose, onSubmit, editingExpense }) => {
                     control={control}
                     rules={expenseFormSchema.category}
                     render={({ field }) => (
-                      <AppSelect {...field} label="Category" name="category" placeholder="Select category" options={CATEGORIES} showSearch required errors={errors} />
+                      <AppSelect
+                        {...field}
+                        label="Category"
+                        name="category"
+                        placeholder="Select category"
+                        options={CATEGORIES}
+                        showSearch
+                        required
+                        errors={errors}
+                        optionRender={(option) =>
+                          option.value === "other" ? (
+                            <span style={{
+                              display: "block", margin: "-5px -12px", padding: "5px 12px",
+                              background: "rgba(124, 92, 252, 0.1)",
+                              color: "#7c5cfc", fontWeight: 600,
+                            }}>
+                              {option.label}
+                            </span>
+                          ) : option.label
+                        }
+                      />
                     )}
                   />
                 </Col>
