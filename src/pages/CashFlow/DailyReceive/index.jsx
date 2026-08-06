@@ -163,11 +163,17 @@ const DailyReceive = () => {
         data={
           viewReceive
             ? {
-                customerName: viewReceive.customerName  || "N/A",
-                invoiceNo:    viewReceive.invoiceNumber || "",
-                amount:       viewReceive.amountReceived || 0,
-                method:       viewReceive.method        || "N/A",
-                notes:        viewReceive.notes         || "",
+                receiptNo:        viewReceive.receiptNumber  || "",
+                date:             viewReceive.date           || "",
+                customerName:     viewReceive.customerName   || "N/A",
+                invoiceNo:        viewReceive.invoiceNumber   || "",
+                amount:           viewReceive.amountReceived  || 0,
+                method:           viewReceive.method         || "N/A",
+                notes:            viewReceive.notes          || "",
+                balanceAfter:     viewReceive.balanceAfter    || 0,
+                appliedToInvoice: viewReceive.appliedToInvoice || 0,
+                appliedToCredit:  viewReceive.appliedToCredit  || 0,
+                appliedToAdvance: viewReceive.appliedToAdvance || 0,
               }
             : null
         }

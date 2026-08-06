@@ -1,7 +1,7 @@
-const { app, BrowserWindow, Menu, globalShortcut } = require("electron");
+const { app, BrowserWindow, Menu, globalShortcut, ipcMain, dialog } = require("electron");
 const path = require("path");
 
-const isDev = !app.isPackaged;
+const isDev = !path.join(__dirname).includes("app.asar");
 
 function createWindow() {
   Menu.setApplicationMenu(null);
@@ -35,6 +35,11 @@ function createWindow() {
     }
   });
 }
+
+ipcMain.handle("dialog:selectDirectory", async () => {
+  const result = await dialog.showOpenDialog({ properties: ["openDirectory"] });
+  return result.canceled ? null : result.filePaths[0];
+});
 
 app.whenReady().then(createWindow);
 

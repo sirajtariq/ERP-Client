@@ -12,18 +12,21 @@ import {
 } from "@ant-design/icons";
 
 // roles: undefined = visible to all; array = only those roles can see it
-// role values (normalized uppercase): "ADMIN", "SUPER_ADMIN", "SALES", "PURCHASE"
+// role values (as resolved by the backend): "ADMIN", "SUPER_ADMIN", "SALES_USER", "PURCHASE_USER"
+// SUPER_ADMIN is a user-management-only role — it sees the Users tab and nothing else.
+// ADMIN is the full-access role — it sees every module, including Users.
 
-const ADMIN_SALES    = ["ADMIN", "SALE_PERSON"];
-const ADMIN_PURCHASE = ["ADMIN", "PURCHASE_PERSON"];
-const USERS_ACCESS   = ["ADMIN", "SUPER_ADMIN"];
+export const ADMIN_ONLY    = ["ADMIN"];
+export const ADMIN_SALES   = ["ADMIN", "SALES_USER"];
+export const ADMIN_PURCHASE = ["ADMIN", "PURCHASE_USER"];
+export const USERS_ACCESS  = ["ADMIN", "SUPER_ADMIN"];
 
 export const SIDEBAR_MENU = [
   {
-    key: "/",
+    key: "/dashboard",
     icon: <DashboardOutlined />,
     label: "Dashboard",
-    roles: ["ADMIN", "SALE_PERSON", "PURCHASE_PERSON"],
+    roles: ADMIN_ONLY,
   },
   {
     key: "/customer-khata",

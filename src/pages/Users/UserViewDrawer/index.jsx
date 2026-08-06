@@ -14,9 +14,11 @@ import {
 import { AppDrawer } from "@/components/common";
 import styles from "./styles.module.css";
 
-const ROLE_COLORS  = { Admin: "blue", Sales: "green", Purchase: "purple" };
-const ROLE_ICON_BG = { Admin: "#dbeafe", Sales: "#dcfce7", Purchase: "#ede9fe" };
-const ROLE_ICON_CL = { Admin: "#3b82f6", Sales: "#22c55e", Purchase: "#7c5cfc" };
+// Matches the resolved role constants the backend returns (ADMIN/SUPER_ADMIN/SALES_USER/PURCHASE_USER).
+const ROLE_LABELS  = { ADMIN: "Admin", SUPER_ADMIN: "Super Admin", SALES_USER: "Sale", PURCHASE_USER: "Purchase" };
+const ROLE_COLORS  = { ADMIN: "blue", SUPER_ADMIN: "purple", SALES_USER: "green", PURCHASE_USER: "orange" };
+const ROLE_ICON_BG = { ADMIN: "#dbeafe", SUPER_ADMIN: "#ede9fe", SALES_USER: "#dcfce7", PURCHASE_USER: "#ffedd5" };
+const ROLE_ICON_CL = { ADMIN: "#3b82f6", SUPER_ADMIN: "#7c5cfc", SALES_USER: "#22c55e", PURCHASE_USER: "#f97316" };
 
 const EMPLOYMENT_LABELS = { fulltime: "Full-time", parttime: "Part-time", contract: "Contract" };
 const SALARY_LABELS     = { monthly: "Monthly", daily: "Daily", perjob: "Per Job" };
@@ -55,7 +57,7 @@ const UserViewDrawer = ({ open, onClose, user }) => {
         {user.role && (
           <span className={styles.roleBadge}>
             <Tag color={roleColor} style={{ borderRadius: 20, fontWeight: 700, fontSize: 11, padding: "2px 12px", margin: 0 }}>
-              {user.role}
+              {ROLE_LABELS[user.role] || user.role}
             </Tag>
           </span>
         )}

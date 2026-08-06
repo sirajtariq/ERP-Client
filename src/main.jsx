@@ -5,6 +5,7 @@ import { ConfigProvider } from "antd";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { SearchProvider } from "./context/SearchContext";
+import { DashboardFilterProvider } from "./context/DashboardFilterContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { getThemeConfig } from "./config/theme";
 import "./assets/styles/global.css";
@@ -21,7 +22,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <BrowserRouter>
           <AuthProvider>
             <SearchProvider>
-              <App />
+              <DashboardFilterProvider>
+                <App />
+              </DashboardFilterProvider>
             </SearchProvider>
           </AuthProvider>
         </BrowserRouter>

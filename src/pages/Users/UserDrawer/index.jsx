@@ -6,10 +6,11 @@ import { AppInput, AppSelect, AppDrawer } from "@/components/common";
 import { createUser, updateUser } from "@/services/userService";
 import styles from "./styles.module.css";
 
+// Matches the write-serializer's `role` ChoiceField on POST/PUT /users/.
 const ROLE_OPTIONS = [
-  { label: "Admin",    value: "Admin" },
-  { label: "Sales",    value: "Sales" },
-  { label: "Purchase", value: "Purchase" },
+  { label: "Admin",    value: "ADMIN" },
+  { label: "Purchase", value: "PURCHASE_USER" },
+  { label: "Sale",     value: "SALES_USER" },
 ];
 
 const EMPLOYMENT_TYPE_OPTIONS = [

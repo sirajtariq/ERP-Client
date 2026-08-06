@@ -13,17 +13,33 @@ export const PURCHASE_PAYMENT_STATUS_OPTIONS = [
   { label: "Partial", value: "partial" },
 ];
 
+// Matches Quotation.status enum in the backend.
 export const QUOTATION_STATUS_OPTIONS = [
-  { label: "Draft", value: "Draft" },
-  { label: "Sent", value: "Sent" },
-  { label: "Approved", value: "Approved" },
-  { label: "Rejected", value: "Rejected" },
+  { label: "Draft", value: "draft" },
+  { label: "Sent", value: "sent" },
+  { label: "Accepted", value: "accepted" },
+  { label: "Rejected", value: "rejected" },
+  { label: "Converted", value: "converted" },
+];
+
+// Matches Quotation.payment_term enum in the backend (lowercase — distinct from
+// PurchaseInvoice.paymentTerm below, which uses capitalized values).
+export const QUOTATION_PAYMENT_TERM_OPTIONS = [
+  { label: "Cash", value: "cash" },
+  { label: "Credit", value: "credit" },
 ];
 
 // Matches PurchaseInvoice.status enum in the backend (Draft/Saved) — the real
 // `status` query param on GET /purchase/invoices/. Distinct from paymentStatus
 // (Paid/Unpaid/Partial), which is NOT filterable on that endpoint.
 export const PURCHASE_INVOICE_STATUS_OPTIONS = [
+  { label: "Draft", value: "Draft" },
+  { label: "Saved", value: "Saved" },
+];
+
+// Matches SalesInvoice.invoiceStatus enum in the backend (Draft/Saved) — the real
+// `status` query param on GET /sales/invoices/.
+export const SALE_INVOICE_STATUS_OPTIONS = [
   { label: "Draft", value: "Draft" },
   { label: "Saved", value: "Saved" },
 ];

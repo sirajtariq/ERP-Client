@@ -11,7 +11,10 @@ const ReceiveModal = ({ open, onClose, data }) => {
   const companyInfo = getCompanyInfo();
   if (!data) return null;
 
-  const { customerName, amount, method, notes, invoiceNo } = data;
+  const {
+    receiptNo, date, customerName, amount, method, notes, invoiceNo,
+    balanceAfter, appliedToInvoice, appliedToCredit, appliedToAdvance,
+  } = data;
   const now = new Date();
   const printDate = now.toLocaleString("en-PK", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
@@ -22,7 +25,12 @@ const ReceiveModal = ({ open, onClose, data }) => {
       </head><body>
         <div style="display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
           <div style="display:flex;gap:14px;align-items:flex-start;">${logoSvgString(50)}<div><h1 style="font-size:20px;font-weight:800;">${companyInfo.name}</h1><p style="font-size:12px;color:#475569;">${companyInfo.contact} | ${companyInfo.email}</p></div></div>
-          <div style="text-align:right;"><h2 style="font-size:18px;font-weight:800;">PAYMENT RECEIPT</h2><p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${printDate}</p></div>
+          <div style="text-align:right;">
+            <h2 style="font-size:18px;font-weight:800;">PAYMENT RECEIPT</h2>
+            ${receiptNo ? `<p style="font-size:12px;color:#475569;"><strong>Receipt No:</strong> ${receiptNo}</p>` : ""}
+            <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${date || "N/A"}</p>
+            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
+          </div>
         </div>
         <div style="border:1px solid #3b82f6;border-radius:6px;padding:20px;margin-bottom:20px;">
           <p style="font-size:14px;margin:6px 0;"><strong>Received From:</strong> ${customerName}</p>
@@ -30,6 +38,13 @@ const ReceiveModal = ({ open, onClose, data }) => {
           <p style="font-size:14px;margin:6px 0;"><strong>Amount Received:</strong> <span style="font-size:20px;font-weight:800;color:#22c55e;">${formatCurrency(amount)}</span></p>
           <p style="font-size:14px;margin:6px 0;"><strong>Method:</strong> ${method}</p>
           ${notes ? `<p style="font-size:14px;margin:6px 0;"><strong>Notes:</strong> ${notes}</p>` : ""}
+        </div>
+        <div style="border:1px solid #e2e8f0;border-radius:6px;padding:20px;margin-bottom:20px;">
+          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;color:#475569;margin:0 0 10px;">Payment Allocation</h3>
+          ${appliedToInvoice > 0 ? `<p style="font-size:13px;margin:4px 0;display:flex;justify-content:space-between;"><span>Applied to Invoice</span><span style="font-weight:700;">${formatCurrency(appliedToInvoice)}</span></p>` : ""}
+          ${appliedToCredit > 0 ? `<p style="font-size:13px;margin:4px 0;display:flex;justify-content:space-between;"><span>Applied to Credit</span><span style="font-weight:700;">${formatCurrency(appliedToCredit)}</span></p>` : ""}
+          ${appliedToAdvance > 0 ? `<p style="font-size:13px;margin:4px 0;display:flex;justify-content:space-between;"><span>Applied to Advance</span><span style="font-weight:700;">${formatCurrency(appliedToAdvance)}</span></p>` : ""}
+          <p style="font-size:13px;margin:8px 0 0;padding-top:8px;border-top:1px dashed #e2e8f0;display:flex;justify-content:space-between;"><span style="font-weight:700;">Balance After</span><span style="font-weight:800;">${formatCurrency(balanceAfter)}</span></p>
         </div>
         <div style="margin-top:30px;font-size:12px;color:#64748b;"><p><strong>Received By:</strong> ${user?.name || user?.username}</p><p>Computer generated receipt.</p></div>
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;">
@@ -63,7 +78,9 @@ const ReceiveModal = ({ open, onClose, data }) => {
             </div>
             <div style={{ textAlign: "right" }}>
               <h2 className={styles.receiptLabel}>PAYMENT RECEIPT</h2>
-              <p className={styles.detail}><strong>Date:</strong> {printDate}</p>
+              {receiptNo && <p className={styles.detail}><strong>Receipt No:</strong> {receiptNo}</p>}
+              <p className={styles.detail}><strong>Date:</strong> {date || "N/A"}</p>
+              <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </div>
           </div>
 
@@ -92,6 +109,34 @@ const ReceiveModal = ({ open, onClose, data }) => {
                 <span className={styles.receiptValue}>{notes}</span>
               </div>
             )}
+          </div>
+
+          <div className={styles.receiptBox}>
+            <h3 style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", color: "var(--color-text-secondary)", margin: "0 0 10px" }}>
+              Payment Allocation
+            </h3>
+            {appliedToInvoice > 0 && (
+              <div className={styles.receiptRow}>
+                <span className={styles.receiptKey}>Applied to Invoice</span>
+                <span className={styles.receiptValue}>{formatCurrency(appliedToInvoice)}</span>
+              </div>
+            )}
+            {appliedToCredit > 0 && (
+              <div className={styles.receiptRow}>
+                <span className={styles.receiptKey}>Applied to Credit</span>
+                <span className={styles.receiptValue}>{formatCurrency(appliedToCredit)}</span>
+              </div>
+            )}
+            {appliedToAdvance > 0 && (
+              <div className={styles.receiptRow}>
+                <span className={styles.receiptKey}>Applied to Advance</span>
+                <span className={styles.receiptValue}>{formatCurrency(appliedToAdvance)}</span>
+              </div>
+            )}
+            <div className={styles.receiptRow}>
+              <span className={styles.receiptKey} style={{ fontWeight: 700 }}>Balance After</span>
+              <span className={styles.receiptAmount}>{formatCurrency(balanceAfter)}</span>
+            </div>
           </div>
 
           <div className={styles.footer}>

@@ -15,9 +15,15 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
 
   if (!data) return null;
 
-  const { customer, items, date, validDays, paymentTerms, vatPercent, vatAmount, discount, itemsTotal, grandTotal } = data;
+  const {
+    quotationNo, customer, items, date, validDays, validUntil, validityDisplay,
+    paymentTerm, vatPercent, vatAmount, discountPercent, discountAmount, itemsTotal, grandTotal,
+    status, effectiveStatus, convertedInvoice,
+  } = data;
   const customerName = customer?.name || "N/A";
   const validItems = (items || []).filter((i) => i.name || i.qty || i.rate || i.total);
+  const displayStatus = effectiveStatus || status || "";
+  const validityText = validityDisplay || (validDays ? `${validDays} days` : "N/A");
 
   const now = new Date();
   const printDate = now.toLocaleString("en-PK", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -56,8 +62,10 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
           </div>
           <div style="text-align:right;">
             <h2 style="font-size:18px;font-weight:800;color:#141423;">QUOTATION</h2>
+            ${quotationNo ? `<p style="font-size:12px;color:#475569;"><strong>No:</strong> ${quotationNo}</p>` : ""}
+            ${displayStatus ? `<p style="font-size:12px;color:#475569;"><strong>Status:</strong> <span style="text-transform:capitalize;">${displayStatus}</span></p>` : ""}
             <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${date}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Valid:</strong> ${validDays || "N/A"} days</p>
+            <p style="font-size:12px;color:#475569;"><strong>Valid:</strong> ${validityText}${validUntil ? ` (until ${validUntil})` : ""}</p>
             <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
           </div>
         </div>
@@ -65,11 +73,15 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
           <div style="flex:1;border:1px solid #3b82f6;border-radius:6px;padding:16px;">
             <h3 style="font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin:0 0 10px;">CUSTOMER</h3>
             <h4 style="font-size:16px;font-weight:700;margin:0 0 4px;">${customerName}</h4>
+            ${customer?.customerId ? `<p style="font-size:12px;color:#475569;"><strong>Code:</strong> ${customer.customerId}</p>` : ""}
+            ${customer?.phone ? `<p style="font-size:12px;color:#475569;"><strong>Phone:</strong> ${customer.phone}</p>` : ""}
+            ${customer?.customerType ? `<p style="font-size:12px;color:#475569;text-transform:capitalize;"><strong>Type:</strong> ${customer.customerType}</p>` : ""}
           </div>
           <div style="flex:1;border:1px solid #e2e8f0;border-radius:6px;padding:16px;">
             <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;margin:0 0 10px;">TERMS</h3>
-            <p style="font-size:12px;color:#475569;"><strong>Payment:</strong> ${paymentTerms || "N/A"}</p>
+            <p style="font-size:12px;color:#475569;"><strong>Payment:</strong> ${paymentTerm || "N/A"}</p>
             <p style="font-size:12px;color:#475569;"><strong>VAT:</strong> ${vatPercent || 0}%</p>
+            ${convertedInvoice ? `<p style="font-size:12px;color:#475569;"><strong>Converted Invoice:</strong> #${convertedInvoice}</p>` : ""}
           </div>
         </div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
@@ -87,8 +99,8 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
         <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
           <div style="width:280px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;font-size:13px;">
             <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>Items Total</span><span style="font-weight:700;">${formatCurrency(itemsTotal)}</span></div>
+            ${discountPercent > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>Discount (${discountPercent}%)</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(discountAmount)}</span></div>` : ""}
             ${vatPercent > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>VAT (${vatPercent}%)</span><span style="font-weight:700;">${formatCurrency(vatAmount)}</span></div>` : ""}
-            ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>Discount</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(discount)}</span></div>` : ""}
             <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f8fafc;"><span style="font-weight:700;">Grand Total</span><span style="font-weight:800;font-size:15px;">${formatCurrency(grandTotal)}</span></div>
           </div>
         </div>
@@ -128,8 +140,10 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
             </div>
             <div className={styles.companyRight}>
               <h2 className={styles.invoiceLabel}>QUOTATION</h2>
+              {quotationNo && <p className={styles.detail}><strong>No:</strong> {quotationNo}</p>}
+              {displayStatus && <p className={styles.detail} style={{ textTransform: "capitalize" }}><strong>Status:</strong> {displayStatus}</p>}
               <p className={styles.detail}><strong>Date:</strong> {date}</p>
-              <p className={styles.detail}><strong>Valid:</strong> {validDays || "N/A"} days</p>
+              <p className={styles.detail}><strong>Valid:</strong> {validityText}{validUntil ? ` (until ${validUntil})` : ""}</p>
               <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </div>
           </div>
@@ -138,11 +152,15 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
             <div className={styles.billBox}>
               <h3 className={styles.boxTitle}>CUSTOMER</h3>
               <h4 className={styles.custName}>{customerName}</h4>
+              {customer?.customerId && <p className={styles.detail}><strong>Code:</strong> {customer.customerId}</p>}
+              {customer?.phone && <p className={styles.detail}><strong>Phone:</strong> {customer.phone}</p>}
+              {customer?.customerType && <p className={styles.detail} style={{ textTransform: "capitalize" }}><strong>Type:</strong> {customer.customerType}</p>}
             </div>
             <div className={styles.payBox}>
               <h3 className={styles.boxTitleDark}>TERMS</h3>
-              <p className={styles.detail}><strong>Payment:</strong> {paymentTerms || "N/A"}</p>
+              <p className={styles.detail}><strong>Payment:</strong> {paymentTerm || "N/A"}</p>
               <p className={styles.detail}><strong>VAT:</strong> {vatPercent || 0}%</p>
+              {convertedInvoice && <p className={styles.detail}><strong>Converted Invoice:</strong> #{convertedInvoice}</p>}
             </div>
           </div>
 
@@ -182,8 +200,8 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
           <div className={styles.totalsWrapper}>
             <div className={styles.totalsBox}>
               <div className={styles.totalRow}><span>Items Total</span><span className={styles.bold}>{formatCurrency(itemsTotal)}</span></div>
+              {discountPercent > 0 && <div className={styles.totalRow}><span>Discount ({discountPercent}%)</span><span className={styles.redText}>- {formatCurrency(discountAmount)}</span></div>}
               {vatPercent > 0 && <div className={styles.totalRow}><span>VAT ({vatPercent}%)</span><span className={styles.bold}>{formatCurrency(vatAmount)}</span></div>}
-              {discount > 0 && <div className={styles.totalRow}><span>Discount</span><span className={styles.redText}>- {formatCurrency(discount)}</span></div>}
               <div className={`${styles.totalRow} ${styles.totalRowLast}`}><span style={{ fontWeight: 700 }}>Grand Total</span><span style={{ fontSize: 16, fontWeight: 800 }}>{formatCurrency(grandTotal)}</span></div>
             </div>
           </div>
