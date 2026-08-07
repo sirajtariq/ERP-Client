@@ -328,7 +328,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
       <section className={styles.header}>
         <h2 className={styles.headerTitle}>Invoice Preview - {customerName}</h2>
         <section className={styles.headerActions}>
-          <AppButton className={styles.recBtn} onClick={() => setReceiveOpen((v) => !v)}>Receive Payment</AppButton>
+          <AppButton className={styles.recBtn} onClick={() => setReceiveOpen((v) => !v)}>{isPurchase ? "Pay Supplier" : "Receive Payment"}</AppButton>
           <AppButton className={styles.printBtn} onClick={handlePrint}>Print</AppButton>
           <AppButton className={styles.pdfBtn} onClick={handlePrint}>Download PDF</AppButton>
           <AppButton className={styles.closeBtn} onClick={onClose}>Close</AppButton>
@@ -337,7 +337,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
 
       {receiveOpen && (
         <section style={{ padding: "16px 24px", borderBottom: "1px solid #eef0f6", background: "#f8fafc" }}>
-          <h4 style={{ fontWeight: 700, fontSize: 14, color: "var(--color-text)", marginBottom: 12 }}>Receive Payment</h4>
+          <h4 style={{ fontWeight: 700, fontSize: 14, color: "var(--color-text)", marginBottom: 12 }}>{isPurchase ? "Pay Supplier" : "Receive Payment"}</h4>
           <section style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
             <section style={{ flex: 1, minWidth: 160 }}>
               <Controller
@@ -361,7 +361,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                     {...field}
                     onChange={(val) => { if (val === null || val === undefined || !isNaN(val)) field.onChange(val); }}
                     inputType="number"
-                    label="Amount Received"
+                    label={isPurchase ? "Pay Amount" : "Amount Received"}
                     name="amountReceived"
                     placeholder="0"
                     min={1}

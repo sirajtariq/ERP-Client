@@ -1,9 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
-import _ from "lodash";
+import { useEffect, useState } from "react";
 import { message, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { AppTable, AppButton, AppModal, PageHeader } from "@/components/common";
-import { useSearch } from "@/context/SearchContext";
 import { getAllUsers, deleteUser, normalizeUser } from "@/services/userService";
 import { getUserColumns } from "./columns";
 import UserDrawer from "./UserDrawer";
@@ -18,21 +16,20 @@ const Users = () => {
   const [viewUser, setViewUser]       = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, user: null });
-  const { searchText, setPlaceholder, clearSearch } = useSearch();
 
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
 
-  const fetchUsers = async (pageNo = page.current, pageSize = page.size, search = "") => {
+  const fetchUsers = async (pageNo = page.current, pageSize = page.size) => {
     setLoading(true);
     try {
-      const response = await getAllUsers({ page: pageNo, pageSize, search });
+      const response = await getAllUsers({ page: pageNo, pageSize });
       const normalized = (response.results || []).map(normalizeUser);
       setUsers(normalized);
       setPage((prev) => ({
         ...prev,
-        current: response.page || pageNo,
-        size:    response.page_size || pageSize,
-        total:   response.count || 0,
+        current:    response.page       || pageNo,
+        size:       response.page_size  || pageSize,
+        total:      response.count      || 0,
         totalPages: response.total_pages || 0,
       }));
     } catch {
@@ -43,28 +40,13 @@ const Users = () => {
   };
 
   useEffect(() => {
-    setPlaceholder("Search by username or email...");
-    fetchUsers(1, page.size, "");
-    return () => clearSearch();
+    fetchUsers(1, page.size);
   }, []);
-
-  useEffect(() => {
-    if (searchText !== undefined) {
-      handleSearchDebounce(searchText);
-    }
-  }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearchDebounce = useCallback(
-    _.debounce((value) => {
-      fetchUsers(1, page.size, value);
-    }, 500),
-    [page.size]
-  );
 
   const handlePagination = (pageNo, pageSize) => {
     const size = pageSize || page.size;
     setPage((prev) => ({ ...prev, current: pageNo, size }));
-    fetchUsers(pageNo, size, searchText);
+    fetchUsers(pageNo, size);
   };
 
   const handleCreate = () => {
@@ -86,7 +68,7 @@ const Users = () => {
       await deleteUser(deleteModal.user.id);
       message.success(`"${deleteModal.user.username}" deleted`);
       setDeleteModal({ open: false, user: null });
-      fetchUsers(page.current, page.size, searchText);
+      fetchUsers(page.current, page.size);
     } catch (err) {
       message.error(err.response?.data?.detail || "Failed to delete user");
     }
@@ -95,7 +77,7 @@ const Users = () => {
   const handleDrawerSubmit = () => {
     message.success(editingUser ? "User updated successfully" : "User created successfully");
     setDrawerOpen(false);
-    fetchUsers(page.current, page.size, searchText);
+    fetchUsers(page.current, page.size);
   };
 
   const columns = getUserColumns({
