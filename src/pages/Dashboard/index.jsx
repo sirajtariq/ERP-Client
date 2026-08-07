@@ -9,7 +9,7 @@ import {
   ShoppingCartOutlined, WalletOutlined, CreditCardOutlined, ClockCircleOutlined,
   FallOutlined, RiseOutlined, ShopOutlined, CheckCircleOutlined, BankOutlined,
   ArrowUpOutlined, ArrowDownOutlined, UserAddOutlined, ThunderboltOutlined,
-  InfoCircleOutlined, FundOutlined,
+  InfoCircleOutlined, FundOutlined, SolutionOutlined,
 } from "@ant-design/icons";
 import { CompanyLogo } from "@/components/common";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
@@ -26,19 +26,25 @@ const CARD_META = [
   { id: 4, title: "Receivable",        color: "#f59e0b", gradient: "linear-gradient(135deg, #f59e0b, #fbbf24)", icon: <ClockCircleOutlined /> },
   { id: 5, title: "Outgoing Expense",  color: "#ef4444", gradient: "linear-gradient(135deg, #ef4444, #f87171)", icon: <FallOutlined /> },
   { id: 6, title: "Profit",            color: "#10b981", gradient: "linear-gradient(135deg, #10b981, #34d399)", icon: <RiseOutlined /> },
-  { id: 7, title: "Supplier Payable",  color: "#f43f5e", gradient: "linear-gradient(135deg, #f43f5e, #fb7185)", icon: <ShopOutlined /> },
-  { id: 8, title: "Supplier Paid",     color: "#06b6d4", gradient: "linear-gradient(135deg, #06b6d4, #22d3ee)", icon: <CheckCircleOutlined /> },
-  { id: 9, title: "Incoming Cash",     color: "#8b5cf6", gradient: "linear-gradient(135deg, #8b5cf6, #c084fc)", icon: <BankOutlined /> },
+  { id: 7,  title: "Vendor Payable",   color: "#f43f5e", gradient: "linear-gradient(135deg, #f43f5e, #fb7185)", icon: <ShopOutlined /> },
+  { id: 8,  title: "Vendor Paid",      color: "#06b6d4", gradient: "linear-gradient(135deg, #06b6d4, #22d3ee)", icon: <CheckCircleOutlined /> },
+  { id: 9,  title: "Incoming Cash",      color: "#8b5cf6", gradient: "linear-gradient(135deg, #8b5cf6, #c084fc)", icon: <BankOutlined /> },
+  { id: 10, title: "Customer Advance",   color: "#f97316", gradient: "linear-gradient(135deg, #f97316, #fb923c)", icon: <UserAddOutlined /> },
+  { id: 11, title: "Sales Returns",      color: "#ec4899", gradient: "linear-gradient(135deg, #ec4899, #f472b6)", icon: <ArrowDownOutlined /> },
+  { id: 12, title: "Vendor Advance",     color: "#6366f1", gradient: "linear-gradient(135deg, #6366f1, #818cf8)", icon: <ArrowUpOutlined /> },
+  { id: 13, title: "Total Cash Outflow", color: "#dc2626", gradient: "linear-gradient(135deg, #dc2626, #ef4444)", icon: <ThunderboltOutlined /> },
 ];
 
-const HERO_IDS = [1, 6, 4]; // Total Sales, Profit, Receivable
+const HERO_IDS = [1, 4, 6, 13]; // Total Sales, Receivable, Profit, Total Cash Outflow
 
 const QUICK_ACTIONS = [
   { label: "Sale Invoice",     icon: <ShoppingCartOutlined />, path: "/sale-invoice",     color: "#7c5cfc" },
   { label: "Purchase Invoice", icon: <ShopOutlined />,         path: "/purchase-invoice", color: "#3b82f6" },
-  { label: "Add Expense",      icon: <WalletOutlined />,       path: "/daily-expense",    color: "#ef4444" },
-  { label: "Receive Payment",  icon: <BankOutlined />,         path: "/daily-income",     color: "#22c55e" },
-  { label: "Customer Khata",   icon: <UserAddOutlined />,      path: "/customer-khata",   color: "#f59e0b" },
+  { label: "Quotations",       icon: <SolutionOutlined />,     path: "/quotations",        color: "#8b5cf6" },
+  { label: "Vendor Ledger",    icon: <ShopOutlined />,         path: "/vendor-ledger",    color: "#f43f5e" },
+  { label: "Daily Expense",    icon: <WalletOutlined />,       path: "/daily-expense",    color: "#ef4444" },
+  { label: "Daily Income",     icon: <BankOutlined />,         path: "/daily-income",     color: "#22c55e" },
+  { label: "Customers",        icon: <UserAddOutlined />,      path: "/customers",        color: "#f59e0b" },
 ];
 
 const formatK = (val) => {
@@ -73,9 +79,13 @@ const normalizeCards = (data) => {
     { ...CARD_META[3], value: n(data.receivable       ?? data.total_receivable) },
     { ...CARD_META[4], value: n(data.outgoingExpense  ?? data.outgoing_expense  ?? data.totalExpense ?? data.total_expense) },
     { ...CARD_META[5], value: n(data.profit           ?? data.net_profit) },
-    { ...CARD_META[6], value: n(data.supplierPayable  ?? data.supplier_payable) },
-    { ...CARD_META[7], value: n(data.supplierPaid     ?? data.supplier_paid) },
-    { ...CARD_META[8], value: n(data.incomingCash     ?? data.incoming_cash) },
+    { ...CARD_META[6],  value: n(data.supplierPayable  ?? data.supplier_payable) },
+    { ...CARD_META[7],  value: n(data.supplierPaid     ?? data.supplier_paid) },
+    { ...CARD_META[8],  value: n(data.incomingCash     ?? data.incoming_cash) },
+    { ...CARD_META[9],  value: n(data.customer_advance ?? data.customerAdvance) },
+    { ...CARD_META[10], value: n(data.total_sales_returns ?? data.totalSalesReturns) },
+    { ...CARD_META[11], value: n(data.vendor_advance   ?? data.vendorAdvance) },
+    { ...CARD_META[12], value: n(data.total_cash_outflow ?? data.totalCashOutflow) },
   ];
 };
 
@@ -177,7 +187,7 @@ const Dashboard = () => {
         {heroCards.map((card, index) => {
           const trend = trendById[card.id];
           return (
-            <Col xs={24} sm={12} lg={8} key={card.id}>
+            <Col xs={24} sm={12} lg={6} key={card.id}>
               <section
                 className={`${styles.heroCard} animate-fade-in-up`}
                 style={{ animationDelay: `${index * 0.05}s`, "--accent": card.color, background: card.gradient }}
@@ -222,7 +232,7 @@ const Dashboard = () => {
       {/* Secondary KPI grid */}
       <Row gutter={[14, 14]}>
         {gridCards.map((card, index) => (
-          <Col xs={24} sm={12} md={8} key={card.id}>
+          <Col xs={24} sm={8} key={card.id}>
             <section
               className={`${styles.kpiCard} animate-fade-in-up`}
               style={{ animationDelay: `${index * 0.04}s`, "--accent": card.color }}
@@ -297,7 +307,7 @@ const Dashboard = () => {
               </section>
             }
           >
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={400}>
               <ComposedChart data={enrichedChartData} margin={{ top: 10, right: 56, left: 0, bottom: 0 }} barGap={4}>
                 <defs>
                   <linearGradient id="incomeBarGrad" x1="0" y1="0" x2="0" y2="1">

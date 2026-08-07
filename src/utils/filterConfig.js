@@ -28,7 +28,9 @@ export const filterConfig = {
     showEndDate: true,
   },
   dailyExpense: {
-    showStartDate: true,
-    showEndDate: true,
+    showStartDate:    true,
+    showEndDate:      true,
+    showCategoryText: true,
+    showOutflowType:  true,
   },
 };

@@ -19,7 +19,7 @@ const { Text } = Typography;
 const PAGE_SIZE = 10;
 
 const getSteps = (type) => [
-  { title: type === "purchase" ? "Supplier" : "Customer" },
+  { title: type === "purchase" ? "Vendor" : "Customer" },
   { title: "Items" },
   { title: "Payment" },
 ];
@@ -27,7 +27,7 @@ const getSteps = (type) => [
 const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" }) => {
   const label       = type === "purchase" ? "Purchase" : "Sale";
   const isPurchase  = type === "purchase";
-  const entityName  = isPurchase ? "Supplier" : "Customer";
+  const entityName  = isPurchase ? "Vendor" : "Customer";
 
   const [current, setCurrent]               = useState(0);
   const [customers, setCustomers]           = useState([]);
@@ -401,7 +401,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
       </section>
 
       <section className={styles.stepContent}>
-        {/* Step 1: Customer / Supplier */}
+        {/* Step 1: Customer / Vendor */}
         {current === 0 && (
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{entityName} Details</h3>
@@ -515,9 +515,9 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                     <Controller
                       name="billNumber"
                       control={control}
-                      rules={{ required: "Supplier bill number is required" }}
+                      rules={{ required: "Vendor bill number is required" }}
                       render={({ field }) => (
-                        <AppInput {...field} label="Supplier Bill Number" name="billNumber" placeholder="Enter supplier bill number" required errors={errors} />
+                        <AppInput {...field} label="Vendor Bill Number" name="billNumber" placeholder="Enter vendor bill number" required errors={errors} />
                       )}
                     />
                   </Col>

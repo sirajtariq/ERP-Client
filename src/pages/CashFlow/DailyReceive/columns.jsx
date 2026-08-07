@@ -1,4 +1,4 @@
-import { Space, Tag } from "antd";
+import { Space, Tag, Tooltip } from "antd";
 import { EyeOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
@@ -56,10 +56,13 @@ export const getDailyReceiveColumns = ({ onView, onEdit, onDelete }) => [
     dataIndex: "method",
     key: "method",
     width: "9%",
+    ellipsis: true,
     render: (val) => (
-      <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600 }}>
-        {val || "-"}
-      </Tag>
+      <Tooltip title={val}>
+        <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "inline-block" }}>
+          {val || "-"}
+        </Tag>
+      </Tooltip>
     ),
   },
   {

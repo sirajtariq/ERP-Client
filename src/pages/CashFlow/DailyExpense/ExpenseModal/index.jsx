@@ -45,7 +45,7 @@ const ExpenseModal = ({ open, onClose, data, onDeleteItem }) => {
             <p style="font-size:12px;margin:3px 0;"><strong>Category:</strong> ${category || "N/A"}</p>
             <p style="font-size:12px;margin:3px 0;"><strong>Date:</strong> ${date ? formatDate(date) : "N/A"}</p>
             <p style="font-size:12px;margin:3px 0;"><strong>Payment Method:</strong> ${paymentMethod || "N/A"}</p>
-            <p style="font-size:12px;margin:3px 0;"><strong>Person / Supplier:</strong> ${person || "N/A"}</p>
+            <p style="font-size:12px;margin:3px 0;"><strong>Person / Vendor:</strong> ${person || "N/A"}</p>
             <p style="font-size:12px;margin:3px 0;"><strong>Paid By:</strong> ${paidBy || "N/A"}</p>
             ${expenseName ? `<p style="font-size:12px;margin:3px 0;"><strong>Notes:</strong> ${expenseName}</p>` : ""}
           </div>
@@ -100,7 +100,7 @@ const ExpenseModal = ({ open, onClose, data, onDeleteItem }) => {
               <p className={styles.detail}><strong>Category:</strong> {category || "N/A"}</p>
               <p className={styles.detail}><strong>Date:</strong> {date ? formatDate(date) : "N/A"}</p>
               <p className={styles.detail}><strong>Payment Method:</strong> {paymentMethod || "N/A"}</p>
-              <p className={styles.detail}><strong>Person / Supplier:</strong> {person || "N/A"}</p>
+              <p className={styles.detail}><strong>Person / Vendor:</strong> {person || "N/A"}</p>
               <p className={styles.detail}><strong>Paid By:</strong> {paidBy || "N/A"}</p>
             </div>
             {expenseName && (
@@ -115,7 +115,7 @@ const ExpenseModal = ({ open, onClose, data, onDeleteItem }) => {
                 <th className={styles.th}>Detail</th>
                 <th className={styles.thCenter} style={{ width: "12%" }}>Qty</th>
                 <th className={styles.thRight} style={{ width: "20%" }}>Amount</th>
-                <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>
+                {onDeleteItem && <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -125,12 +125,14 @@ const ExpenseModal = ({ open, onClose, data, onDeleteItem }) => {
                   <td className={styles.td}>{item.detail}</td>
                   <td className={styles.tdCenter}>{item.qty || 1}</td>
                   <td className={`${styles.tdRight} ${styles.bold}`}>{formatCurrency(item.amount || 0)}</td>
-                  <td className={styles.tdCenter}>
-                    <button className={styles.deleteBtn} onClick={() => onDeleteItem && onDeleteItem(i)}><DeleteOutlined /></button>
-                  </td>
+                  {onDeleteItem && (
+                    <td className={styles.tdCenter}>
+                      <button className={styles.deleteBtn} onClick={() => onDeleteItem(i)}><DeleteOutlined /></button>
+                    </td>
+                  )}
                 </tr>
               )) : (
-                <tr><td colSpan={5} className={styles.emptyRow}>No items added yet</td></tr>
+                <tr><td colSpan={onDeleteItem ? 5 : 4} className={styles.emptyRow}>No items added yet</td></tr>
               )}
             </tbody>
           </table>

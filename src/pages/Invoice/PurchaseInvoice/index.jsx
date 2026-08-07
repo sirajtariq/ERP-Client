@@ -278,7 +278,7 @@ const PurchaseInvoice = () => {
           columns={[
             { title: "Invoice #", dataIndex: "invoiceNumber", key: "invoiceNumber", width: 130, render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v || "-"}</span> },
             { title: "Bill #",    dataIndex: "billNumber",    key: "billNumber",    width: 110 },
-            { title: "Supplier",  dataIndex: "vendor",        key: "vendor",        ellipsis: true, render: (v) => v?.vendorName || "-" },
+            { title: "Vendor",    dataIndex: "vendor",        key: "vendor",        ellipsis: true, render: (v) => v?.vendorName || "-" },
             { title: "Total",     dataIndex: "netTotal",      key: "netTotal",      width: 120, render: (v) => <span style={{ fontWeight: 700 }}>Rs {parseFloat(v || 0).toLocaleString()}</span> },
             { title: "Date",      dataIndex: "date",          key: "date",          width: 110 },
           ]}

@@ -1,5 +1,5 @@
 import { Space, Tag, Tooltip } from "antd";
-import { EyeOutlined, EditOutlined, DeleteOutlined, CheckOutlined } from "@ant-design/icons";
+import { EyeOutlined, EditOutlined, DeleteOutlined, CheckOutlined, RollbackOutlined } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
 
@@ -11,14 +11,14 @@ export const getSaleInvoiceColumns = ({ onView, onEdit, onDelete, onSaveDraft, v
     title: "Invoice No",
     dataIndex: "invoiceNo",
     key: "invoiceNo",
-    width: "11%",
+    width: "10%",
     render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val}</span>,
   },
   {
     title: "Customer",
     dataIndex: "customerName",
     key: "customerName",
-    width: "16%",
+    width: "14%",
     ellipsis: true,
     render: (val) => <span style={{ fontWeight: 600, color: "var(--color-text)" }}>{val || "-"}</span>,
   },
@@ -26,26 +26,47 @@ export const getSaleInvoiceColumns = ({ onView, onEdit, onDelete, onSaveDraft, v
     title: "Total",
     dataIndex: "total",
     key: "total",
-    width: "11%",
+    width: "10%",
     render: (val) => <span style={{ fontWeight: 600 }}>{formatCurrency(val || 0)}</span>,
   },
   {
     title: "Paid",
     dataIndex: "paid",
     key: "paid",
-    width: "11%",
+    width: "10%",
     render: (val) => <span style={{ fontWeight: 600, color: "#22c55e" }}>{formatCurrency(val || 0)}</span>,
   },
   {
     title: "Pending",
     dataIndex: "pending",
     key: "pending",
-    width: "11%",
+    width: "10%",
     render: (val) => (
       <span style={{ fontWeight: 700, color: val > 0 ? "#ef4444" : "#64748b" }}>
         {formatCurrency(val || 0)}
       </span>
     ),
+  },
+  {
+    title: "Returns",
+    dataIndex: "returnedItemsCount",
+    key: "returnedItemsCount",
+    width: "7%",
+    render: (count, record) =>
+      count > 0 ? (
+        <Tooltip title={`Returned: Rs ${record.totalReturnedAmount?.toLocaleString("en-PK", { minimumFractionDigits: 2 })}`}>
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "2px 8px", borderRadius: 12,
+            background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+            color: "#ef4444", fontWeight: 700, fontSize: 12, cursor: "default",
+          }}>
+            <RollbackOutlined style={{ fontSize: 11 }} /> {count}
+          </span>
+        </Tooltip>
+      ) : (
+        <span style={{ color: "#cbd5e1", fontSize: 13 }}>—</span>
+      ),
   },
   {
     title: "Payment Status",
@@ -62,7 +83,7 @@ export const getSaleInvoiceColumns = ({ onView, onEdit, onDelete, onSaveDraft, v
     title: "Invoice Status",
     dataIndex: "invoiceStatus",
     key: "invoiceStatus",
-    width: "9%",
+    width: "8%",
     render: (val) => (
       <span style={{ fontWeight: 700, color: val === "Saved" ? "#22c55e" : "#ef4444" }}>
         {val || "-"}
