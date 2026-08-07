@@ -126,3 +126,9 @@ export const createVendorPayment = async (payload) => {
   const response = await api.post("/purchase/vendor-payments/", payload);
   return response.data;
 };
+
+// GET /purchase/vendor-payments/{id}/
+export const getVendorPaymentById = async (id) => {
+  const response = await api.get(`/purchase/vendor-payments/${id}/`);
+  return response.data;
+};

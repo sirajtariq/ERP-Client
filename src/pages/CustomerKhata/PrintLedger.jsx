@@ -101,6 +101,7 @@ const PrintLedger = ({ open, onClose, customer }) => {
             <h4 style="font-size:16px;font-weight:700;margin:0 0 8px;">${customer.name}</h4>
             <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Customer #:</strong> ${customer.invoiceNo}</p>
             <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Phone:</strong> ${customer.phone}</p>
+            ${customer.customerType ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Type:</strong> <span style="text-transform:capitalize;">${customer.customerType}</span></p>` : ''}
             ${customer.address ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Address:</strong> ${customer.address}</p>` : ''}
           </div>
           <div style="flex:1.5;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
@@ -113,15 +114,10 @@ const PrintLedger = ({ open, onClose, customer }) => {
               ${summaryCell('Available Advance', formatCurrency(s.availableAdvance), '#22c55e')}
               ${summaryCell('Remaining Balance', formatCurrency(s.remainingBalance), '#ef4444')}
               ${summaryCell('Invoices', s.totalInvoices, '#1e293b')}
-              ${summaryCell('Opening', formatCurrency(customer.openingCredit), '#1e293b')}
-              ${summaryCell('Formula', '<em>Remaining = Opening + Sales - Cash - Advance</em>', '#64748b')}
+              ${summaryCell('Opening Credit', formatCurrency(customer.openingCredit), '#1e293b')}
+              ${summaryCell('Closing Balance', formatCurrency(s.closingBalance), '#0ea5e9')}
             </div>
           </div>
-        </div>
-
-        <!-- Statement Note -->
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:10px 14px;font-size:12px;color:#475569;margin-bottom:16px;">
-          This statement shows invoice sales, payments received, advance balance, and remaining khata balance for customer confirmation.
         </div>
 
         <!-- Ledger Table -->
@@ -234,6 +230,9 @@ const PrintLedger = ({ open, onClose, customer }) => {
               <h4 className={styles.customerName}>{customer.name}</h4>
               <p className={styles.detailLine}><strong>Customer #:</strong> {customer.invoiceNo}</p>
               <p className={styles.detailLine}><strong>Phone:</strong> {customer.phone}</p>
+              {customer.customerType && (
+                <p className={styles.detailLine}><strong>Type:</strong> <span style={{ textTransform: "capitalize" }}>{customer.customerType}</span></p>
+              )}
               {customer.address && (
                 <p className={styles.detailLine}><strong>Address:</strong> {customer.address}</p>
               )}
@@ -270,20 +269,15 @@ const PrintLedger = ({ open, onClose, customer }) => {
                   <span className={styles.summaryValue}>{summary.totalInvoices}</span>
                 </section>
                 <section className={styles.summaryCell}>
-                  <span className={styles.summaryLabel}>Opening</span>
+                  <span className={styles.summaryLabel}>Opening Credit</span>
                   <span className={styles.summaryValue}>{formatCurrency(customer.openingCredit)}</span>
                 </section>
                 <section className={styles.summaryCell}>
-                  <span className={styles.summaryLabel}>Formula</span>
-                  <span className={styles.summaryFormula}>Remaining = Opening + Sales - Cash - Advance</span>
+                  <span className={styles.summaryLabel}>Closing Balance</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#0ea5e9" }}>{formatCurrency(summary.closingBalance)}</span>
                 </section>
               </section>
             </section>
-          </section>
-
-          {/* Statement Note */}
-          <section className={styles.statementNote}>
-            This statement shows invoice sales, payments received, advance balance, and remaining khata balance for customer confirmation.
           </section>
 
           {/* Ledger Table */}

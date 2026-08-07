@@ -281,6 +281,7 @@ const ReceiveDrawer = ({ open, onClose, onSubmit, editingReceive }) => {
                 filterOption={false}
                 loading={customerLoading}
                 onSearch={handleCustomerSearchDebounce}
+                onClear={() => { setCustomerSearch(""); fetchCustomers(0, ""); }}
                 onPopupScroll={handleCustomerScroll}
                 onChange={handleCustomerChange}
                 value={selectedCustomer?.id}

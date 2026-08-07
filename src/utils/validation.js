@@ -15,7 +15,7 @@ export const customerFormSchema = {
 
 // Supplier / Vendor
 export const supplierLedgerSchema = {
-  vendorName:     { required: "Supplier name is required" },
+  vendorName:     { required: "Vendor name is required" },
   phone:          {},
   email:          {},
   address:        {},

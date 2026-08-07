@@ -47,7 +47,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
     const summaryCell = (label, value, color) => `<div style="padding:10px 14px;border:1px solid #e2e8f0;border-radius:6px;"><div style="font-size:11px;color:#64748b;font-weight:600;">${label}</div><div style="font-size:14px;font-weight:700;color:${color || "#1e293b"};">${value}</div></div>`;
 
     const win = window.open("", "_blank");
-    win.document.write(`<html><head><title>Supplier Ledger - ${supplier.name}</title>
+    win.document.write(`<html><head><title>Vendor Ledger - ${supplier.name}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
@@ -69,7 +69,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
           <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Products:</strong> ${supplier.products || "N/A"}</p>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-          ${summaryCell("Opening Payable", formatCurrency(ledger.openingPayable), "#f97316")}
+          ${summaryCell("Opening Balance", formatCurrency(ledger.openingPayable), "#f97316")}
           ${summaryCell("Credit Purchases", formatCurrency(ledger.creditPurchases), "#ef4444")}
           ${summaryCell("Cash Purchases", formatCurrency(ledger.cashPurchases), "#ef4444")}
           ${summaryCell("Advance Applied", formatCurrency(ledger.advanceApplied), "#a855f7")}
@@ -198,10 +198,10 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
     <Modal open={open} onCancel={onClose} footer={null} width="90%" style={{ maxWidth: 1000, top: 20 }} closable={false} destroyOnClose className={styles.modal}>
       {/* Sticky Header */}
       <div className={styles.header}>
-        <h2 className={styles.headerTitle}>Supplier Ledger — {supplier.name}</h2>
+        <h2 className={styles.headerTitle}>Vendor Ledger — {supplier.name}</h2>
         <div className={styles.headerActions}>
-          <AppButton type="primary" icon={<DollarOutlined />} size="small" onClick={() => { setPayOpen(true); setOpeningOpen(false); }} className="btn-dark">Pay Supplier</AppButton>
-          <AppButton type="default" icon={<FileAddOutlined />} size="small" onClick={() => { setOpeningOpen(true); setPayOpen(false); }}>Opening Payable</AppButton>
+          <button className={styles.payBtn} onClick={() => { setPayOpen(true); setOpeningOpen(false); }}><DollarOutlined /> Pay Vendor</button>
+          <button className={styles.openingBtn} onClick={() => { setOpeningOpen(true); setPayOpen(false); }}><FileAddOutlined /> Opening Balance</button>
           <button className={styles.printBtn} onClick={handlePrint}>Print</button>
           <button className={styles.pdfBtn} onClick={handlePrint}>Download PDF</button>
           <button className={styles.closeBtn} onClick={onClose}>Close</button>
@@ -217,7 +217,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
             {ledger && (
               <Row gutter={[12, 12]} className={styles.summaryRow}>
                 <Col xs={24} sm={12} md={8}>
-                  <StatCard variant="bordered" borderColor="#f97316" title="Opening Payable" value={ledger.openingPayable} delay={0.02} />
+                  <StatCard variant="bordered" borderColor="#f97316" title="Opening Balance" value={ledger.openingPayable} delay={0.02} />
                 </Col>
                 <Col xs={24} sm={12} md={8}>
                   <StatCard variant="bordered" borderColor="#ef4444" title="Credit Purchases" value={ledger.creditPurchases} delay={0.04} />
@@ -246,10 +246,10 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
               </Row>
             )}
 
-            {/* Pay Supplier Form */}
+            {/* Pay Vendor Form */}
             {payOpen && (
               <div className={styles.inlineForm}>
-                <h4 className={styles.formTitle}>Pay Supplier</h4>
+                <h4 className={styles.formTitle}>Pay Vendor</h4>
                 <Row gutter={12}>
                   <Col span={8}>
                     <Controller name="amount" control={payForm.control} rules={{ required: "Amount is required" }} render={({ field }) => (
@@ -288,10 +288,10 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
               </div>
             )}
 
-            {/* Opening Payable Form */}
+            {/* Opening Balance Form */}
             {openingOpen && (
               <div className={styles.inlineForm}>
-                <h4 className={styles.formTitle}>Opening Payable</h4>
+                <h4 className={styles.formTitle}>Opening Balance</h4>
                 <Row gutter={12}>
                   <Col span={8}>
                     <Controller name="amount" control={openingForm.control} rules={{ required: "Amount is required" }} render={({ field }) => (
@@ -301,7 +301,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
                 </Row>
                 <div className={styles.formActions}>
                   <AppButton type="default" size="small" onClick={() => { setOpeningOpen(false); openingForm.reset(); }}>Cancel</AppButton>
-                  <AppButton type="primary" size="small" className="btn-dark" loading={submitting} disabled={!openingForm.formState.isValid} onClick={openingForm.handleSubmit(handleOpeningSubmit)}>Save Opening Payable</AppButton>
+                  <AppButton type="primary" size="small" className="btn-dark" loading={submitting} disabled={!openingForm.formState.isValid} onClick={openingForm.handleSubmit(handleOpeningSubmit)}>Save Opening Balance</AppButton>
                 </div>
               </div>
             )}

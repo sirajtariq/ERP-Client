@@ -75,6 +75,7 @@ const Parties = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
+      ellipsis: true,
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
@@ -88,12 +89,12 @@ const Parties = () => {
       key: "type",
       render: (type) => (
         <Tag color={type === "customer" ? "blue" : "orange"}>
-          {type === "customer" ? "Customer" : "Supplier"}
+          {type === "customer" ? "Customer" : "Vendor"}
         </Tag>
       ),
       filters: [
         { text: "Customer", value: "customer" },
-        { text: "Supplier", value: "supplier" },
+        { text: "Vendor", value: "supplier" },
       ],
       onFilter: (value, record) => record.type === value,
     },

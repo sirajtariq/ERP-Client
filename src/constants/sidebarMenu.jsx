@@ -29,7 +29,7 @@ export const SIDEBAR_MENU = [
     roles: ADMIN_ONLY,
   },
   {
-    key: "/customer-khata",
+    key: "/customers",
     icon: <BookOutlined />,
     label: "Customers",
     roles: ADMIN_SALES,
@@ -60,9 +60,9 @@ export const SIDEBAR_MENU = [
     roles: ADMIN_SALES,
   },
   {
-    key: "/supplier-ledger",
+    key: "/vendor-ledger",
     icon: <ShopOutlined />,
-    label: "Supplier Ledger",
+    label: "Vendor Ledger",
     roles: ADMIN_PURCHASE,
   },
   {

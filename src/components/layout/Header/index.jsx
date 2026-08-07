@@ -108,7 +108,7 @@ const Header = () => {
             style={{ width: "100%", borderRadius: 8 }}
           />
         </div>
-      ) : (
+      ) : placeholder ? (
         <div className={styles.searchWrapper}>
           <SearchBar
             placeholder={placeholder}
@@ -116,7 +116,7 @@ const Header = () => {
             onChange={(e) => setSearchText(e.target.value)}
           />
         </div>
-      )}
+      ) : null}
 
       <div className={styles.right}>
         <div className={styles.dateChip}>

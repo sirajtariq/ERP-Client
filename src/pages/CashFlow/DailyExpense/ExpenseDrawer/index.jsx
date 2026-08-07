@@ -249,7 +249,7 @@ const ExpenseDrawer = ({ open, onClose, onSubmit, editingExpense }) => {
                     name="person"
                     control={control}
                     render={({ field }) => (
-                      <AppInput {...field} label="Person / Supplier" name="person" placeholder="Name if related (optional)" errors={errors} />
+                      <AppInput {...field} label="Person / Vendor" name="person" placeholder="Name if related (optional)" errors={errors} />
                     )}
                   />
                 </Col>

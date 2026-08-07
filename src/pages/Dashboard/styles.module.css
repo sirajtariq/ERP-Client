@@ -101,12 +101,15 @@
   }
 
   & .heroValue {
-    font-size: 30px;
+    font-size: clamp(16px, 1.8vw, 28px);
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.5px;
     position: relative;
     z-index: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   & .heroTrend {
@@ -175,8 +178,10 @@
 
   & .quickActionsRow {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
   }
 
   & .quickActionBtn {
@@ -449,7 +454,7 @@
     }
 
     & .heroValue {
-      font-size: 24px;
+      font-size: clamp(14px, 4.5vw, 22px);
     }
 
     & .quickActionBtn {

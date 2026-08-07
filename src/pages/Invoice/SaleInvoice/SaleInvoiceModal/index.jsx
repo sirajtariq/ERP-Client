@@ -184,6 +184,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   const {
     customer, items, payment, grandTotal, date, type, billNumber,
     paymentStatus, invoiceStatus, subtotal, taxAmount, totalLineDiscount,
+    returnedItemsCount, totalReturnedAmount, netTotalAfterReturns,
   } = invoiceData;
   const isPurchase = type === "purchase";
   const showReturnColumn = !isPurchase;
@@ -290,6 +291,8 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;">
               <span style="color:#64748b;">Grand Total</span><span style="font-weight:700;">${formatCurrency(grandTotal)}</span>
             </div>
+            ${returnedItemsCount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Returns (${returnedItemsCount} item${returnedItemsCount > 1 ? "s" : ""})</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(totalReturnedAmount)}</span></div>` : ""}
+            ${returnedItemsCount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Net After Returns</span><span style="font-weight:700;">${formatCurrency(netTotalAfterReturns)}</span></div>` : ""}
             ${advanceApplied > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Advance Applied</span><span style="font-weight:700;color:#22c55e;">- ${formatCurrency(advanceApplied)}</span></div>` : ""}
             <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;">
               <span style="color:#64748b;">Paid</span><span style="font-weight:700;color:#22c55e;">${formatCurrency(paidAmount)}</span>
@@ -328,7 +331,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
       <section className={styles.header}>
         <h2 className={styles.headerTitle}>Invoice Preview - {customerName}</h2>
         <section className={styles.headerActions}>
-          <AppButton className={styles.recBtn} onClick={() => setReceiveOpen((v) => !v)}>Receive Payment</AppButton>
+          <AppButton className={styles.recBtn} onClick={() => setReceiveOpen((v) => !v)}>{isPurchase ? "Pay Vendor" : "Receive Payment"}</AppButton>
           <AppButton className={styles.printBtn} onClick={handlePrint}>Print</AppButton>
           <AppButton className={styles.pdfBtn} onClick={handlePrint}>Download PDF</AppButton>
           <AppButton className={styles.closeBtn} onClick={onClose}>Close</AppButton>
@@ -337,7 +340,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
 
       {receiveOpen && (
         <section style={{ padding: "16px 24px", borderBottom: "1px solid #eef0f6", background: "#f8fafc" }}>
-          <h4 style={{ fontWeight: 700, fontSize: 14, color: "var(--color-text)", marginBottom: 12 }}>Receive Payment</h4>
+          <h4 style={{ fontWeight: 700, fontSize: 14, color: "var(--color-text)", marginBottom: 12 }}>{isPurchase ? "Pay Vendor" : "Receive Payment"}</h4>
           <section style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
             <section style={{ flex: 1, minWidth: 160 }}>
               <Controller
@@ -361,7 +364,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                     {...field}
                     onChange={(val) => { if (val === null || val === undefined || !isNaN(val)) field.onChange(val); }}
                     inputType="number"
-                    label="Amount Received"
+                    label={isPurchase ? "Pay Amount" : "Amount Received"}
                     name="amountReceived"
                     placeholder="0"
                     min={1}
@@ -427,7 +430,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
               <h4 className={styles.custName}>{customerName}</h4>
               <p className={styles.detail}><strong>Phone:</strong> {customerPhone}</p>
               <p className={styles.detail}><strong>Address:</strong> {customerAddress}</p>
-              {isPurchase && billNumber && <p className={styles.detail}><strong>Supplier Bill #:</strong> {billNumber}</p>}
+              {isPurchase && billNumber && <p className={styles.detail}><strong>Vendor Bill #:</strong> {billNumber}</p>}
             </section>
             <section className={styles.payBox}>
               <h3 className={styles.boxTitleDark}>PAYMENT INFO</h3>
@@ -475,14 +478,20 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             <tbody>
               {validItems.length > 0 ? validItems.map((item, i) => {
                 const remainingQty = getRemainingQty(item);
-                const returnDisabled = !canReturn || remainingQty <= 0;
+                const returnDisabled = !canReturn || remainingQty <= 0 || item.isReturned;
                 const returnTooltip = !canReturn
                   ? "Returns are only allowed once the invoice status is 'Saved'"
-                  : remainingQty <= 0
-                    ? "All units of this item have already been returned"
-                    : "";
+                  : item.isReturned
+                    ? "This item has already been returned"
+                    : remainingQty <= 0
+                      ? "All units of this item have already been returned"
+                      : "";
                 return (
-                <tr key={i} className={`${styles.tableRow} ${showReturnColumn && returnItems.has(i) ? styles.returnRow : ""}`}>
+                <tr
+                  key={i}
+                  className={`${styles.tableRow} ${showReturnColumn && returnItems.has(i) ? styles.returnRow : ""}`}
+                  style={item.isReturned ? { background: "rgba(239,68,68,0.08)", borderLeft: "3px solid #ef4444" } : {}}
+                >
                   {showReturnColumn && (
                     <td className={styles.tdCenter}>
                       <Tooltip title={returnTooltip}>
@@ -497,10 +506,24 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                   )}
                   <td className={styles.tdCenter}>{i + 1}</td>
                   <td className={styles.td}>
-                    {item.name}
-                    {showReturnColumn && returnItems.has(i) && (
-                      <span className={styles.returnTag}><RollbackOutlined /> Return</span>
-                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                      <span style={item.isReturned ? { textDecoration: "line-through", color: "#94a3b8" } : {}}>
+                        {item.name}
+                      </span>
+                      {item.isReturned && (
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", gap: 3, alignSelf: "flex-start",
+                          fontSize: 10, fontWeight: 700, color: "#ef4444",
+                          background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)",
+                          padding: "1px 6px", borderRadius: 20, letterSpacing: "0.3px",
+                        }}>
+                          <RollbackOutlined style={{ fontSize: 9 }} /> RETURNED
+                        </span>
+                      )}
+                      {showReturnColumn && returnItems.has(i) && (
+                        <span className={styles.returnTag}><RollbackOutlined /> Return</span>
+                      )}
+                    </div>
                   </td>
                   <td className={styles.tdCenter}>{item.unit || "-"}</td>
                   <td className={styles.tdRight}>{item.qty || 0}</td>
@@ -666,6 +689,18 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                 <span>Grand Total</span>
                 <span className={styles.bold}>{formatCurrency(grandTotal)}</span>
               </section>
+              {returnedItemsCount > 0 && (
+                <section className={styles.totalRow}>
+                  <span>Returns ({returnedItemsCount} item{returnedItemsCount > 1 ? "s" : ""})</span>
+                  <span className={styles.redText}>- {formatCurrency(totalReturnedAmount)}</span>
+                </section>
+              )}
+              {returnedItemsCount > 0 && (
+                <section className={styles.totalRow}>
+                  <span>Net After Returns</span>
+                  <span className={styles.bold}>{formatCurrency(netTotalAfterReturns)}</span>
+                </section>
+              )}
               {advanceApplied > 0 && (
                 <section className={styles.totalRow}>
                   <span>Advance Applied</span>

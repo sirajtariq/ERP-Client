@@ -174,7 +174,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
                 <th className={styles.thRight} style={{ width: "13%" }}>Rate</th>
                 <th className={styles.thRight} style={{ width: "10%" }}>Disc %</th>
                 <th className={styles.thRight} style={{ width: "17%" }}>Total</th>
-                <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>
+                {onDeleteItem && <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -187,12 +187,14 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
                   <td className={styles.tdRight}>{formatCurrency(item.rate || 0)}</td>
                   <td className={styles.tdRight}>{item.discount || 0}%</td>
                   <td className={`${styles.tdRight} ${styles.bold}`}>{formatCurrency(item.total || 0)}</td>
-                  <td className={styles.tdCenter}>
-                    <button className={styles.deleteItemBtn} onClick={() => onDeleteItem && onDeleteItem(i)}><DeleteOutlined /></button>
-                  </td>
+                  {onDeleteItem && (
+                    <td className={styles.tdCenter}>
+                      <button className={styles.deleteItemBtn} onClick={() => onDeleteItem(i)}><DeleteOutlined /></button>
+                    </td>
+                  )}
                 </tr>
               )) : (
-                <tr><td colSpan={8} className={styles.emptyRow}>No items added yet</td></tr>
+                <tr><td colSpan={onDeleteItem ? 8 : 7} className={styles.emptyRow}>No items added yet</td></tr>
               )}
             </tbody>
           </table>
