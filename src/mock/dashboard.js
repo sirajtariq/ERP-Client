@@ -64,14 +64,14 @@ export const dashboardCards = [
   },
   {
     id: 7,
-    title: "Supplier Payable",
+    title: "Vendor Payable",
     value: supplierPayable,
     color: "#f43f5e",
     gradient: "linear-gradient(135deg, #f43f5e, #fb7185)",
   },
   {
     id: 8,
-    title: "Supplier Paid",
+    title: "Vendor Paid",
     value: supplierPaid,
     color: "#06b6d4",
     gradient: "linear-gradient(135deg, #06b6d4, #22d3ee)",

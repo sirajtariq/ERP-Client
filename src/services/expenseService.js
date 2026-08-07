@@ -1,5 +1,32 @@
 import api from "./api";
 
+// GET /purchase/daily-outflows/  (unified list: EXPENSE + VENDOR_PAYMENT)
+export const getAllDailyOutflows = async ({ page = 1, pageSize = 10, expenseNumber = "", category = "", dateFrom = "", dateTo = "", type = "" } = {}) => {
+  const params = new URLSearchParams();
+  params.append("page", page);
+  params.append("page_size", pageSize);
+  if (expenseNumber) params.append("expense_number", expenseNumber);
+  if (category)      params.append("category", category);
+  if (dateFrom)      params.append("start_date", dateFrom);
+  if (dateTo)        params.append("end_date", dateTo);
+  if (type)          params.append("type", type);
+
+  const response = await api.get(`/purchase/daily-outflows/?${params.toString()}`);
+  return response.data;
+};
+
+export const normalizeDailyOutflow = (item) => ({
+  id:            item.id,
+  type:          item.type          || "EXPENSE",
+  voucher:       item.expenseNumber || "",
+  category:      item.category      || "",
+  amount:        parseFloat(item.amount) || 0,
+  supplier:      item.personSupplier || "",
+  paymentMethod: item.paymentMethod  || "",
+  notes:         item.notes          || "",
+  date:          item.date           || "",
+});
+
 // GET /purchase/expenses/
 export const getAllExpenses = async ({ page = 1, pageSize = 10, category = "", dateFrom = "", dateTo = "", ordering = "" } = {}) => {
   const params = new URLSearchParams();

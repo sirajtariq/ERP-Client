@@ -81,7 +81,7 @@ const LedgerDrawer = ({ open, onClose, onSubmit, editingVendor }) => {
     <Drawer
       title={
         <span style={{ fontWeight: 700, fontSize: 17, color: "var(--color-text)" }}>
-          {editingVendor ? "Edit Supplier" : "Add Supplier"}
+          {editingVendor ? "Edit Vendor" : "Add Vendor"}
         </span>
       }
       open={open}
@@ -105,14 +105,14 @@ const LedgerDrawer = ({ open, onClose, onSubmit, editingVendor }) => {
             loading={submitting}
           >
             {editingVendor
-              ? submitting ? "Updating..." : "Update Supplier"
-              : submitting ? "Creating..." : "Create Supplier"}
+              ? submitting ? "Updating..." : "Update Vendor"
+              : submitting ? "Creating..." : "Create Vendor"}
           </AppButton>
         </div>
       }
     >
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>Supplier Details</h3>
+        <h3 className={styles.sectionTitle}>Vendor Details</h3>
         <div className={styles.detailsCard}>
 
           <Controller
@@ -122,7 +122,7 @@ const LedgerDrawer = ({ open, onClose, onSubmit, editingVendor }) => {
             render={({ field }) => (
               <AppInput
                 {...field}
-                label="Supplier Name"
+                label="Vendor Name"
                 name="vendorName"
                 placeholder="Enter supplier name"
                 required
@@ -196,7 +196,7 @@ const LedgerDrawer = ({ open, onClose, onSubmit, editingVendor }) => {
               <AppInput
                 {...field}
                 inputType="number"
-                label="Opening Payable"
+                label="Opening Balance"
                 name="openingPayable"
                 placeholder="0.00"
                 min={0}

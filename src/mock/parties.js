@@ -99,5 +99,5 @@ export const partiesMock = [
 
 export const partyTypeOptions = [
   { label: "Customer", value: "customer" },
-  { label: "Supplier", value: "supplier" },
+  { label: "Vendor", value: "supplier" },
 ];

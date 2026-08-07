@@ -79,7 +79,7 @@ const Reports = () => {
   ];
 
   const partyColumns = [
-    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "Name", dataIndex: "name", key: "name", ellipsis: true },
     { title: "Phone", dataIndex: "phone", key: "phone" },
     {
       title: "Balance",

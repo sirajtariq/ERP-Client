@@ -44,9 +44,9 @@ const AppRoutes = () => {
       <Route path="/stock" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
       <Route path="/sale-invoice" element={<ProtectedRoute roles={ADMIN_SALES}><SaleInvoice /></ProtectedRoute>} />
       <Route path="/quotations" element={<ProtectedRoute roles={ADMIN_SALES}><Quotation /></ProtectedRoute>} />
-      <Route path="/customer-khata" element={<ProtectedRoute roles={ADMIN_SALES}><CustomerKhata /></ProtectedRoute>} />
+      <Route path="/customers" element={<ProtectedRoute roles={ADMIN_SALES}><CustomerKhata /></ProtectedRoute>} />
       <Route path="/daily-income" element={<ProtectedRoute roles={ADMIN_SALES}><DailyReceive /></ProtectedRoute>} />
-      <Route path="/supplier-ledger" element={<ProtectedRoute roles={ADMIN_PURCHASE}><SupplierLedger /></ProtectedRoute>} />
+      <Route path="/vendor-ledger" element={<ProtectedRoute roles={ADMIN_PURCHASE}><SupplierLedger /></ProtectedRoute>} />
       <Route path="/purchase-invoice" element={<ProtectedRoute roles={ADMIN_PURCHASE}><PurchaseInvoice /></ProtectedRoute>} />
       <Route path="/supplier-payment" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
       <Route path="/daily-expense" element={<ProtectedRoute roles={ADMIN_PURCHASE}><DailyExpense /></ProtectedRoute>} />

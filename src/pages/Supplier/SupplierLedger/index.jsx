@@ -83,7 +83,7 @@ const SupplierLedger = () => {
   };
 
   const handleDrawerSubmit = () => {
-    message.success(editingVendor ? "Supplier updated" : "Supplier added");
+    message.success(editingVendor ? "Vendor updated" : "Vendor added");
     setDrawerOpen(false);
     fetchVendors(page.current, page.size, searchText);
   };
@@ -97,8 +97,8 @@ const SupplierLedger = () => {
   return (
     <section>
       <PageHeader
-        title="Supplier Ledger"
-        subtitle="Manage your suppliers"
+        title="Vendor Ledger"
+        subtitle="Manage your vendors"
         extra={
           <>
             {isAdmin && (
@@ -107,7 +107,7 @@ const SupplierLedger = () => {
               </AppButton>
             )}
             <AppButton type="primary" icon={<PlusOutlined />} onClick={handleAdd} className="btn-dark">
-              Add Supplier
+              Add Vendor
             </AppButton>
           </>
         }
@@ -159,7 +159,7 @@ const SupplierLedger = () => {
         <TrashDrawer
           open={trashOpen}
           onClose={() => setTrashOpen(false)}
-          title="Suppliers"
+          title="Vendors"
           fetchFn={getTrashedVendors}
           restoreFn={restoreVendor}
           permanentDeleteFn={permanentDeleteVendor}

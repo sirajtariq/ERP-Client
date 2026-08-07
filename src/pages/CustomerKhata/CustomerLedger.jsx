@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Modal, Table, Spin, message, DatePicker } from "antd";
+import { Modal, Table, Spin, message, DatePicker, Popover } from "antd";
+import { PhoneOutlined, IdcardOutlined, TagOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useForm, Controller } from "react-hook-form";
 import { StatCard, AppInput, AppSelect, AppButton } from "@/components/common";
@@ -144,6 +145,25 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
           )}
           <button className={styles.closeBtn} onClick={onClose}>Close</button>
         </section>
+      </section>
+
+      <section className={styles.customerInfo}>
+        <span className={styles.customerInfoItem}>
+          <IdcardOutlined style={{ color: "#7c5cfc" }} />
+          {ledgerData?.customer?.customerId || customer?.customerId || "—"}
+        </span>
+        {(ledgerData?.customer?.phone || customer?.phone) && (
+          <span className={styles.customerInfoItem}>
+            <PhoneOutlined style={{ color: "#22c55e" }} />
+            {ledgerData?.customer?.phone || customer?.phone}
+          </span>
+        )}
+        {(ledgerData?.customer?.customerType || customer?.customerType) && (
+          <span className={styles.customerInfoBadge}>
+            <TagOutlined style={{ fontSize: 10 }} />
+            {ledgerData?.customer?.customerType || customer?.customerType}
+          </span>
+        )}
       </section>
 
       <section className={styles.scrollArea}>
@@ -293,9 +313,41 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
             </section>
 
             <section className={styles.cardsRow}>
-              <StatCard variant="bordered" borderColor="#f97316" title="Total Invoices" value={summary.totalInvoices || 0} isCurrency={false} delay={0.3} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 140 }}>
+                <StatCard variant="bordered" borderColor="#f97316" title="Total Invoices" value={summary.totalInvoices || 0} isCurrency={false} delay={0.3} />
+                {(ledgerData?.invoices || []).length > 0 && (
+                  <Popover
+                    trigger="click"
+                    placement="bottomLeft"
+                    title={<span style={{ fontWeight: 700, fontSize: 13 }}>Invoice Numbers</span>}
+                    content={
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 220, overflowY: "auto", minWidth: 180 }}>
+                        {(ledgerData.invoices).map((inv) => (
+                          <span key={inv.id} style={{ fontSize: 13, fontWeight: 600, color: "#7c5cfc", padding: "3px 0", borderBottom: "1px solid var(--color-border-light)" }}>
+                            {inv.invoice_number}
+                          </span>
+                        ))}
+                      </div>
+                    }
+                  >
+                    <button style={{
+                      width: "100%", padding: "4px 0", borderRadius: 6,
+                      border: "1px solid #f97316", background: "rgba(249,115,22,0.06)",
+                      color: "#f97316", fontSize: 12, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s ease",
+                    }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(249,115,22,0.14)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(249,115,22,0.06)"; }}
+                    >
+                      View Invoices
+                    </button>
+                  </Popover>
+                )}
+              </div>
+
               <StatCard variant="bordered" borderColor="#f97316" title="Opening Credit" value={customer.openingCredit || 0} delay={0.35} />
-              <StatCard variant="bordered" borderColor="#8b5cf6" title="Available Advance" value={summary.availableAdvance || 0} subtitle="Unused advance" delay={0.4} className={styles.valueGreen} />
+              <StatCard variant="bordered" borderColor="#8b5cf6" title="Available Advance" value={summary.availableAdvance || 0} delay={0.4} className={styles.valueGreen} />
+              <StatCard variant="bordered" borderColor="#0ea5e9" title="Closing Balance" value={summary.closingBalance || 0} delay={0.45} />
             </section>
 
             <section className={styles.ledgerSection}>

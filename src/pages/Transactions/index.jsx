@@ -110,6 +110,7 @@ const Transactions = () => {
       title: "Party",
       dataIndex: "partyName",
       key: "partyName",
+      ellipsis: true,
     },
     {
       title: "Type",
@@ -158,6 +159,7 @@ const Transactions = () => {
       title: "Reference",
       dataIndex: "reference",
       key: "reference",
+      ellipsis: true,
     },
     {
       title: "Description",

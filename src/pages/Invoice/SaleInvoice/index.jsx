@@ -223,17 +223,23 @@ const SaleInvoice = () => {
         open={!!viewInvoice}
         onClose={() => setViewInvoice(null)}
         invoiceData={viewInvoice ? {
-          id:           viewInvoice.id,
-          invoiceNo:    viewInvoice.invoiceNo,
-          date:         viewInvoice.date,
-          customer:     { ...viewInvoice.customerData, name: viewInvoice.customerName },
-          items:        viewInvoice.items,
-          payment:      { paidAmount: viewInvoice.paid, method: viewInvoice.paymentMethod, terms: viewInvoice.paymentTerm },
-          grandTotal:   viewInvoice.total,
-          paymentStatus: viewInvoice.paymentStatus,
-          invoiceStatus: viewInvoice.invoiceStatus,
-          notes:        viewInvoice.notes,
-          type:         "sale",
+          id:                   viewInvoice.id,
+          invoiceNo:            viewInvoice.invoiceNo,
+          date:                 viewInvoice.date,
+          customer:             { ...viewInvoice.customerData, name: viewInvoice.customerName },
+          items:                viewInvoice.items,
+          payment:              { paidAmount: viewInvoice.paid, method: viewInvoice.paymentMethod, terms: viewInvoice.paymentTerm, advanceApplied: viewInvoice.advanceApplied, vatPercentage: viewInvoice.vatPercentage },
+          grandTotal:           viewInvoice.total,
+          subtotal:             viewInvoice.subtotal,
+          taxAmount:            viewInvoice.taxAmount,
+          totalLineDiscount:    viewInvoice.totalLineDiscount,
+          paymentStatus:        viewInvoice.paymentStatus,
+          invoiceStatus:        viewInvoice.invoiceStatus,
+          notes:                viewInvoice.notes,
+          returnedItemsCount:   viewInvoice.returnedItemsCount,
+          totalReturnedAmount:  viewInvoice.totalReturnedAmount,
+          netTotalAfterReturns: viewInvoice.netTotalAfterReturns,
+          type:                 "sale",
         } : null}
         onRefresh={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate)}
       />

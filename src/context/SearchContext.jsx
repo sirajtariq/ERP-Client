@@ -4,9 +4,9 @@ const SearchContext = createContext(null);
 
 export const SearchProvider = ({ children }) => {
   const [searchText, setSearchText] = useState("");
-  const [placeholder, setPlaceholder] = useState("Search customer, invoice, item...");
+  const [placeholder, setPlaceholder] = useState(null);
 
-  const clearSearch = () => setSearchText("");
+  const clearSearch = () => { setSearchText(""); setPlaceholder(null); };
 
   return (
     <SearchContext.Provider value={{ searchText, setSearchText, placeholder, setPlaceholder, clearSearch }}>

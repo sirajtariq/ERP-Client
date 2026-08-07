@@ -11,14 +11,14 @@ export const getPurchaseInvoiceColumns = ({ onView, onEdit, onDelete, onSaveDraf
     title: "Invoice No",
     dataIndex: "invoiceNo",
     key: "invoiceNo",
-    width: "12%",
+    width: "11%",
     render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val}</span>,
   },
   {
-    title: "Supplier",
+    title: "Vendor",
     dataIndex: "customerName",
     key: "customerName",
-    width: "20%",
+    width: "18%",
     ellipsis: true,
     render: (val) => <span style={{ fontWeight: 600, color: "var(--color-text)" }}>{val || "-"}</span>,
   },
@@ -26,21 +26,21 @@ export const getPurchaseInvoiceColumns = ({ onView, onEdit, onDelete, onSaveDraf
     title: "Total",
     dataIndex: "total",
     key: "total",
-    width: "13%",
+    width: "12%",
     render: (val) => <span style={{ fontWeight: 600 }}>{formatCurrency(val || 0)}</span>,
   },
   {
     title: "Paid",
     dataIndex: "paid",
     key: "paid",
-    width: "13%",
+    width: "12%",
     render: (val) => <span style={{ fontWeight: 600, color: "#22c55e" }}>{formatCurrency(val || 0)}</span>,
   },
   {
     title: "Pending",
     dataIndex: "pending",
     key: "pending",
-    width: "13%",
+    width: "12%",
     render: (val) => (
       <span style={{ fontWeight: 700, color: val > 0 ? "#ef4444" : "#64748b" }}>
         {formatCurrency(val || 0)}
@@ -68,7 +68,7 @@ export const getPurchaseInvoiceColumns = ({ onView, onEdit, onDelete, onSaveDraf
   {
     title: "Action",
     key: "actions",
-    width: "13%",
+    width: "15%",
     render: (_, record) => (
       <Space size={4}>
         {record.invoiceStatus !== "Saved" && (
