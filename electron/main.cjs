@@ -5,6 +5,20 @@ const fs = require("fs");
 const net = require("net");
 
 const isDev = !path.join(__dirname).includes("app.asar");
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  const win = BrowserWindow.getAllWindows()[0];
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  }
+});
+
 let backendProcess = null;
 
 // Ensure log directory exists in AppData / userData
