@@ -320,7 +320,7 @@ const CustomerKhata = () => {
         open={!!ledgerCustomer}
         onClose={() => setLedgerCustomer(null)}
         customer={ledgerCustomer}
-        onPrint={() => { setPrintCustomer(ledgerCustomer); setLedgerCustomer(null); }}
+        onPrint={(data) => { setPrintCustomer({ ...ledgerCustomer, ...data }); setLedgerCustomer(null); }}
       />
 
       <PrintLedger

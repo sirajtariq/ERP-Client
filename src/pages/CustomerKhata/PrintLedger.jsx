@@ -16,7 +16,8 @@ const PrintLedger = ({ open, onClose, customer }) => {
   if (!customer) return null;
 
   const summary = customer.summary || {};
-  const transactions = customer.transactions || [];
+  const finalPaymentDetails = customer.finalPaymentDetails || {};
+  const transactions = customer.ledger || customer.transactions || [];
   const now = new Date();
   const printDate = now.toLocaleString("en-PK", {
     day: "2-digit",
@@ -42,12 +43,12 @@ const PrintLedger = ({ open, onClose, customer }) => {
     const s = summary;
     const rows = transactions.map(t => `
       <tr>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.date}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:600;">${t.voucher}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.description}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${t.debit ? formatCurrency(t.debit) : '-'}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${t.credit ? formatCurrency(t.credit) : '-'}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;font-weight:700;color:${t.type === 'Cr' ? '#22c55e' : '#1e293b'};">${formatCurrency(t.balance)} ${t.type}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${t.date}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:600;word-break:break-all;">${t.voucher}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;word-break:break-word;">${t.description}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${t.debit ? formatCurrency(t.debit) : '-'}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${t.credit ? formatCurrency(t.credit) : '-'}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:700;white-space:nowrap;color:${(t.credit > 0 && !t.debit) ? '#22c55e' : '#1e293b'};">${formatCurrency(t.balance)}</td>
       </tr>
     `).join('');
 
@@ -77,20 +78,23 @@ const PrintLedger = ({ open, onClose, customer }) => {
       </head>
       <body>
         <!-- Company Header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            ${logoSvgString(50)}
+        <div style="background:linear-gradient(135deg,#0f0c29 0%,#141423 45%,#1e1b4b 100%);padding:20px 28px;margin:-28px -28px 24px -28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c5cfc;">
+          <div style="display:flex;gap:14px;align-items:center;">
+            <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+              ${logoSvgString(42)}
+            </div>
             <div>
-              <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${companyInfo.name}</h1>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Contact:</strong> ${companyInfo.contact} &nbsp;&nbsp;<strong>WhatsApp:</strong> ${companyInfo.whatsapp}</p>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Email:</strong> ${companyInfo.email}</p>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Address:</strong> ${companyInfo.address}</p>
+              <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.whatsapp}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.email} &nbsp;•&nbsp; ${companyInfo.address}</p>
             </div>
           </div>
           <div style="text-align:right;">
-            <h2 style="font-size:18px;font-weight:800;color:#141423;margin:0 0 6px;">CUSTOMER LEDGER</h2>
-            <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Period:</strong> All transactions</p>
-            <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Printed:</strong> ${printDate}</p>
+            <div style="display:inline-block;background:rgba(124,92,252,0.2);border:1.5px solid rgba(124,92,252,0.45);border-radius:10px;padding:10px 18px;">
+              <h2 style="font-size:15px;font-weight:800;color:#fff;margin:0 0 5px;text-transform:uppercase;letter-spacing:1.5px;">CUSTOMER LEDGER</h2>
+              <p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">Period:</span> All transactions</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.6);margin:0;"><span style="color:rgba(255,255,255,0.45);">Printed:</span> ${printDate}</p>
+            </div>
           </div>
         </div>
 
@@ -107,14 +111,14 @@ const PrintLedger = ({ open, onClose, customer }) => {
           <div style="flex:1.5;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
             <div style="background:#141423;color:#fff;padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;">ACCOUNT SUMMARY</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:0;">
-              ${summaryCell('Total Sales', formatCurrency(s.creditSales), '#3b82f6')}
-              ${summaryCell('Payments Received', formatCurrency(s.cashReturns), '#22c55e')}
+              ${summaryCell('Credit Sales', formatCurrency(s.creditSales), '#3b82f6')}
+              ${summaryCell('Total Purchases', formatCurrency(finalPaymentDetails.totalPurchases), '#3b82f6')}
+              ${summaryCell('Cash Returns', formatCurrency(s.cashReturn), '#22c55e')}
               ${summaryCell('Advance Applied', formatCurrency(s.advanceApplied), '#22c55e')}
-              ${summaryCell('Total Collected', formatCurrency(s.totalCollected), '#1e293b')}
+              ${summaryCell('Payments Received', formatCurrency(finalPaymentDetails.paymentsReceived), '#22c55e')}
+              ${summaryCell('Total Collected', formatCurrency(finalPaymentDetails.totalCollected), '#1e293b')}
               ${summaryCell('Available Advance', formatCurrency(s.availableAdvance), '#22c55e')}
               ${summaryCell('Remaining Balance', formatCurrency(s.remainingBalance), '#ef4444')}
-              ${summaryCell('Invoices', s.totalInvoices, '#1e293b')}
-              ${summaryCell('Opening Credit', formatCurrency(customer.openingCredit), '#1e293b')}
               ${summaryCell('Closing Balance', formatCurrency(s.closingBalance), '#0ea5e9')}
             </div>
           </div>
@@ -127,9 +131,9 @@ const PrintLedger = ({ open, onClose, customer }) => {
               <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Date</th>
               <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Voucher</th>
               <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Description</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Debit</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Credit</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Balance</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Debit</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Credit</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Balance</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -138,15 +142,15 @@ const PrintLedger = ({ open, onClose, customer }) => {
         <!-- Final Payment Details -->
         <h3 style="font-size:14px;font-weight:700;color:#3b82f6;margin:0 0 8px;">Final Payment Details</h3>
         <div style="display:flex;border:1px solid #e2e8f0;">
-          ${finalCell('Opening Balance', formatCurrency(customer.openingCredit))}
-          ${finalCell('Total Purchases', formatCurrency(s.creditSales), '#3b82f6')}
-          ${finalCell('Payments Received', formatCurrency(s.cashReturns), '#22c55e')}
-          ${finalCell('Advance Used', formatCurrency(s.advanceApplied), '#22c55e')}
+          ${finalCell('Opening Balance', formatCurrency(finalPaymentDetails.openingBalance), '#8b5cf6')}
+          ${finalCell('Total Purchases', formatCurrency(finalPaymentDetails.totalPurchases), '#3b82f6')}
+          ${finalCell('Payments Received', formatCurrency(finalPaymentDetails.paymentsReceived), '#22c55e')}
+          ${finalCell('Advance Used', formatCurrency(finalPaymentDetails.advanceUsed), '#22c55e')}
         </div>
         <div style="display:flex;border:1px solid #e2e8f0;border-top:none;">
-          ${finalCell('Total Collected', formatCurrency(s.totalCollected))}
-          ${finalCell('Available Advance', formatCurrency(s.availableAdvance), '#22c55e')}
-          ${finalCell('Remaining Balance', formatCurrency(s.remainingBalance), '#ef4444')}
+          ${finalCell('Total Collected', formatCurrency(finalPaymentDetails.totalCollected))}
+          ${finalCell('Available Advance', formatCurrency(finalPaymentDetails.availableAdvance), '#22c55e')}
+          ${finalCell('Remaining Balance', formatCurrency(finalPaymentDetails.remainingBalance), '#ef4444')}
         </div>
 
         <!-- Generated Info -->
@@ -241,20 +245,28 @@ const PrintLedger = ({ open, onClose, customer }) => {
               <h3 className={styles.boxTitleDark}>ACCOUNT SUMMARY</h3>
               <section className={styles.summaryGrid}>
                 <section className={styles.summaryCell}>
-                  <span className={styles.summaryLabel}>Total Sales</span>
+                  <span className={styles.summaryLabel}>Credit Sales</span>
                   <span className={styles.summaryValueBlue}>{formatCurrency(summary.creditSales)}</span>
                 </section>
                 <section className={styles.summaryCell}>
-                  <span className={styles.summaryLabel}>Payments Received</span>
-                  <span className={styles.summaryValueGreen}>{formatCurrency(summary.cashReturns)}</span>
+                  <span className={styles.summaryLabel}>Total Purchases</span>
+                  <span className={styles.summaryValueBlue}>{formatCurrency(finalPaymentDetails.totalPurchases)}</span>
+                </section>
+                <section className={styles.summaryCell}>
+                  <span className={styles.summaryLabel}>Cash Returns</span>
+                  <span className={styles.summaryValueGreen}>{formatCurrency(summary.cashReturn)}</span>
                 </section>
                 <section className={styles.summaryCell}>
                   <span className={styles.summaryLabel}>Advance Applied</span>
                   <span className={styles.summaryValueGreen}>{formatCurrency(summary.advanceApplied)}</span>
                 </section>
                 <section className={styles.summaryCell}>
+                  <span className={styles.summaryLabel}>Payments Received</span>
+                  <span className={styles.summaryValueGreen}>{formatCurrency(finalPaymentDetails.paymentsReceived)}</span>
+                </section>
+                <section className={styles.summaryCell}>
                   <span className={styles.summaryLabel}>Total Collected</span>
-                  <span className={styles.summaryValue}>{formatCurrency(summary.totalCollected)}</span>
+                  <span className={styles.summaryValue}>{formatCurrency(finalPaymentDetails.totalCollected)}</span>
                 </section>
                 <section className={styles.summaryCell}>
                   <span className={styles.summaryLabel}>Available Advance</span>
@@ -263,14 +275,6 @@ const PrintLedger = ({ open, onClose, customer }) => {
                 <section className={styles.summaryCell}>
                   <span className={styles.summaryLabel}>Remaining Balance</span>
                   <span className={styles.summaryValueRed}>{formatCurrency(summary.remainingBalance)}</span>
-                </section>
-                <section className={styles.summaryCell}>
-                  <span className={styles.summaryLabel}>Invoices</span>
-                  <span className={styles.summaryValue}>{summary.totalInvoices}</span>
-                </section>
-                <section className={styles.summaryCell}>
-                  <span className={styles.summaryLabel}>Opening Credit</span>
-                  <span className={styles.summaryValue}>{formatCurrency(customer.openingCredit)}</span>
                 </section>
                 <section className={styles.summaryCell}>
                   <span className={styles.summaryLabel}>Closing Balance</span>
@@ -287,9 +291,9 @@ const PrintLedger = ({ open, onClose, customer }) => {
                 <th className={styles.th}>Date</th>
                 <th className={styles.th}>Voucher</th>
                 <th className={styles.th}>Description</th>
-                <th className={styles.thRight}>Debit</th>
-                <th className={styles.thRight}>Credit</th>
-                <th className={styles.thRight}>Balance</th>
+                <th className={styles.th}>Debit</th>
+                <th className={styles.th}>Credit</th>
+                <th className={styles.th}>Balance</th>
               </tr>
             </thead>
             <tbody>
@@ -298,9 +302,9 @@ const PrintLedger = ({ open, onClose, customer }) => {
                   <td className={styles.td}>{t.date}</td>
                   <td className={styles.td}>{t.voucher}</td>
                   <td className={styles.td}>{t.description}</td>
-                  <td className={styles.tdRight}>{t.debit ? formatCurrency(t.debit) : "-"}</td>
-                  <td className={styles.tdRight}>{t.credit ? formatCurrency(t.credit) : "-"}</td>
-                  <td className={`${styles.tdRight} ${styles.balanceCell} ${t.type === "Cr" ? styles.balanceCr : styles.balanceDr}`}>
+                  <td className={styles.td}>{t.debit ? formatCurrency(t.debit) : "-"}</td>
+                  <td className={styles.td}>{t.credit ? formatCurrency(t.credit) : "-"}</td>
+                  <td className={`${styles.td} ${styles.balanceCell} ${t.type === "Cr" ? styles.balanceCr : styles.balanceDr}`}>
                     {formatCurrency(t.balance)} {t.type}
                   </td>
                 </tr>
@@ -313,33 +317,33 @@ const PrintLedger = ({ open, onClose, customer }) => {
           <section className={styles.finalGrid}>
             <section className={styles.finalCell}>
               <span className={styles.finalLabel}>Opening Balance</span>
-              <span className={styles.finalValue}>{formatCurrency(customer.openingCredit)}</span>
+              <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{formatCurrency(finalPaymentDetails.openingBalance)}</span>
             </section>
             <section className={styles.finalCell}>
               <span className={styles.finalLabel}>Total Purchases</span>
-              <span className={styles.finalValueBlue}>{formatCurrency(summary.creditSales)}</span>
+              <span className={styles.finalValueBlue}>{formatCurrency(finalPaymentDetails.totalPurchases)}</span>
             </section>
             <section className={styles.finalCell}>
               <span className={styles.finalLabel}>Payments Received</span>
-              <span className={styles.finalValueGreen}>{formatCurrency(summary.cashReturns)}</span>
+              <span className={styles.finalValueGreen}>{formatCurrency(finalPaymentDetails.paymentsReceived)}</span>
             </section>
             <section className={styles.finalCell}>
               <span className={styles.finalLabel}>Advance Used</span>
-              <span className={styles.finalValueGreen}>{formatCurrency(summary.advanceApplied)}</span>
+              <span className={styles.finalValueGreen}>{formatCurrency(finalPaymentDetails.advanceUsed)}</span>
             </section>
           </section>
           <section className={styles.finalGrid}>
             <section className={styles.finalCell}>
-              <span className={styles.finalLabel}>Total Collected</span>
-              <span className={styles.finalValue}>{formatCurrency(summary.totalCollected)}</span>
+              <span className={styles.finalLabel}>Payment Received</span>
+              <span className={styles.finalValue}>{formatCurrency(finalPaymentDetails.totalCollected)}</span>
             </section>
             <section className={styles.finalCell}>
               <span className={styles.finalLabel}>Available Advance</span>
-              <span className={styles.finalValueGreen}>{formatCurrency(summary.availableAdvance)}</span>
+              <span className={styles.finalValueGreen}>{formatCurrency(finalPaymentDetails.availableAdvance)}</span>
             </section>
             <section className={styles.finalCell}>
               <span className={styles.finalLabel}>Remaining Balance</span>
-              <span className={styles.finalValueRed}>{formatCurrency(summary.remainingBalance)}</span>
+              <span className={styles.finalValueRed}>{formatCurrency(finalPaymentDetails.remainingBalance)}</span>
             </section>
           </section>
 

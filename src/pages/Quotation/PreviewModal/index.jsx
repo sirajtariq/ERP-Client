@@ -38,35 +38,39 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
   const buildPrintHTML = () => {
     const rows = validItems.map((item, i) => `
       <tr>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;">${i + 1}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;">${item.name}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;">${item.unit || "-"}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:right;">${item.qty || 0}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:right;">${formatCurrency(item.rate || 0)}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:right;">${formatCurrency(item.discount || 0)}%</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:right;font-weight:700;">${formatCurrency(item.total || 0)}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;white-space:nowrap;">${i + 1}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;word-break:break-word;">${item.name}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;white-space:nowrap;">${item.unit || "-"}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;white-space:nowrap;">${item.qty || 0}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;white-space:nowrap;">${formatCurrency(item.rate || 0)}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;white-space:nowrap;">${parseFloat(item.discount) > 0 ? item.discount + '%' : '-'}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-weight:700;white-space:nowrap;">${formatCurrency(item.total || 0)}</td>
       </tr>
     `).join("");
 
     return `<html><head><title>Quotation - ${customerName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
-          <div style="display:flex;gap:14px;">
-            ${logoSvgString(50)}
+        <div style="background:linear-gradient(135deg,#0f0c29 0%,#141423 45%,#1e1b4b 100%);padding:20px 28px;margin:-28px -28px 24px -28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c5cfc;">
+          <div style="display:flex;gap:14px;align-items:center;">
+            <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+              ${logoSvgString(42)}
+            </div>
             <div>
-              <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${companyInfo.name}</h1>
-              <p style="font-size:12px;color:#475569;"><strong>Contact:</strong> ${companyInfo.contact} &nbsp;<strong>Email:</strong> ${companyInfo.email}</p>
-              <p style="font-size:12px;color:#475569;"><strong>Address:</strong> ${companyInfo.address}</p>
+              <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.email}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.address}</p>
             </div>
           </div>
           <div style="text-align:right;">
-            <h2 style="font-size:18px;font-weight:800;color:#141423;">QUOTATION</h2>
-            ${quotationNo ? `<p style="font-size:12px;color:#475569;"><strong>No:</strong> ${quotationNo}</p>` : ""}
-            ${displayStatus ? `<p style="font-size:12px;color:#475569;"><strong>Status:</strong> <span style="text-transform:capitalize;">${displayStatus}</span></p>` : ""}
-            <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${date}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Valid:</strong> ${validityText}${validUntil ? ` (until ${validUntil})` : ""}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
+            <div style="display:inline-block;background:rgba(124,92,252,0.2);border:1.5px solid rgba(124,92,252,0.45);border-radius:10px;padding:10px 18px;">
+              <h2 style="font-size:15px;font-weight:800;color:#fff;margin:0 0 5px;text-transform:uppercase;letter-spacing:1.5px;">QUOTATION</h2>
+              ${quotationNo ? `<p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">No:</span> ${quotationNo}</p>` : ""}
+              ${displayStatus ? `<p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">Status:</span> <span style="text-transform:capitalize;">${displayStatus}</span></p>` : ""}
+              <p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">Date:</span> ${date}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">Valid:</span> ${validityText}${validUntil ? ` (until ${validUntil})` : ""}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.6);margin:0;"><span style="color:rgba(255,255,255,0.45);">Printed:</span> ${printDate}</p>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:16px;margin-bottom:16px;">
@@ -80,6 +84,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
           <div style="flex:1;border:1px solid #e2e8f0;border-radius:6px;padding:16px;">
             <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;margin:0 0 10px;">TERMS</h3>
             <p style="font-size:12px;color:#475569;"><strong>Payment:</strong> ${paymentTerm || "N/A"}</p>
+            <p style="font-size:12px;color:#475569;"><strong>Discount:</strong> ${discountPercent || 0}%</p>
             <p style="font-size:12px;color:#475569;"><strong>VAT:</strong> ${vatPercent || 0}%</p>
             ${convertedInvoice ? `<p style="font-size:12px;color:#475569;"><strong>Converted Invoice:</strong> #${convertedInvoice}</p>` : ""}
           </div>
@@ -89,18 +94,18 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
             <th style="padding:10px;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);width:5%">#</th>
             <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Item</th>
             <th style="padding:10px;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);">Unit</th>
-            <th style="padding:10px;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Qty</th>
-            <th style="padding:10px;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Rate</th>
-            <th style="padding:10px;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Disc %</th>
-            <th style="padding:10px;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Total</th>
+            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Qty</th>
+            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Rate</th>
+            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Disc %</th>
+            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Total</th>
           </tr></thead>
           <tbody>${rows || '<tr><td colspan="7" style="padding:12px;text-align:center;color:#94a3b8;">No items</td></tr>'}</tbody>
         </table>
         <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
           <div style="width:280px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;font-size:13px;">
             <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>Items Total</span><span style="font-weight:700;">${formatCurrency(itemsTotal)}</span></div>
-            ${discountPercent > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>Discount (${discountPercent}%)</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(discountAmount)}</span></div>` : ""}
-            ${vatPercent > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>VAT (${vatPercent}%)</span><span style="font-weight:700;">${formatCurrency(vatAmount)}</span></div>` : ""}
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>Discount (${discountPercent || 0}%)</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(discountAmount || 0)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span>VAT (${vatPercent || 0}%)</span><span style="font-weight:700;">${formatCurrency(vatAmount || 0)}</span></div>
             <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f8fafc;"><span style="font-weight:700;">Grand Total</span><span style="font-weight:800;font-size:15px;">${formatCurrency(grandTotal)}</span></div>
           </div>
         </div>
@@ -159,6 +164,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
             <div className={styles.payBox}>
               <h3 className={styles.boxTitleDark}>TERMS</h3>
               <p className={styles.detail}><strong>Payment:</strong> {paymentTerm || "N/A"}</p>
+              <p className={styles.detail}><strong>Discount:</strong> {discountPercent || 0}%</p>
               <p className={styles.detail}><strong>VAT:</strong> {vatPercent || 0}%</p>
               {convertedInvoice && <p className={styles.detail}><strong>Converted Invoice:</strong> #{convertedInvoice}</p>}
             </div>
@@ -185,7 +191,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
                   <td className={styles.tdCenter}>{item.unit || "-"}</td>
                   <td className={styles.tdRight}>{item.qty || 0}</td>
                   <td className={styles.tdRight}>{formatCurrency(item.rate || 0)}</td>
-                  <td className={styles.tdRight}>{item.discount || 0}%</td>
+                  <td className={styles.tdRight}>{parseFloat(item.discount) > 0 ? `${item.discount}%` : "-"}</td>
                   <td className={`${styles.tdRight} ${styles.bold}`}>{formatCurrency(item.total || 0)}</td>
                   {onDeleteItem && (
                     <td className={styles.tdCenter}>
@@ -202,8 +208,8 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
           <div className={styles.totalsWrapper}>
             <div className={styles.totalsBox}>
               <div className={styles.totalRow}><span>Items Total</span><span className={styles.bold}>{formatCurrency(itemsTotal)}</span></div>
-              {discountPercent > 0 && <div className={styles.totalRow}><span>Discount ({discountPercent}%)</span><span className={styles.redText}>- {formatCurrency(discountAmount)}</span></div>}
-              {vatPercent > 0 && <div className={styles.totalRow}><span>VAT ({vatPercent}%)</span><span className={styles.bold}>{formatCurrency(vatAmount)}</span></div>}
+              <div className={styles.totalRow}><span>Discount ({discountPercent || 0}%)</span><span className={styles.redText}>- {formatCurrency(discountAmount || 0)}</span></div>
+              <div className={styles.totalRow}><span>VAT ({vatPercent || 0}%)</span><span className={styles.bold}>{formatCurrency(vatAmount || 0)}</span></div>
               <div className={`${styles.totalRow} ${styles.totalRowLast}`}><span style={{ fontWeight: 700 }}>Grand Total</span><span style={{ fontSize: 16, fontWeight: 800 }}>{formatCurrency(grandTotal)}</span></div>
             </div>
           </div>

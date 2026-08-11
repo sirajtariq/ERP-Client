@@ -38,9 +38,9 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
         <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.date}</td>
         <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:600;">${t.voucher}</td>
         <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.description}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${t.debit ? formatCurrency(t.debit) : "-"}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${t.credit ? formatCurrency(t.credit) : "-"}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;font-weight:700;color:${t.type === "Cr" ? "#22c55e" : "#1e293b"};">${formatCurrency(t.balance)} ${t.type}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.debit ? formatCurrency(t.debit) : "-"}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.credit ? formatCurrency(t.credit) : "-"}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:700;color:${t.type === "Cr" ? "#22c55e" : "#1e293b"};">${formatCurrency(t.balance)} ${t.type}</td>
       </tr>
     `).join("");
 
@@ -50,15 +50,20 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
     win.document.write(`<html><head><title>Vendor Ledger - ${supplier.name}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
-          <div style="display:flex;gap:14px;">${logoSvgString(50)}<div>
-            <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${companyInfo.name}</h1>
-            <p style="font-size:12px;color:#475569;">${companyInfo.contact} | ${companyInfo.email}</p>
-            <p style="font-size:12px;color:#475569;">${companyInfo.address}</p>
-          </div></div>
+        <div style="background:linear-gradient(135deg,#0f0c29 0%,#141423 45%,#1e1b4b 100%);padding:20px 28px;margin:-28px -28px 24px -28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c5cfc;">
+          <div style="display:flex;gap:14px;align-items:center;">
+            <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">${logoSvgString(42)}</div>
+            <div>
+              <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.email}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:0;">${companyInfo.address}</p>
+            </div>
+          </div>
           <div style="text-align:right;">
-            <h2 style="font-size:18px;font-weight:800;color:#141423;">SUPPLIER LEDGER</h2>
-            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
+            <div style="display:inline-block;background:rgba(124,92,252,0.2);border:1.5px solid rgba(124,92,252,0.45);border-radius:10px;padding:10px 18px;">
+              <h2 style="font-size:15px;font-weight:800;color:#fff;margin:0 0 5px;text-transform:uppercase;letter-spacing:1.5px;">VENDOR LEDGER</h2>
+              <p style="font-size:11px;color:rgba(255,255,255,0.6);margin:0;"><span style="color:rgba(255,255,255,0.45);">Printed:</span> ${printDate}</p>
+            </div>
           </div>
         </div>
         <div style="border:1px solid #3b82f6;border-radius:6px;padding:16px;margin-bottom:16px;">
@@ -70,7 +75,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
           ${summaryCell("Opening Balance", formatCurrency(ledger.openingPayable), "#f97316")}
-          ${summaryCell("Credit Purchases", formatCurrency(ledger.creditPurchases), "#ef4444")}
+          ${summaryCell("Total Purchases", formatCurrency(ledger.creditPurchases), "#ef4444")}
           ${summaryCell("Cash Purchases", formatCurrency(ledger.cashPurchases), "#ef4444")}
           ${summaryCell("Advance Applied", formatCurrency(ledger.advanceApplied), "#a855f7")}
           ${summaryCell("Total Paid", formatCurrency(ledger.totalPaid), "#22c55e")}
@@ -84,9 +89,9 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
             <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Date</th>
             <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Voucher</th>
             <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Description</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Debit</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Credit</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Balance</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Debit</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Credit</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Balance</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -187,9 +192,9 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
     { title: "Date", dataIndex: "date", key: "date", width: "12%" },
     { title: "Voucher", dataIndex: "voucher", key: "voucher", width: "15%", render: (v) => <span style={{ fontWeight: 600 }}>{v}</span> },
     { title: "Description", dataIndex: "description", key: "description", width: "28%" },
-    { title: "Debit", dataIndex: "debit", key: "debit", width: "13%", align: "right", render: (v) => v ? formatCurrency(v) : "-" },
-    { title: "Credit", dataIndex: "credit", key: "credit", width: "13%", align: "right", render: (v) => v ? formatCurrency(v) : "-" },
-    { title: "Balance", dataIndex: "balance", key: "balance", width: "19%", align: "right", render: (v, r) => <span style={{ fontWeight: 700, color: r.type === "Cr" ? "#22c55e" : "#1e293b" }}>{formatCurrency(v)} {r.type}</span> },
+    { title: "Debit", dataIndex: "debit", key: "debit", width: "13%", render: (v) => v ? formatCurrency(v) : "-" },
+    { title: "Credit", dataIndex: "credit", key: "credit", width: "13%", render: (v) => v ? formatCurrency(v) : "-" },
+    { title: "Balance", dataIndex: "balance", key: "balance", width: "19%", render: (v, r) => <span style={{ fontWeight: 700, color: r.type === "Cr" ? "#22c55e" : "#1e293b" }}>{formatCurrency(v)} {r.type}</span> },
   ];
 
   if (!supplier) return null;
@@ -220,7 +225,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
                   <StatCard variant="bordered" borderColor="#f97316" title="Opening Balance" value={ledger.openingPayable} delay={0.02} />
                 </Col>
                 <Col xs={24} sm={12} md={8}>
-                  <StatCard variant="bordered" borderColor="#ef4444" title="Credit Purchases" value={ledger.creditPurchases} delay={0.04} />
+                  <StatCard variant="bordered" borderColor="#ef4444" title="Total Purchases" value={ledger.creditPurchases} delay={0.04} />
                 </Col>
                 <Col xs={24} sm={12} md={8}>
                   <StatCard variant="bordered" borderColor="#ef4444" title="Cash Purchases" value={ledger.cashPurchases} delay={0.06} />

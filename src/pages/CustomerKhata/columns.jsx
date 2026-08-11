@@ -61,30 +61,30 @@ export const getCustomerColumns = ({ onView, onEdit, onDelete }) => [
     title: "#",
     dataIndex: "invoiceNo",
     key: "invoiceNo",
-    width: "8%",
+    width: "5%",
     render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val ? val.replace("C-", "") : "-"}</span>,
   },
   {
     title: "Name",
     dataIndex: "name",
     key: "name",
-    width: "20%",
+    width: "25%",
     ellipsis: true,
     render: (val) => <span style={{ fontWeight: 600, color: "var(--color-text)" }}>{val || "-"}</span>,
   },
   {
-    title: "Personal Details",
+    title: "Cust. Info",
     key: "personalDetails",
-    width: "12%",
+    width: "13%",
     render: (_, record) => <PersonalDetailsPopover record={record} />,
   },
   {
-    title: "Paid",
-    key: "paid",
+    title: "Opening Credit",
+    key: "openingCredit",
     width: "15%",
     render: (_, record) => (
-      <span style={{ fontWeight: 600, color: "#22c55e" }}>
-        {formatCurrency(record.summary?.cashReceived || 0)}
+      <span style={{ fontWeight: 600, color: "#8b5cf6" }}>
+        {formatCurrency(parseFloat(record.openingCredit) || 0)}
       </span>
     ),
   },
@@ -93,7 +93,7 @@ export const getCustomerColumns = ({ onView, onEdit, onDelete }) => [
     key: "due",
     width: "15%",
     render: (_, record) => {
-      const due = record.summary?.remainingBalance || 0;
+      const due = record.creditBalance || 0;
       return (
         <span style={{ fontWeight: 700, color: due > 0 ? "#ef4444" : "#64748b" }}>
           {formatCurrency(due)}
@@ -106,7 +106,7 @@ export const getCustomerColumns = ({ onView, onEdit, onDelete }) => [
     key: "advance",
     width: "15%",
     render: (_, record) => {
-      const adv = record.summary?.availableAdvance || 0;
+      const adv = record.advanceBalance || 0;
       return (
         <span style={{ fontWeight: 600, color: adv > 0 ? "#3b82f6" : "#64748b" }}>
           {formatCurrency(adv)}
@@ -117,7 +117,7 @@ export const getCustomerColumns = ({ onView, onEdit, onDelete }) => [
   {
     title: "Action",
     key: "actions",
-    width: "15%",
+    width: "12%",
     render: (_, record) => (
       <Space size={4}>
         <AppButton type="text" icon={<EyeOutlined />} size="small" onClick={() => onView(record)} />

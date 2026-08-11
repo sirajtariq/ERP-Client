@@ -185,6 +185,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
     customer, items, payment, grandTotal, date, type, billNumber,
     paymentStatus, invoiceStatus, subtotal, taxAmount, totalLineDiscount,
     returnedItemsCount, totalReturnedAmount, netTotalAfterReturns,
+    notes, pending,
   } = invoiceData;
   const isPurchase = type === "purchase";
   const showReturnColumn = !isPurchase;
@@ -192,8 +193,8 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   const canReturn = showReturnColumn && invoiceStatus === "Saved";
   const invoiceLabel = isPurchase ? "PURCHASE INVOICE" : "SALE INVOICE";
   const customerName = customer?.name || customer?.customerName || "N/A";
-  const customerPhone = customer?.phone || "N/A";
-  const customerAddress = customer?.address || "N/A";
+  const customerPhone = customer?.phone || "";
+  const customerAddress = customer?.address || "";
   const invoiceNo = invoiceData.invoiceNo || "Auto Generated";
   const invoiceDate = date || new Date().toLocaleDateString("en-PK");
 
@@ -204,10 +205,13 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   });
 
   const paidAmount = payment?.paidAmount || 0;
-  const remaining = Math.max(0, grandTotal - paidAmount);
-  const paymentMethod = payment?.method === "cash" ? "Cash" : "Credit";
+  const remaining = pending !== undefined ? pending : Math.max(0, grandTotal - paidAmount);
+  const paymentMethod = payment?.method === "cash" ? "Cash" : (payment?.method || "N/A");
   const paymentTerms = payment?.terms || "N/A";
   const advanceApplied = payment?.advanceApplied || 0;
+  const invoiceDiscount = payment?.invoiceDiscount || 0;
+  const customerId = customer?.customerId || "";
+  const customerType = customer?.customerType || "";
 
   const PAYMENT_STATUS_COLORS = { Paid: "#22c55e", Unpaid: "#ef4444", Partial: "#f97316", Advance: "#3b82f6" };
   const INVOICE_STATUS_COLORS = { Saved: "#22c55e", Draft: "#ef4444" };
@@ -224,43 +228,56 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
 
   const buildPrintHTML = () => {
     const itemRows = validItems.map((item, i) => `
-      <tr>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:center;">${i + 1}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${item.name}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:center;">${item.unit || "-"}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${item.qty || 0}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${formatCurrency(item.rate || 0)}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;">${item.discount || 0}%</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:right;font-weight:700;">${formatCurrency(item.total || 0)}</td>
+      <tr style="${item.isReturned ? 'background:rgba(239,68,68,0.06);' : ''}">
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:center;white-space:nowrap;">${i + 1}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;word-break:break-word;${item.isReturned ? 'border-left:3px solid #ef4444;' : ''}">
+          <span style="${item.isReturned ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${item.name}</span>
+          ${item.isReturned ? '<span style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:1px 6px;border-radius:20px;">RETURNED</span>' : ''}
+        </td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:center;white-space:nowrap;">${item.unit || "-"}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${item.qty || 0}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${formatCurrency(item.rate || 0)}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${parseFloat(item.discount) > 0 ? item.discount + '%' : '-'}</td>
+        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:700;white-space:nowrap;${item.isReturned ? 'color:#94a3b8;' : ''}">${formatCurrency(item.total || 0)}</td>
       </tr>
     `).join("");
 
     return `<html><head><title>Invoice - ${customerName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
-          <div style="display:flex;gap:14px;align-items:flex-start;">
-            ${logoSvgString(50)}
+        <div style="background:linear-gradient(135deg,#0f0c29 0%,#141423 45%,#1e1b4b 100%);padding:20px 28px;margin:-28px -28px 24px -28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c5cfc;">
+          <div style="display:flex;gap:14px;align-items:center;">
+            <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+              ${logoSvgString(42)}
+            </div>
             <div>
-              <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${companyInfo.name}</h1>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Contact:</strong> ${companyInfo.contact} &nbsp;&nbsp;<strong>WhatsApp:</strong> ${companyInfo.whatsapp}</p>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Email:</strong> ${companyInfo.email}</p>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Address:</strong> ${companyInfo.address}</p>
+              <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.whatsapp}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.email} &nbsp;•&nbsp; ${companyInfo.address}</p>
             </div>
           </div>
-          <div style="text-align:right;">
-            <h2 style="font-size:18px;font-weight:800;color:#141423;margin:0 0 6px;">${invoiceLabel}</h2>
-            <p style="font-size:12px;color:#475569;"><strong>Invoice:</strong> ${invoiceNo}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${invoiceDate}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
+          <div style="display:flex;align-items:center;">
+            <div style="border-radius:12px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.35),0 0 0 1px rgba(124,92,252,0.4);min-width:210px;">
+              <div style="background:linear-gradient(135deg,#7c5cfc 0%,#5b21b6 100%);padding:10px 20px;text-align:center;">
+                <h2 style="font-size:15px;font-weight:900;color:#fff;margin:0;text-transform:uppercase;letter-spacing:2px;">${invoiceLabel}</h2>
+              </div>
+              <div style="background:rgba(255,255,255,0.06);padding:12px 20px;text-align:right;">
+                <p style="font-size:11px;color:rgba(255,255,255,0.85);margin:3px 0;"><span style="color:rgba(255,255,255,0.5);">Invoice:</span> <strong style="color:#fff;">${invoiceNo}</strong></p>
+                <p style="font-size:11px;color:rgba(255,255,255,0.85);margin:3px 0;"><span style="color:rgba(255,255,255,0.5);">Date:</span> <strong style="color:#fff;">${invoiceDate}</strong></p>
+                <p style="font-size:10px;color:rgba(255,255,255,0.5);margin:3px 0;">Printed: ${printDate}</p>
+              </div>
+            </div>
           </div>
         </div>
         <div style="display:flex;gap:16px;margin-bottom:16px;">
           <div style="flex:1;border:1px solid #3b82f6;border-radius:6px;padding:16px;">
             <h3 style="font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin:0 0 10px;">BILL TO</h3>
             <h4 style="font-size:16px;font-weight:700;margin:0 0 8px;">${customerName}</h4>
-            <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Phone:</strong> ${customerPhone}</p>
-            <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Address:</strong> ${customerAddress}</p>
+            ${customerId ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Customer ID:</strong> ${customerId}</p>` : ""}
+            ${customerType ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Type:</strong> ${customerType}</p>` : ""}
+            ${customerPhone ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Phone:</strong> ${customerPhone}</p>` : ""}
+            ${customerAddress ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Address:</strong> ${customerAddress}</p>` : ""}
+            ${isPurchase && billNumber ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Vendor Bill #:</strong> ${billNumber}</p>` : ""}
           </div>
           <div style="flex:1;border:1px solid #e2e8f0;border-radius:6px;padding:16px;">
             <h3 style="font-size:11px;font-weight:700;color:#141423;text-transform:uppercase;margin:0 0 10px;">PAYMENT INFO</h3>
@@ -276,17 +293,18 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);width:5%">#</th>
             <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Item</th>
             <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);">Unit</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Qty</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Rate</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Discount</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:right;border:1px solid rgba(255,255,255,0.1);">Total</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Qty</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Rate</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Discount</th>
+            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Total</th>
           </tr></thead>
           <tbody>${itemRows || '<tr><td colspan="7" style="padding:12px;text-align:center;color:#94a3b8;">No items added yet</td></tr>'}</tbody>
         </table>
         <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
           <div style="width:280px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
             ${subtotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Subtotal</span><span style="font-weight:700;">${formatCurrency(subtotal)}</span></div>` : ""}
-            ${totalLineDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Discount</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(totalLineDiscount)}</span></div>` : ""}
+            ${totalLineDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Line Discount</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(totalLineDiscount)}</span></div>` : ""}
+            ${invoiceDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Invoice Discount</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(invoiceDiscount)}</span></div>` : ""}
             ${taxAmount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Tax${payment?.vatPercentage ? ` (${payment.vatPercentage}%)` : ""}</span><span style="font-weight:700;">${formatCurrency(taxAmount)}</span></div>` : ""}
             <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;">
               <span style="color:#64748b;">Grand Total</span><span style="font-weight:700;">${formatCurrency(grandTotal)}</span>
@@ -302,6 +320,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             </div>
           </div>
         </div>
+        ${notes ? `<div style="border:1px solid #e2e8f0;border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#475569;"><strong>Notes:</strong> ${notes}</div>` : ""}
         <div style="border:1px solid #e2e8f0;border-radius:4px;padding:12px 16px;margin:20px 0;font-size:12px;color:#475569;line-height:1.7;">
           <p><strong>Generated:</strong> ${printDate}</p>
           <p><strong>Generated By:</strong> ${user?.name || user?.username}</p>
@@ -417,9 +436,11 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             </section>
             <section className={styles.companyRight}>
               <h2 className={styles.invoiceLabel}>{invoiceLabel}</h2>
-              <p className={styles.detail}><strong>Invoice:</strong> {invoiceNo}</p>
-              <p className={styles.detail}><strong>Date:</strong> {invoiceDate}</p>
-              <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
+              <div className={styles.invoiceDetails}>
+                <p className={styles.detail}><strong>Invoice:</strong> {invoiceNo}</p>
+                <p className={styles.detail}><strong>Date:</strong> {invoiceDate}</p>
+                <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
+              </div>
             </section>
           </section>
 
@@ -428,8 +449,10 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             <section className={styles.billBox}>
               <h3 className={styles.boxTitle}>BILL TO</h3>
               <h4 className={styles.custName}>{customerName}</h4>
-              <p className={styles.detail}><strong>Phone:</strong> {customerPhone}</p>
-              <p className={styles.detail}><strong>Address:</strong> {customerAddress}</p>
+              {customerId && <p className={styles.detail}><strong>Customer ID:</strong> {customerId}</p>}
+              {customerType && <p className={styles.detail}><strong>Type:</strong> {customerType}</p>}
+              {customerPhone && <p className={styles.detail}><strong>Phone:</strong> {customerPhone}</p>}
+              {customerAddress && <p className={styles.detail}><strong>Address:</strong> {customerAddress}</p>}
               {isPurchase && billNumber && <p className={styles.detail}><strong>Vendor Bill #:</strong> {billNumber}</p>}
             </section>
             <section className={styles.payBox}>
@@ -466,12 +489,12 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                   </th>
                 )}
                 <th className={styles.thCenter} style={{ width: "5%" }}>#</th>
-                <th className={styles.th} style={{ width: isPurchase ? "28%" : (showReturnColumn ? "13%" : "22%") }}>Item</th>
-                <th className={styles.thCenter} style={{ width: isPurchase ? "12%" : "10%" }}>Unit</th>
-                <th className={styles.thRight} style={{ width: isPurchase ? "12%" : "10%" }}>Qty</th>
-                <th className={styles.thRight} style={{ width: isPurchase ? "15%" : "13%" }}>Rate</th>
-                {!isPurchase && <th className={styles.thRight} style={{ width: "13%" }}>Discount</th>}
-                <th className={styles.thRight} style={{ width: isPurchase ? "18%" : "17%" }}>Total</th>
+                <th className={styles.th} style={{ width: showReturnColumn ? "13%" : "22%" }}>Item</th>
+                <th className={styles.thCenter} style={{ width: "10%" }}>Unit</th>
+                <th className={styles.thRight} style={{ width: "10%" }}>Qty</th>
+                <th className={styles.thRight} style={{ width: "13%" }}>Rate</th>
+                <th className={styles.thRight} style={{ width: "11%" }}>Discount</th>
+                <th className={styles.thRight} style={{ width: "17%" }}>Total</th>
                 {onDeleteItem && <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>}
               </tr>
             </thead>
@@ -528,7 +551,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                   <td className={styles.tdCenter}>{item.unit || "-"}</td>
                   <td className={styles.tdRight}>{item.qty || 0}</td>
                   <td className={styles.tdRight}>{formatCurrency(item.rate || 0)}</td>
-                  {!isPurchase && <td className={styles.tdRight}>{item.discount || 0}%</td>}
+                  <td className={styles.tdRight}>{parseFloat(item.discount) > 0 ? `${item.discount}%` : "-"}</td>
                   <td className={`${styles.tdRight} ${styles.bold}`}>{formatCurrency(item.total || 0)}</td>
                   {onDeleteItem && (
                     <td className={styles.tdCenter}>
@@ -540,7 +563,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                 </tr>
                 );
               }) : (
-                <tr><td colSpan={(isPurchase ? 6 : showReturnColumn ? 8 : 7) + (onDeleteItem ? 1 : 0)} className={styles.emptyRow}>No items added yet</td></tr>
+                <tr><td colSpan={(showReturnColumn ? 8 : 7) + (onDeleteItem ? 1 : 0)} className={styles.emptyRow}>No items added yet</td></tr>
               )}
             </tbody>
           </table>
@@ -675,8 +698,14 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
               )}
               {totalLineDiscount > 0 && (
                 <section className={styles.totalRow}>
-                  <span>Discount</span>
+                  <span>Line Discount</span>
                   <span className={styles.redText}>- {formatCurrency(totalLineDiscount)}</span>
+                </section>
+              )}
+              {invoiceDiscount > 0 && (
+                <section className={styles.totalRow}>
+                  <span>Invoice Discount</span>
+                  <span className={styles.redText}>- {formatCurrency(invoiceDiscount)}</span>
                 </section>
               )}
               {taxAmount > 0 && (
@@ -719,6 +748,13 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
               </section>
             </section>
           </section>
+
+          {/* Notes */}
+          {notes && (
+            <section className={styles.genBox} style={{ marginBottom: 8 }}>
+              <p><strong>Notes:</strong> {notes}</p>
+            </section>
+          )}
 
           {/* Footer */}
           <section className={styles.genBox}>

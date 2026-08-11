@@ -299,7 +299,7 @@
 
 .thRight {
   composes: th;
-  text-align: right;
+  text-align: left;
 }
 
 .tableRow {
@@ -318,7 +318,7 @@
 
 .tdRight {
   composes: td;
-  text-align: right;
+  text-align: left;
 }
 
 .balanceCell {
