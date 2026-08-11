@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -30,6 +30,7 @@ const SaleInvoice = () => {
   const { userRole } = useAuth();
   const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
+  const isInitialMount = useRef(true);
 
   const fetchInvoices = async (pageNo = 1, pageSize = 10, name = "", invoiceNumber = "", status = "", startDate = "", endDate = "") => {
     setLoading(true);
@@ -57,6 +58,7 @@ const SaleInvoice = () => {
   }, []);
 
   useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
     if (searchText !== undefined) handleSearchDebounce(searchText);
   }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -79,12 +81,14 @@ const SaleInvoice = () => {
   };
 
   const handleApplyFilters = (filters) => {
+    handleSearchDebounce.cancel();
     setAppliedFilters(filters);
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchInvoices(1, page.size, searchText, filters.invoiceNumber, filters.status, filters.startDate, filters.endDate);
   };
 
   const handleResetFilters = () => {
+    handleSearchDebounce.cancel();
     setAppliedFilters({});
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchInvoices(1, page.size, searchText);

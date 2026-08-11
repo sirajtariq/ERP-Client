@@ -44,7 +44,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
       </tr>
     `).join("");
 
-    const summaryCell = (label, value, color) => `<div style="padding:10px 14px;border:1px solid #e2e8f0;border-radius:6px;"><div style="font-size:11px;color:#64748b;font-weight:600;">${label}</div><div style="font-size:14px;font-weight:700;color:${color || "#1e293b"};">${value}</div></div>`;
+    const summaryCell = (label, value, color) => `<div style="padding:18px 20px;border:1px solid #e2e8f0;border-radius:6px;"><div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:10px;">${label}</div><div style="font-size:14px;font-weight:700;color:${color || "#1e293b"};">${value}</div></div>`;
 
     const win = window.open("", "_blank");
     win.document.write(`<html><head><title>Vendor Ledger - ${supplier.name}</title>
@@ -55,8 +55,10 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
             <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">${logoSvgString(42)}</div>
             <div>
               <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.email}</p>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:0;">${companyInfo.address}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Phone:</span> ${companyInfo.contact}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">WhatsApp:</span> ${companyInfo.whatsapp}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Email:</span> ${companyInfo.email}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:0;"><span style="color:rgba(255,255,255,0.5);">Address:</span> ${companyInfo.address}</p>
             </div>
           </div>
           <div style="text-align:right;">

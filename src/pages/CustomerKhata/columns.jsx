@@ -61,7 +61,7 @@ export const getCustomerColumns = ({ onView, onEdit, onDelete }) => [
     title: "#",
     dataIndex: "invoiceNo",
     key: "invoiceNo",
-    width: "5%",
+    width: "10%",
     render: (val) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{val ? val.replace("C-", "") : "-"}</span>,
   },
   {

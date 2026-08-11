@@ -53,16 +53,16 @@ const PrintLedger = ({ open, onClose, customer }) => {
     `).join('');
 
     const summaryCell = (label, value, color) => `
-      <div style="padding:8px 10px;border-bottom:1px solid #f1f5f9;border-right:1px solid #f1f5f9;">
-        <div style="font-size:11px;font-weight:600;color:#64748b;">${label}</div>
-        <div style="font-size:13px;font-weight:700;color:${color || '#1e293b'};">${value}</div>
+      <div style="padding:16px 18px;border-bottom:1px solid #f1f5f9;border-right:1px solid #f1f5f9;">
+        <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:10px;">${label}</div>
+        <div style="font-size:14px;font-weight:700;color:${color || '#1e293b'};">${value}</div>
       </div>
     `;
 
     const finalCell = (label, value, color) => `
-      <div style="flex:1;padding:10px 14px;border-right:1px solid #e2e8f0;">
-        <div style="font-size:11px;font-weight:600;color:#64748b;">${label}</div>
-        <div style="font-size:13px;font-weight:700;color:${color || '#1e293b'};">${value}</div>
+      <div style="flex:1;padding:16px 18px;border-right:1px solid #e2e8f0;">
+        <div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:10px;">${label}</div>
+        <div style="font-size:14px;font-weight:700;color:${color || '#1e293b'};">${value}</div>
       </div>
     `;
 
@@ -85,8 +85,10 @@ const PrintLedger = ({ open, onClose, customer }) => {
             </div>
             <div>
               <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.whatsapp}</p>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.email} &nbsp;•&nbsp; ${companyInfo.address}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Phone:</span> ${companyInfo.contact}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">WhatsApp:</span> ${companyInfo.whatsapp}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Email:</span> ${companyInfo.email}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Address:</span> ${companyInfo.address}</p>
             </div>
           </div>
           <div style="text-align:right;">

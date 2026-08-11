@@ -252,8 +252,10 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             </div>
             <div>
               <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.whatsapp}</p>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.email} &nbsp;•&nbsp; ${companyInfo.address}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Phone:</span> ${companyInfo.contact}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">WhatsApp:</span> ${companyInfo.whatsapp}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Email:</span> ${companyInfo.email}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Address:</span> ${companyInfo.address}</p>
             </div>
           </div>
           <div style="display:flex;align-items:center;">
