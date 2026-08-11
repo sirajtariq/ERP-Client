@@ -12,6 +12,7 @@ import Quotation from "@/pages/Quotation";
 import DailyExpense from "@/pages/CashFlow/DailyExpense";
 import SupplierLedger from "@/pages/Supplier/SupplierLedger";
 import DailyReceive from "@/pages/CashFlow/DailyReceive";
+import Employee from "@/pages/Employee";
 
 const getDefaultRoute = (userRole) => {
   if (userRole === "SALES_USER") return "/sale-invoice";
@@ -50,8 +51,7 @@ const AppRoutes = () => {
       <Route path="/purchase-invoice" element={<ProtectedRoute roles={ADMIN_PURCHASE}><PurchaseInvoice /></ProtectedRoute>} />
       <Route path="/supplier-payment" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
       <Route path="/daily-expense" element={<ProtectedRoute roles={ADMIN_PURCHASE}><DailyExpense /></ProtectedRoute>} />
-      <Route path="/employees" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
-      <Route path="/salary" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
+      <Route path="/employees" element={<ProtectedRoute roles={ADMIN_ONLY}><Employee /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute roles={USERS_ACCESS}><Users /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute roles={USERS_ACCESS}><Settings /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />

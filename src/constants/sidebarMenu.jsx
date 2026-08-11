@@ -9,6 +9,7 @@ import {
   WalletOutlined,
   UserSwitchOutlined,
   FileDoneOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
 
 // roles: undefined = visible to all; array = only those roles can see it
@@ -83,6 +84,12 @@ export const SIDEBAR_MENU = [
         roles: ADMIN_PURCHASE,
       },
     ],
+  },
+  {
+    key: "/employees",
+    icon: <TeamOutlined />,
+    label: "Employees",
+    roles: ADMIN_ONLY,
   },
   {
     key: "/users",
