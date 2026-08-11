@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -29,6 +29,7 @@ const PurchaseInvoice = () => {
   const { userRole } = useAuth();
   const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
+  const isInitialMount = useRef(true);
 
   const fetchInvoices = async (pageNo = 1, pageSize = 10, search = "", billNumber = "", status = "", paymentTerm = "", filterInvoiceNumber = "") => {
     setLoading(true);
@@ -56,6 +57,7 @@ const PurchaseInvoice = () => {
   }, []);
 
   useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
     if (searchText !== undefined) handleSearchDebounce(searchText);
   }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -78,12 +80,14 @@ const PurchaseInvoice = () => {
   };
 
   const handleApplyFilters = (filters) => {
+    handleSearchDebounce.cancel();
     setAppliedFilters(filters);
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchInvoices(1, page.size, searchText, filters.billNumber, filters.status, filters.paymentTerm, filters.invoiceNumber);
   };
 
   const handleResetFilters = () => {
+    handleSearchDebounce.cancel();
     setAppliedFilters({});
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchInvoices(1, page.size, searchText);
@@ -235,29 +239,35 @@ const PurchaseInvoice = () => {
           billNumber: viewInvoice.billNumber    || "",
           date:       viewInvoice.date          || "",
           items: (viewInvoice.items || []).map((item) => ({
-            name:     item.productName                   || "",
-            unit:     item.units                         || "",
-            qty:      parseFloat(item.quantity)          || 0,
-            rate:     parseFloat(item.purchasePrice)     || 0,
-            discount: parseFloat(item.discount)          || 0,
-            total:    parseFloat(item.total)             || 0,
+            id:         item.id,
+            name:       item.productName              || "",
+            unit:       item.units                    || "",
+            qty:        parseFloat(item.quantity)     || 0,
+            rate:       parseFloat(item.purchasePrice)|| 0,
+            discount:   parseFloat(item.discount)     || 0,
+            total:      parseFloat(item.total)        || 0,
+            isReturned: item.isReturned               || false,
           })),
           payment: {
-            paidAmount:       parseFloat(viewInvoice.paidAmount)     || 0,
-            method:           viewInvoice.paymentMethod              || "",
-            terms:            viewInvoice.paymentTerm                || "",
-            note:             viewInvoice.notes                      || "",
-            vatPercentage:    viewInvoice.vatPercentage              || "",
-            invoiceDiscount:  viewInvoice.invoiceDiscount            || "",
-            paymentReference: viewInvoice.paymentReference           || "",
-            advanceApplied:   parseFloat(viewInvoice.advanceApplied) || 0,
+            paidAmount:       parseFloat(viewInvoice.paidAmount)      || 0,
+            method:           viewInvoice.paymentMethod               || "",
+            terms:            viewInvoice.paymentTerm                 || "",
+            vatPercentage:    parseFloat(viewInvoice.vatPercentage)   || 0,
+            invoiceDiscount:  parseFloat(viewInvoice.invoiceDiscount) || 0,
+            paymentReference: viewInvoice.paymentReference            || "",
+            advanceApplied:   parseFloat(viewInvoice.advanceApplied)  || 0,
           },
+          notes:             viewInvoice.notes                        || "",
           subtotal:          parseFloat(viewInvoice.subtotal)         || 0,
           taxAmount:         parseFloat(viewInvoice.taxAmount)        || 0,
-          totalLineDiscount: parseFloat(viewInvoice.totalLineDiscount) || 0,
+          totalLineDiscount: parseFloat(viewInvoice.totalLineDiscount)|| 0,
           paymentStatus:     viewInvoice.paymentStatus                || "",
           invoiceStatus:     viewInvoice.status                       || "",
-          grandTotal: parseFloat(viewInvoice.netTotal) || 0,
+          grandTotal:        parseFloat(viewInvoice.netTotal)         || 0,
+          pending:           parseFloat(viewInvoice.balanceDue)       || 0,
+          returnedItemsCount:   0,
+          totalReturnedAmount:  0,
+          netTotalAfterReturns: 0,
           type: "purchase",
         } : null}
       />

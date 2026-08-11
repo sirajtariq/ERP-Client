@@ -86,7 +86,7 @@ const ExpenseDrawer = ({ open, onClose, onSubmit, editingExpense }) => {
     if (items.length > 1) setItems(items.filter((_, i) => i !== index));
   };
 
-  const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totalAmount = items.reduce((sum, item) => sum + (item.amount || 0) * (item.qty || 1), 0);
 
   const resolveCategory = (values) =>
     values.category === "other"
@@ -290,7 +290,7 @@ const ExpenseDrawer = ({ open, onClose, onSubmit, editingExpense }) => {
                   <span className={styles.itemBadge}>{index + 1}</span>
                   <span className={styles.itemHeaderLabel}>{item.detail || `Item ${index + 1}`}</span>
                   <span className={styles.itemHeaderSpacer} />
-                  <span className={styles.itemHeaderTotal}>{formatCurrency(item.amount || 0)}</span>
+                  <span className={styles.itemHeaderTotal}>{formatCurrency((item.amount || 0) * (item.qty || 1))}</span>
                   {items.length > 1 && (
                     <AppButton type="text" icon={<DeleteOutlined />} size="small" danger onClick={() => removeItem(index)} />
                   )}

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import { ConfigProvider } from "antd";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
@@ -19,7 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ThemeProvider>
       <AntdThemeBridge>
-        <BrowserRouter>
+        <HashRouter>
           <AuthProvider>
             <SearchProvider>
               <DashboardFilterProvider>
@@ -27,7 +27,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               </DashboardFilterProvider>
             </SearchProvider>
           </AuthProvider>
-        </BrowserRouter>
+        </HashRouter>
       </AntdThemeBridge>
     </ThemeProvider>
   </React.StrictMode>

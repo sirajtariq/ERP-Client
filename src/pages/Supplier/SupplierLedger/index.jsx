@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -24,6 +24,7 @@ const SupplierLedger = () => {
   const { userRole } = useAuth();
   const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
+  const isInitialMount = useRef(true);
 
   const fetchVendors = async (pageNo = 1, pageSize = 10, name = "") => {
     setLoading(true);
@@ -51,6 +52,7 @@ const SupplierLedger = () => {
   }, []);
 
   useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
     if (searchText !== undefined) handleSearchDebounce(searchText);
   }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
 

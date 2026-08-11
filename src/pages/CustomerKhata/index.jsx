@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
 import { useForm, Controller } from "react-hook-form";
@@ -42,6 +42,7 @@ const CustomerKhata = () => {
 
   // Pagination: API uses 1-based page numbers
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
+  const isInitialMount = useRef(true);
 
   const {
     control,
@@ -89,9 +90,8 @@ const CustomerKhata = () => {
 
   // Trigger debounced search when header searchText changes
   useEffect(() => {
-    if (searchText !== undefined) {
-      handleSearchDebounce(searchText);
-    }
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
+    if (searchText !== undefined) handleSearchDebounce(searchText);
   }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAdd = () => {
@@ -190,12 +190,14 @@ const CustomerKhata = () => {
   };
 
   const handleApplyFilters = (filters) => {
+    handleSearchDebounce.cancel();
     setAppliedFilters(filters);
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchCustomers(1, page.size, searchText, filters.customerType);
   };
 
   const handleResetFilters = () => {
+    handleSearchDebounce.cancel();
     setAppliedFilters({});
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchCustomers(1, page.size, searchText, "permanent");
@@ -320,7 +322,7 @@ const CustomerKhata = () => {
         open={!!ledgerCustomer}
         onClose={() => setLedgerCustomer(null)}
         customer={ledgerCustomer}
-        onPrint={() => { setPrintCustomer(ledgerCustomer); setLedgerCustomer(null); }}
+        onPrint={(data) => { setPrintCustomer({ ...ledgerCustomer, ...data }); setLedgerCustomer(null); }}
       />
 
       <PrintLedger
@@ -337,7 +339,6 @@ const CustomerKhata = () => {
           fetchFn={getTrashedCustomers}
           restoreFn={restoreCustomer}
           permanentDeleteFn={permanentDeleteCustomer}
-          convertFn={convertCustomerToPermanent}
           onSuccess={() => fetchCustomers(page.current, page.size, searchText)}
           rowKey="customerId"
           searchPlaceholder="Search by name..."

@@ -141,7 +141,7 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
         <h2 className={styles.title}>Customer Ledger — {customer.name}</h2>
         <section className={styles.headerActions}>
           {onPrint && (
-            <button className={styles.printBtn} onClick={onPrint}>Print Ledger</button>
+            <button className={styles.printBtn} onClick={() => onPrint(ledgerData)}>Print Ledger</button>
           )}
           <button className={styles.closeBtn} onClick={onClose}>Close</button>
         </section>
@@ -304,11 +304,9 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
 
             <section className={styles.cardsRow}>
               <StatCard variant="bordered" borderColor="#22c55e" title="Credit Sales" value={summary.creditSales || 0} delay={0.05} className={styles.valueGreen} />
-              <StatCard variant="bordered" borderColor="#22c55e" title="Cash Returns" value={summary.cashReturn || 0} delay={0.1} className={styles.valueGreen} />
-              <StatCard variant="bordered" borderColor="#22c55e" title="Advance Applied" value={summary.advanceApplied || 0} delay={0.15} className={styles.valueGreen} />
-              <StatCard variant="bordered" borderColor="#3b82f6" title="Total Collected" value={summary.totalCollected || 0} delay={0.2} className={styles.valueBlue}>
-                <span className={styles.cardSub}>Opening Credit: {formatCurrency(summary.openingCredit || 0)}</span>
-              </StatCard>
+              <StatCard variant="bordered" borderColor="#3b82f6" title="Total Purchases" value={finalPayment.totalPurchases || 0} delay={0.1} className={styles.valueBlue} />
+              <StatCard variant="bordered" borderColor="#22c55e" title="Cash Returns" value={summary.cashReturn || 0} delay={0.15} className={styles.valueGreen} />
+              <StatCard variant="bordered" borderColor="#22c55e" title="Advance Applied" value={summary.advanceApplied || 0} delay={0.2} className={styles.valueGreen} />
               <StatCard variant="bordered" borderColor="#ef4444" title="Remaining Balance" value={summary.remainingBalance || 0} delay={0.25} className={styles.valueRed} />
             </section>
 
