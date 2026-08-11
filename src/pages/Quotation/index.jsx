@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
 import { message, Typography } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
@@ -36,6 +36,7 @@ const Quotation = () => {
   const [appliedFilters, setAppliedFilters] = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
   const [page, setPage] = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
+  const isInitialMount = useRef(true);
 
   const fetchQuotations = async (pageNo = 1, pageSize = 10, customerName = "", quotationNumber = "", status = "", startDate = "", endDate = "") => {
     setLoading(true);
@@ -63,6 +64,7 @@ const Quotation = () => {
   }, []);
 
   useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
     if (searchText !== undefined) handleSearchDebounce(searchText);
   }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -81,12 +83,14 @@ const Quotation = () => {
   const handleCreate = () => { setEditingQuotation(null); setDrawerOpen(true); };
 
   const handleApplyFilters = (filters) => {
+    handleSearchDebounce.cancel();
     setAppliedFilters(filters);
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchQuotations(1, page.size, searchText, filters.quotationNumber, filters.status, filters.startDate, filters.endDate);
   };
 
   const handleResetFilters = () => {
+    handleSearchDebounce.cancel();
     setAppliedFilters({});
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchQuotations(1, page.size, searchText);

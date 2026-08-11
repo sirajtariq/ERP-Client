@@ -189,7 +189,7 @@
   border: 1px solid rgba(255,255,255,0.1);
 }
 .th { text-align: left; }
-.thRight { text-align: right; }
+.thRight { text-align: left; }
 .thCenter { text-align: center; }
 
 .tableRow:hover { background: #f8fafc; }
@@ -201,7 +201,7 @@
   border: 1px solid #e2e8f0;
 }
 .td { text-align: left; }
-.tdRight { text-align: right; }
+.tdRight { text-align: left; }
 .tdCenter { text-align: center; }
 
 .bold { font-weight: 700; }

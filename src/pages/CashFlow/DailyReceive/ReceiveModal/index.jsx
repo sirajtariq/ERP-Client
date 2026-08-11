@@ -23,13 +23,21 @@ const ReceiveModal = ({ open, onClose, data }) => {
     win.document.write(`<html><head><title>Receipt - ${customerName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
-          <div style="display:flex;gap:14px;align-items:flex-start;">${logoSvgString(50)}<div><h1 style="font-size:20px;font-weight:800;">${companyInfo.name}</h1><p style="font-size:12px;color:#475569;">${companyInfo.contact} | ${companyInfo.email}</p></div></div>
+        <div style="background:linear-gradient(135deg,#0f0c29 0%,#141423 45%,#1e1b4b 100%);padding:20px 28px;margin:-28px -28px 24px -28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c5cfc;">
+          <div style="display:flex;gap:14px;align-items:center;">
+            <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">${logoSvgString(42)}</div>
+            <div>
+              <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
+              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;">${companyInfo.contact} &nbsp;•&nbsp; ${companyInfo.email}</p>
+            </div>
+          </div>
           <div style="text-align:right;">
-            <h2 style="font-size:18px;font-weight:800;">PAYMENT RECEIPT</h2>
-            ${receiptNo ? `<p style="font-size:12px;color:#475569;"><strong>Receipt No:</strong> ${receiptNo}</p>` : ""}
-            <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${date || "N/A"}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
+            <div style="display:inline-block;background:rgba(124,92,252,0.2);border:1.5px solid rgba(124,92,252,0.45);border-radius:10px;padding:10px 18px;">
+              <h2 style="font-size:15px;font-weight:800;color:#fff;margin:0 0 5px;text-transform:uppercase;letter-spacing:1.5px;">PAYMENT RECEIPT</h2>
+              ${receiptNo ? `<p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">Receipt No:</span> ${receiptNo}</p>` : ""}
+              <p style="font-size:11px;color:rgba(255,255,255,0.8);margin:1px 0;"><span style="color:rgba(255,255,255,0.55);">Date:</span> ${date || "N/A"}</p>
+              <p style="font-size:11px;color:rgba(255,255,255,0.6);margin:0;"><span style="color:rgba(255,255,255,0.45);">Printed:</span> ${printDate}</p>
+            </div>
           </div>
         </div>
         <div style="border:1px solid #3b82f6;border-radius:6px;padding:20px;margin-bottom:20px;">

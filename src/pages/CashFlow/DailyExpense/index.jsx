@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
 import { Space, Tag, Tooltip, message, Typography } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
@@ -36,6 +36,7 @@ const DailyExpense = () => {
   const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
   const [page, setPage]       = useState({ current: 1, size: 10, total: 0, totalPages: 0 });
   const [summary, setSummary] = useState({ totalExpenses: 0, totalVendorPayments: 0, totalCombinedOutflow: 0 });
+  const isInitialMount = useRef(true);
 
   const fetchExpenses = async (pageNo = 1, pageSize = 10, expenseNumber = "", dateFrom = "", dateTo = "", category = "", type = "") => {
     setLoading(true);
@@ -64,6 +65,7 @@ const DailyExpense = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (isInitialMount.current) { isInitialMount.current = false; return; }
     if (searchText !== undefined) handleSearchDebounce(searchText);
   }, [searchText]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -81,12 +83,14 @@ const DailyExpense = () => {
   };
 
   const handleApplyFilters = (filters) => {
+    handleSearchDebounce.cancel();
     setAppliedFilters(filters);
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchExpenses(1, page.size, searchText, filters.startDate, filters.endDate, filters.category, filters.type);
   };
 
   const handleResetFilters = () => {
+    handleSearchDebounce.cancel();
     setAppliedFilters({});
     setPage((prev) => ({ ...prev, current: 1 }));
     fetchExpenses(1, page.size, searchText);
@@ -343,7 +347,7 @@ const DailyExpense = () => {
           permanentDeleteFn={permanentDeleteExpense}
           onSuccess={() => fetchExpenses(page.current, page.size, searchText, appliedFilters.startDate, appliedFilters.endDate)}
           rowKey="id"
-          searchPlaceholder="Search by voucher..."
+          searchPlaceholder="Search by expense number..."
           showDateFilter
 
           columns={[

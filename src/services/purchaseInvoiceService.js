@@ -63,17 +63,18 @@ export const normalizePurchaseInvoice = (inv) => {
   const total   = parseFloat(inv.netTotal)   || 0;
   const pending = parseFloat(inv.balanceDue) || 0;
   return {
-    id:           inv.id,
-    invoiceNo:    inv.invoiceNumber              || "",
-    billNumber:   inv.billNumber                 || "",
-    customerName: inv.vendor?.vendorName         || "",
+    id:            inv.id,
+    invoiceNo:     inv.invoiceNumber              || "",
+    billNumber:    inv.billNumber                 || "",
+    customerName:  inv.vendor?.vendorName         || "",
+    subtotal:      parseFloat(inv.subtotal)       || 0,
     total,
-    paid:         Math.max(0, total - pending),
+    paid:          Math.max(0, total - pending),
     pending,
-    status:       inv.paymentStatus              || inv.invoiceStatus || "",
-    invoiceStatus: inv.invoiceStatus             || "",
-    paymentTerm:  inv.paymentTerm                || "",
-    date:         inv.date                       || "",
-    vendor:       inv.vendor                     || null,
+    paymentTerm:   inv.paymentTerm                || "",
+    status:        inv.paymentStatus              || inv.invoiceStatus || "",
+    invoiceStatus: inv.invoiceStatus              || "",
+    date:          inv.date                       || "",
+    vendor:        inv.vendor                     || null,
   };
 };

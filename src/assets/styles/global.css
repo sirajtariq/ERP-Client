@@ -282,6 +282,7 @@ body {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
   padding: 16px;
+  text-align: left !important;
 
   &::before {
     background-color: var(--color-border);

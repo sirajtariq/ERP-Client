@@ -2,6 +2,7 @@
   "name": "lenden-app",
   "version": "1.0.0",
   "description": "LenDen - Desktop ERP & Khata Book Application",
+  "author": "LenDen",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -33,13 +34,42 @@
   },
   "build": {
     "appId": "com.lenden.app",
-    "productName": "LenDen",
+    "productName": "LenDen ERP",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "electron/**/*"
-    ]
+    ],
+    "extraResources": [
+      {
+        "from": "../server/dist/ERP_Backend",
+        "to": "ERP_Backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LenDen ERP",
+      "uninstallDisplayName": "LenDen ERP Uninstaller",
+      "deleteAppDataOnUninstall": true,
+      "include": "electron/installer.nsh"
+    }
   }
 }
