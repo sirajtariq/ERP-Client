@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Drawer, Table, Divider, Popconfirm, Tag, message } from "antd";
-import { CreditCardOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Drawer, message } from "antd";
+import { CreditCardOutlined } from "@ant-design/icons";
 import { AppButton, AppInput, AppSelect } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
 import styles from "./styles.module.css";
@@ -51,33 +51,6 @@ const AdvanceDrawer = ({ open, onClose, employee, advances, advanceBalance, onGi
   };
 
   if (!employee) return null;
-
-  const columns = [
-    { title: "Date",           dataIndex: "date",           key: "date",   width: "15%", render: (v) => <span style={{ fontWeight: 600, fontSize: 12 }}>{formatDate(v)}</span> },
-    { title: "Amount Given",   dataIndex: "amount",         key: "amount", width: "16%", render: (v) => <span style={{ fontWeight: 700, color: "#f97316" }}>{formatCurrency(v)}</span> },
-    { title: "Deducted",       dataIndex: "deductedAmount", key: "ded",    width: "14%", render: (v) => <span style={{ color: "#22c55e", fontWeight: 600 }}>{formatCurrency(v || 0)}</span> },
-    {
-      title: "Remaining",
-      key: "remaining",
-      width: "14%",
-      render: (_, r) => {
-        const rem = r.amount - (r.deductedAmount || 0);
-        return <span style={{ fontWeight: 700, color: rem > 0 ? "#ef4444" : "#22c55e" }}>{formatCurrency(rem)}</span>;
-      },
-    },
-    { title: "Status", dataIndex: "status", key: "status", width: "11%",
-      render: (v) => <Tag color={STATUS_COLOR[v] || "default"} style={{ borderRadius: 5, fontWeight: 600, textTransform: "capitalize" }}>{v}</Tag> },
-    { title: "Method", dataIndex: "paymentMethod", key: "method", ellipsis: true, render: (v) => <span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{v}</span> },
-    { title: "Reason", dataIndex: "reason", key: "reason", ellipsis: true, render: (v) => <span style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>{v}</span> },
-    {
-      title: "", key: "action", width: "5%",
-      render: (_, r) => (
-        <Popconfirm title="Delete this advance?" onConfirm={() => onDeleteAdvance(r.id)} okText="Delete" cancelText="No" okType="danger">
-          <AppButton type="text" size="small" icon={<DeleteOutlined />} danger />
-        </Popconfirm>
-      ),
-    },
-  ];
 
   return (
     <Drawer
@@ -156,19 +129,6 @@ const AdvanceDrawer = ({ open, onClose, employee, advances, advanceBalance, onGi
           </div>
         </div>
 
-        <Divider style={{ margin: "20px 0" }} />
-
-        <h3 className={styles.sectionTitle} style={{ marginBottom: 12 }}>Advance History</h3>
-        <Table
-          columns={columns}
-          dataSource={empAdvances}
-          rowKey="id"
-          size="small"
-          pagination={{ pageSize: 6, showSizeChanger: false, size: "small" }}
-          scroll={{ x: 600 }}
-          locale={{ emptyText: "No advance records" }}
-          style={{ border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}
-        />
       </div>
     </Drawer>
   );

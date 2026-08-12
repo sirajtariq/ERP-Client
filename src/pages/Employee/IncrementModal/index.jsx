@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Modal, Table, Row, Col, Divider, Popconfirm, message } from "antd";
-import { RiseOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Modal, Row, Col, message } from "antd";
+import { RiseOutlined } from "@ant-design/icons";
 import { AppButton, AppInput } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
 import styles from "./styles.module.css";
@@ -48,23 +48,6 @@ const IncrementModal = ({ open, onClose, employee, increments, onAddIncrement, o
   };
 
   if (!employee) return null;
-
-  const columns = [
-    { title: "Effective Date",   dataIndex: "effectiveDate",   key: "date",    width: "14%", render: (v) => <span style={{ fontWeight: 600 }}>{formatDate(v)}</span> },
-    { title: "Previous Salary",  dataIndex: "previousSalary",  key: "prev",    width: "15%", render: (v) => <span style={{ color: "#64748b" }}>{formatCurrency(v)}</span> },
-    { title: "Increment",        dataIndex: "incrementAmount",  key: "inc",     width: "13%", render: (v) => <span style={{ fontWeight: 700, color: "#22c55e" }}>+{formatCurrency(v)}</span> },
-    { title: "New Salary",       dataIndex: "newSalary",       key: "new",     width: "15%", render: (v) => <span style={{ fontWeight: 800, color: "#7c5cfc", fontSize: 13 }}>{formatCurrency(v)}</span> },
-    { title: "Reason",           dataIndex: "reason",          key: "reason",  ellipsis: true, render: (v) => <span style={{ color: "var(--color-text-secondary)" }}>{v}</span> },
-    { title: "Approved By",      dataIndex: "approvedBy",      key: "appr",    width: "13%", render: (v) => <span style={{ color: "var(--color-text-secondary)" }}>{v || "—"}</span> },
-    {
-      title: "", key: "action", width: "5%",
-      render: (_, r) => (
-        <Popconfirm title="Delete this increment?" onConfirm={() => onDeleteIncrement(r.id)} okText="Delete" cancelText="No" okType="danger">
-          <AppButton type="text" size="small" icon={<DeleteOutlined />} danger />
-        </Popconfirm>
-      ),
-    },
-  ];
 
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={860} centered destroyOnClose closable={false} className={styles.modal}
@@ -143,18 +126,6 @@ const IncrementModal = ({ open, onClose, employee, increments, onAddIncrement, o
           </div>
         </div>
 
-        <Divider style={{ margin: "20px 0" }} />
-
-        <h3 className={styles.sectionTitle} style={{ marginBottom: 12 }}>Increment History</h3>
-        <Table
-          columns={columns}
-          dataSource={empIncrements}
-          rowKey="id"
-          size="small"
-          pagination={{ pageSize: 6, showSizeChanger: false, size: "small" }}
-          locale={{ emptyText: "No increments recorded yet" }}
-          style={{ border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}
-        />
       </div>
     </Modal>
   );

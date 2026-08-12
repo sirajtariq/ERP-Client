@@ -13,6 +13,7 @@ import DailyExpense from "@/pages/CashFlow/DailyExpense";
 import SupplierLedger from "@/pages/Supplier/SupplierLedger";
 import DailyReceive from "@/pages/CashFlow/DailyReceive";
 import Employee from "@/pages/Employee";
+import Inventory from "@/pages/Inventory";
 
 const getDefaultRoute = (userRole) => {
   if (userRole === "SALES_USER") return "/sale-invoice";
@@ -42,7 +43,7 @@ const AppRoutes = () => {
       />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<ProtectedRoute roles={ADMIN_ONLY}><Dashboard /></ProtectedRoute>} />
-      <Route path="/stock" element={<ProtectedRoute><Placeholder /></ProtectedRoute>} />
+      <Route path="/stock" element={<ProtectedRoute roles={ADMIN_ONLY}><Inventory /></ProtectedRoute>} />
       <Route path="/sale-invoice" element={<ProtectedRoute roles={ADMIN_SALES}><SaleInvoice /></ProtectedRoute>} />
       <Route path="/quotations" element={<ProtectedRoute roles={ADMIN_SALES}><Quotation /></ProtectedRoute>} />
       <Route path="/customers" element={<ProtectedRoute roles={ADMIN_SALES}><CustomerKhata /></ProtectedRoute>} />

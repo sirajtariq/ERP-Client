@@ -10,6 +10,7 @@ import {
   UserSwitchOutlined,
   FileDoneOutlined,
   TeamOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
 
 // roles: undefined = visible to all; array = only those roles can see it
@@ -27,6 +28,12 @@ export const SIDEBAR_MENU = [
     key: "/dashboard",
     icon: <DashboardOutlined />,
     label: "Dashboard",
+    roles: ADMIN_ONLY,
+  },
+  {
+    key: "/stock",
+    icon: <InboxOutlined />,
+    label: "Inventory",
     roles: ADMIN_ONLY,
   },
   {

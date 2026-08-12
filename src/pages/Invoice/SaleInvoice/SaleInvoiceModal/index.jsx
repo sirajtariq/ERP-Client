@@ -245,30 +245,21 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
     return `<html><head><title>Invoice - ${customerName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="background:linear-gradient(135deg,#0f0c29 0%,#141423 45%,#1e1b4b 100%);padding:20px 28px;margin:-28px -28px 24px -28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #7c5cfc;">
-          <div style="display:flex;gap:14px;align-items:center;">
-            <div style="background:#fff;border-radius:10px;padding:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
-              ${logoSvgString(42)}
-            </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            ${logoSvgString(50)}
             <div>
-              <h1 style="font-size:18px;font-weight:800;color:#fff;margin:0 0 4px;white-space:nowrap;">${companyInfo.name}</h1>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Phone:</span> ${companyInfo.contact}</p>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">WhatsApp:</span> ${companyInfo.whatsapp}</p>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Email:</span> ${companyInfo.email}</p>
-              <p style="font-size:11px;color:rgba(255,255,255,0.75);margin:1px 0;"><span style="color:rgba(255,255,255,0.5);">Address:</span> ${companyInfo.address}</p>
+              <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${companyInfo.name}</h1>
+              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Contact:</strong> ${companyInfo.contact} &nbsp;&nbsp;<strong>WhatsApp:</strong> ${companyInfo.whatsapp}</p>
+              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Email:</strong> ${companyInfo.email}</p>
+              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Address:</strong> ${companyInfo.address}</p>
             </div>
           </div>
-          <div style="display:flex;align-items:center;">
-            <div style="border-radius:12px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.35),0 0 0 1px rgba(124,92,252,0.4);min-width:210px;">
-              <div style="background:linear-gradient(135deg,#7c5cfc 0%,#5b21b6 100%);padding:10px 20px;text-align:center;">
-                <h2 style="font-size:15px;font-weight:900;color:#fff;margin:0;text-transform:uppercase;letter-spacing:2px;">${invoiceLabel}</h2>
-              </div>
-              <div style="background:rgba(255,255,255,0.06);padding:12px 20px;text-align:right;">
-                <p style="font-size:11px;color:rgba(255,255,255,0.85);margin:3px 0;"><span style="color:rgba(255,255,255,0.5);">Invoice:</span> <strong style="color:#fff;">${invoiceNo}</strong></p>
-                <p style="font-size:11px;color:rgba(255,255,255,0.85);margin:3px 0;"><span style="color:rgba(255,255,255,0.5);">Date:</span> <strong style="color:#fff;">${invoiceDate}</strong></p>
-                <p style="font-size:10px;color:rgba(255,255,255,0.5);margin:3px 0;">Printed: ${printDate}</p>
-              </div>
-            </div>
+          <div style="text-align:right;">
+            <h2 style="font-size:18px;font-weight:800;color:#141423;margin:0 0 6px;">${invoiceLabel}</h2>
+            <p style="font-size:12px;color:#475569;"><strong>Invoice:</strong> ${invoiceNo}</p>
+            <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${invoiceDate}</p>
+            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
           </div>
         </div>
         <div style="display:flex;gap:16px;margin-bottom:16px;">
@@ -438,11 +429,9 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             </section>
             <section className={styles.companyRight}>
               <h2 className={styles.invoiceLabel}>{invoiceLabel}</h2>
-              <div className={styles.invoiceDetails}>
-                <p className={styles.detail}><strong>Invoice:</strong> {invoiceNo}</p>
-                <p className={styles.detail}><strong>Date:</strong> {invoiceDate}</p>
-                <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
-              </div>
+              <p className={styles.detail}><strong>Invoice:</strong> {invoiceNo}</p>
+              <p className={styles.detail}><strong>Date:</strong> {invoiceDate}</p>
+              <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </section>
           </section>
 

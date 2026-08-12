@@ -281,8 +281,12 @@ const Employee = () => {
         onClose={() => setViewEmployee(null)}
         employee={viewEmployee}
         advanceBalance={viewEmployee ? getAdvanceBalance(viewEmployee.id) : 0}
-        totalIncrements={viewEmployee ? increments.filter((i) => i.employeeId === viewEmployee.id).length : 0}
-        salaryRecordsCount={viewEmployee ? salaryRecords.filter((r) => r.employeeId === viewEmployee.id).length : 0}
+        empSalaryRecords={viewEmployee ? salaryRecords.filter((r) => r.employeeId === viewEmployee.id) : []}
+        empIncrements={viewEmployee ? increments.filter((i) => i.employeeId === viewEmployee.id) : []}
+        empAdvances={viewEmployee ? advances.filter((a) => a.employeeId === viewEmployee.id) : []}
+        onDeleteSalaryRecord={handleDeleteSalaryRecord}
+        onDeleteIncrement={handleDeleteIncrement}
+        onDeleteAdvance={handleDeleteAdvance}
       />
 
       <SalaryModal
@@ -293,7 +297,6 @@ const Employee = () => {
         advanceBalance={salaryEmployee ? getAdvanceBalance(salaryEmployee.id) : 0}
         onPaySalary={handlePaySalary}
         onUpdateSalaryRecord={handleUpdateSalaryRecord}
-        onDeleteRecord={handleDeleteSalaryRecord}
       />
 
       <IncrementModal

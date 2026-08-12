@@ -101,27 +101,13 @@
       }
 
       & .companyRight {
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 16px rgba(124, 92, 252, 0.2), 0 0 0 1px rgba(124, 92, 252, 0.3);
-        min-width: 210px;
+        text-align: right;
 
         & .invoiceLabel {
-          background: linear-gradient(135deg, #7c5cfc 0%, #5b21b6 100%);
-          font-size: 14px;
-          font-weight: 900;
-          color: #fff;
-          margin: 0;
-          padding: 10px 20px;
-          text-align: center;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-        }
-
-        & .invoiceDetails {
-          padding: 10px 16px;
-          text-align: right;
-          background: #f8f6ff;
+          font-size: 18px;
+          font-weight: 800;
+          color: var(--color-primary);
+          margin: 0 0 6px;
         }
       }
     }
