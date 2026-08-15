@@ -41,9 +41,15 @@ const ItemDetailModal = ({ open, onClose, item, stockHistory = [], onStockIn, on
 
   if (!item) return null;
 
-  const margin     = item.purchaseRate > 0 ? ((item.saleRate - item.purchaseRate) / item.purchaseRate * 100).toFixed(1) : 0;
-  const stockValue = item.currentStock * item.purchaseRate;
-  const st         = stockStatus(item);
+  const margin           = item.purchaseRate > 0 ? ((item.saleRate - item.purchaseRate) / item.purchaseRate * 100).toFixed(1) : 0;
+  const profitPerUnit    = item.saleRate - item.purchaseRate;
+  const purchaseValue    = item.currentStock * item.purchaseRate;
+  const saleValue        = item.currentStock * item.saleRate;
+  const potentialProfit  = saleValue - purchaseValue;
+  const totalInvested    = totalIn  * item.purchaseRate;
+  const realizedRevenue  = totalOut * item.saleRate;
+  const realizedProfit   = totalOut * profitPerUnit;
+  const st               = stockStatus(item);
 
   const histColumns = [
     {
@@ -108,7 +114,7 @@ const ItemDetailModal = ({ open, onClose, item, stockHistory = [], onStockIn, on
       open={open}
       onCancel={onClose}
       footer={null}
-      width={900}
+      width={1100}
       centered
       destroyOnClose
       closable={false}
@@ -157,11 +163,11 @@ const ItemDetailModal = ({ open, onClose, item, stockHistory = [], onStockIn, on
 
         {/* Summary stat cards */}
         <div style={{ display: "flex", gap: 10, padding: "16px 24px 4px" }}>
-          <StatCard label="Current Stock"  value={`${item.currentStock} ${item.unit}`} color={st.text}    bg={`${st.text}12`}              border={`${st.text}30`} />
-          <StatCard label="Stock Value"    value={formatCurrency(stockValue)}           color="#7c5cfc"    bg="rgba(124,92,252,0.07)"        border="rgba(124,92,252,0.2)" />
-          <StatCard label="Purchase Rate"  value={formatCurrency(item.purchaseRate)}    color="#64748b"    bg="rgba(100,116,139,0.07)"       border="rgba(100,116,139,0.2)" />
-          <StatCard label="Sale Rate"      value={formatCurrency(item.saleRate)}        color="#7c5cfc"    bg="rgba(124,92,252,0.07)"        border="rgba(124,92,252,0.2)" />
-          <StatCard label="Profit Margin"  value={`${margin}%`}                        color={Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444"} bg="rgba(34,197,94,0.07)" border="rgba(34,197,94,0.2)" />
+          <StatCard label="Current Stock"    value={`${item.currentStock} ${item.unit}`} color={st.text}  bg={`${st.text}12`}              border={`${st.text}30`} />
+          <StatCard label="Purchase Value"   value={formatCurrency(purchaseValue)}        color="#64748b"  bg="rgba(100,116,139,0.07)"       border="rgba(100,116,139,0.2)" />
+          <StatCard label="Sale Value"       value={formatCurrency(saleValue)}            color="#7c5cfc"  bg="rgba(124,92,252,0.07)"        border="rgba(124,92,252,0.2)" />
+          <StatCard label="Potential Profit" value={formatCurrency(potentialProfit)}      color="#22c55e"  bg="rgba(34,197,94,0.07)"         border="rgba(34,197,94,0.2)" />
+          <StatCard label="Profit Margin"    value={`${margin}%`}                        color={Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444"} bg="rgba(34,197,94,0.07)" border="rgba(34,197,94,0.2)" />
         </div>
 
         <div style={{ padding: "12px 24px 24px" }}>
@@ -184,6 +190,69 @@ const ItemDetailModal = ({ open, onClose, item, stockHistory = [], onStockIn, on
               <InfoRow label="Current Stock" value={<span style={{ color: st.text, fontWeight: 800 }}>{item.currentStock} {item.unit}</span>} />
               <InfoRow label="Profit / Item" value={<span style={{ color: "#22c55e", fontWeight: 700 }}>+{formatCurrency(item.saleRate - item.purchaseRate)}</span>} />
             </div>
+          </div>
+
+          {/* Stock Value Section */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)", marginBottom: 12 }}>
+              <DollarOutlined style={{ marginRight: 6, color: "#7c5cfc" }} />
+              Stock Value Analysis
+            </div>
+
+            {/* 3 main value cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
+              <div style={{ padding: "14px 16px", borderRadius: 10, background: "rgba(100,116,139,0.07)", border: "1px solid rgba(100,116,139,0.2)" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.4px", color: "#64748b", marginBottom: 6 }}>Purchase Value</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#475569" }}>{formatCurrency(purchaseValue)}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{item.currentStock} {item.unit} × {formatCurrency(item.purchaseRate)}</div>
+              </div>
+              <div style={{ padding: "14px 16px", borderRadius: 10, background: "rgba(124,92,252,0.07)", border: "1px solid rgba(124,92,252,0.2)" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.4px", color: "#7c5cfc", marginBottom: 6 }}>Sale Value</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#7c5cfc" }}>{formatCurrency(saleValue)}</div>
+                <div style={{ fontSize: 11, color: "#a78bfa", marginTop: 4 }}>{item.currentStock} {item.unit} × {formatCurrency(item.saleRate)}</div>
+              </div>
+              <div style={{ padding: "14px 16px", borderRadius: 10, background: potentialProfit >= 0 ? "rgba(34,197,94,0.07)" : "rgba(239,68,68,0.07)", border: `1px solid ${potentialProfit >= 0 ? "rgba(34,197,94,0.2)" : "rgba(239,68,68,0.2)"}` }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.4px", color: potentialProfit >= 0 ? "#16a34a" : "#dc2626", marginBottom: 6 }}>Potential Profit</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: potentialProfit >= 0 ? "#22c55e" : "#ef4444" }}>{formatCurrency(potentialProfit)}</div>
+                <div style={{ fontSize: 11, color: "#86efac", marginTop: 4 }}>if all {item.currentStock} {item.unit} sold</div>
+              </div>
+            </div>
+
+            {/* Per-unit rate breakdown row */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+              {[
+                { label: "Purchase Rate / Unit", value: formatCurrency(item.purchaseRate), color: "#64748b" },
+                { label: "Sale Rate / Unit",      value: formatCurrency(item.saleRate),     color: "#7c5cfc" },
+                { label: "Profit / Unit",         value: `+${formatCurrency(profitPerUnit)}`, color: "#22c55e" },
+                { label: "Profit Margin",         value: `${margin}%`,                      color: Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444" },
+              ].map(({ label, value, color }) => (
+                <div key={label} style={{ padding: "10px 12px", borderRadius: 8, background: "var(--color-bg-secondary)", border: "1px solid var(--color-border)", textAlign: "center" }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3px", color: "var(--color-text-secondary)", marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color }}>{value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Historical realized section */}
+            {itemHistory.length > 0 && (
+              <div style={{ padding: "12px 16px", borderRadius: 10, background: "var(--color-bg-secondary)", border: "1px solid var(--color-border)", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0 }}>
+                <div style={{ paddingRight: 16, borderRight: "1px solid var(--color-border)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 4 }}>Total Invested (all purchases)</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#64748b" }}>{formatCurrency(totalInvested)}</div>
+                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2 }}>{totalIn} {item.unit} purchased</div>
+                </div>
+                <div style={{ paddingLeft: 16, paddingRight: 16, borderRight: "1px solid var(--color-border)" }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 4 }}>Revenue from Sales</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#7c5cfc" }}>{formatCurrency(realizedRevenue)}</div>
+                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2 }}>{totalOut} {item.unit} sold</div>
+                </div>
+                <div style={{ paddingLeft: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 4 }}>Realized Profit</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#22c55e" }}>+{formatCurrency(realizedProfit)}</div>
+                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 2 }}>from {totalOut} units sold</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Stock history table */}

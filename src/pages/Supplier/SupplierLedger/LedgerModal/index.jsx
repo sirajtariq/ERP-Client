@@ -28,11 +28,10 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
-  const handlePrint = () => {
-    if (!ledger) return;
+  const buildPrintHTML = () => {
+    if (!ledger) return "";
     const now = new Date();
     const printDate = now.toLocaleString("en-PK", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
     const rows = (ledger.transactions || []).map((t) => `
       <tr>
         <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${t.date}</td>
@@ -43,11 +42,8 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
         <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:700;color:${t.type === "Cr" ? "#22c55e" : "#1e293b"};">${formatCurrency(t.balance)} ${t.type}</td>
       </tr>
     `).join("");
-
     const summaryCell = (label, value, color) => `<div style="padding:18px 20px;border:1px solid #e2e8f0;border-radius:6px;"><div style="font-size:11px;color:#64748b;font-weight:600;margin-bottom:10px;">${label}</div><div style="font-size:14px;font-weight:700;color:${color || "#1e293b"};">${value}</div></div>`;
-
-    const win = window.open("", "_blank");
-    win.document.write(`<html><head><title>Vendor Ledger - ${supplier.name}</title>
+    return `<html><head><title>Vendor Ledger - ${supplier.name}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
@@ -103,7 +99,14 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
           <span>Computer generated supplier ledger.</span>
           <div style="text-align:center;"><div style="width:160px;border-bottom:1px solid #1e293b;margin-bottom:6px;"></div><span>Authorized Signature</span></div>
         </div>
-      </body></html>`);
+      </body></html>`;
+  };
+
+  const handlePrint = () => {
+    const html = buildPrintHTML();
+    if (!html) return;
+    const win = window.open("", "_blank");
+    win.document.write(html);
     win.document.close();
     setTimeout(() => { win.print(); win.close(); }, 400);
   };

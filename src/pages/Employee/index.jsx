@@ -1,21 +1,23 @@
 import { useState, useMemo } from "react";
 import { message, Typography, Modal, DatePicker, Alert, Input, Select } from "antd";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { PlusOutlined, SearchOutlined, CalendarOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { AppTable, AppButton, AppModal, PageHeader } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_EMPLOYEES, MOCK_SALARY_RECORDS, MOCK_INCREMENTS, MOCK_ADVANCES } from "./mockData";
+import { MOCK_EMPLOYEES, MOCK_SALARY_RECORDS, MOCK_INCREMENTS, MOCK_ADVANCES, MOCK_ATTENDANCE } from "./mockData";
 import { getEmployeeColumns } from "./columns";
 import EmployeeDrawer from "./EmployeeDrawer";
 import EmployeeDetailModal from "./EmployeeDetailModal";
 import SalaryModal from "./SalaryModal";
 import IncrementModal from "./IncrementModal";
 import AdvanceDrawer from "./AdvanceDrawer";
+import AttendanceModal from "./AttendanceModal";
 
 const { Text } = Typography;
 
-let nextId = 100;
+let nextId    = 100;
+let nextAttId = 200;
 
 const Employee = () => {
   const { userRole } = useAuth();
@@ -25,7 +27,9 @@ const Employee = () => {
   const [salaryRecords, setSalaryRecords] = useState(MOCK_SALARY_RECORDS);
   const [increments,    setIncrements]    = useState(MOCK_INCREMENTS);
   const [advances,      setAdvances]      = useState(MOCK_ADVANCES);
+  const [attendance,    setAttendance]    = useState(MOCK_ATTENDANCE);
 
+  const [attendanceOpen,    setAttendanceOpen]    = useState(false);
   const [drawerOpen,        setDrawerOpen]        = useState(false);
   const [editingEmployee,   setEditingEmployee]   = useState(null);
   const [viewEmployee,      setViewEmployee]      = useState(null);
@@ -94,12 +98,35 @@ const Employee = () => {
   };
 
   const handleDelete = () => {
-    setEmployees((prev) => prev.filter((e) => e.id !== deleteModal.employee.id));
-    setSalaryRecords((prev) => prev.filter((r) => r.employeeId !== deleteModal.employee.id));
-    setIncrements((prev) => prev.filter((i) => i.employeeId !== deleteModal.employee.id));
-    setAdvances((prev) => prev.filter((a) => a.employeeId !== deleteModal.employee.id));
+    const id = deleteModal.employee.id;
+    setEmployees((prev)     => prev.filter((e) => e.id !== id));
+    setSalaryRecords((prev) => prev.filter((r) => r.employeeId !== id));
+    setIncrements((prev)    => prev.filter((i) => i.employeeId !== id));
+    setAdvances((prev)      => prev.filter((a) => a.employeeId !== id));
+    setAttendance((prev)    => prev.filter((a) => a.employeeId !== id));
     setDeleteModal({ open: false, employee: null });
     message.success("Employee deleted");
+  };
+
+  // ── Attendance ──
+  const handleSaveAttendance = (date, records) => {
+    setAttendance((prev) => {
+      const rest = prev.filter((a) => a.date !== date);
+      const newRecs = records.map((r) => ({ ...r, id: ++nextAttId }));
+      return [...rest, ...newRecs];
+    });
+    message.success(`Attendance saved for ${date}`);
+  };
+
+  const handleEditAttendance = (employeeId, date, status, remarks) => {
+    setAttendance((prev) => {
+      const exists = prev.some((a) => a.employeeId === employeeId && a.date === date);
+      if (exists) {
+        return prev.map((a) => a.employeeId === employeeId && a.date === date ? { ...a, status, remarks } : a);
+      }
+      return [...prev, { id: ++nextAttId, employeeId, date, status, remarks }];
+    });
+    message.success("Attendance updated");
   };
 
   // ── Salary ──
@@ -218,9 +245,14 @@ const Employee = () => {
         title="Employees"
         subtitle="Manage employee records, salaries, increments and advances"
         extra={
-          <AppButton type="primary" icon={<PlusOutlined />} onClick={() => { setEditingEmployee(null); setDrawerOpen(true); }} className="btn-dark">
-            Add Employee
-          </AppButton>
+          <div style={{ display: "flex", gap: 8 }}>
+            <AppButton icon={<CalendarOutlined />} onClick={() => setAttendanceOpen(true)}>
+              Mark Attendance
+            </AppButton>
+            <AppButton type="primary" icon={<PlusOutlined />} onClick={() => { setEditingEmployee(null); setDrawerOpen(true); }} className="btn-dark">
+              Add Employee
+            </AppButton>
+          </div>
         }
       />
 
@@ -284,9 +316,11 @@ const Employee = () => {
         empSalaryRecords={viewEmployee ? salaryRecords.filter((r) => r.employeeId === viewEmployee.id) : []}
         empIncrements={viewEmployee ? increments.filter((i) => i.employeeId === viewEmployee.id) : []}
         empAdvances={viewEmployee ? advances.filter((a) => a.employeeId === viewEmployee.id) : []}
+        empAttendance={viewEmployee ? attendance.filter((a) => a.employeeId === viewEmployee.id) : []}
         onDeleteSalaryRecord={handleDeleteSalaryRecord}
         onDeleteIncrement={handleDeleteIncrement}
         onDeleteAdvance={handleDeleteAdvance}
+        onEditAttendance={handleEditAttendance}
       />
 
       <SalaryModal
@@ -386,6 +420,14 @@ const Employee = () => {
           This will permanently remove <strong style={{ color: "var(--color-text)" }}>"{deleteModal.employee?.name}"</strong> and all their salary, increment and advance records. This cannot be undone.
         </Text>
       </AppModal>
+
+      <AttendanceModal
+        open={attendanceOpen}
+        onClose={() => setAttendanceOpen(false)}
+        employees={employees}
+        attendance={attendance}
+        onSave={handleSaveAttendance}
+      />
     </section>
   );
 };
