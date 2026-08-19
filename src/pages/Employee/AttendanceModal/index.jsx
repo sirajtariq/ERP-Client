@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import { Modal } from "antd";
 import { CalendarOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
+import { getCompanyInfo } from "@/utils/companyInfoStore";
 import styles from "./styles.module.css";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const MAIN_S = [
   { v: "present", label: "P", color: "#22c55e", title: "Present"  },
@@ -65,10 +68,13 @@ const AttendanceModal = ({ open, onClose, employees, attendance, onSave }) => {
     onClose();
   };
 
+  const { weeklyOffDays = [] } = getCompanyInfo();
+
   const alreadyMarked = attendance.some((a) => a.date === date);
   const d             = date ? new Date(date + "T00:00:00") : null;
-  const dayLabel = d ? d.toLocaleDateString("en-PK", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }) : "";
-  const isFri    = d?.getDay() === 5;
+  const dayLabel    = d ? d.toLocaleDateString("en-PK", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }) : "";
+  const currentDay  = d ? DAY_NAMES[d.getDay()] : "";
+  const isWeeklyOff = d ? weeklyOffDays.includes(currentDay) : false;
 
   return (
     <Modal
@@ -104,17 +110,17 @@ const AttendanceModal = ({ open, onClose, employees, attendance, onSave }) => {
             onChange={(e) => setDate(e.target.value)}
             className={styles.dateInput}
           />
-          <div style={{ fontSize: 11, fontWeight: 600, marginTop: 5, color: isFri ? "#ef4444" : "var(--color-text-secondary)" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, marginTop: 5, color: isWeeklyOff ? "#ef4444" : "var(--color-text-secondary)" }}>
             {dayLabel}
           </div>
         </div>
 
-        {isFri && (
+        {isWeeklyOff && (
           <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 12, fontWeight: 600, color: "#ef4444", marginBottom: 12 }}>
-            ⚠ Friday is weekly off — attendance is not typically marked.
+            ⚠ {currentDay} is a weekly off — attendance is not typically marked.
           </div>
         )}
-        {alreadyMarked && !isFri && (
+        {alreadyMarked && !isWeeklyOff && (
           <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(59,130,246,0.07)", border: "1px solid rgba(59,130,246,0.2)", fontSize: 12, fontWeight: 600, color: "#3b82f6", marginBottom: 12 }}>
             ℹ Attendance already marked for this date. To edit individual records, open the employee&apos;s View modal → Attendance tab.
           </div>

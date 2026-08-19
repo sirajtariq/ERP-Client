@@ -7,6 +7,7 @@ import _ from "lodash";
 import { AppButton, AppInput, AppSelect } from "@/components/common";
 import { getAllCustomers, normalizeCustomer } from "@/services/customerService";
 import { getAllVendors, normalizeVendor } from "@/services/supplierService";
+import { getItems as getInventoryItems, getItemById } from "@/services/inventoryService";
 import { createSaleInvoice, updateSaleInvoice } from "@/services/saleInvoiceService";
 import { createPurchaseInvoice, updatePurchaseInvoice } from "@/services/purchaseInvoiceService";
 import { useInfiniteScroll } from "@/hooks";
@@ -37,7 +38,14 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isNewCustomer, setIsNewCustomer]   = useState(false);
   const [newCustomerName, setNewCustomerName] = useState("");
-  const [items, setItems]                   = useState([{ id: 1, name: "", unit: "NOS", qty: 0, rate: 0, discount: 0, total: 0 }]);
+  const emptyItem = () => ({ id: Date.now(), inventoryItemId: null, code: "", name: "", unit: "NOS", purchaseRate: 0, inventorySaleRate: 0, rate: 0, qty: 0, discount: 0, total: 0 });
+  const [items, setItems]                   = useState([emptyItem()]);
+
+  // ── Inventory items (sale invoice only) ──
+  const [invItems,   setInvItems]   = useState([]);
+  const [invPage,    setInvPage]    = useState({ current: 0, size: PAGE_SIZE, total: 0 });
+  const [invSearch,  setInvSearch]  = useState("");
+  const [invLoading, setInvLoading] = useState(false);
   const [payment, setPayment]               = useState({ method: "Cash", terms: "Cash", paidAmount: 0, note: "", vatPercentage: "", invoiceDiscount: "", paymentReference: "" });
   const [invoiceStatus, setInvoiceStatus]   = useState("Draft");
   const [previewOpen, setPreviewOpen]       = useState(false);
@@ -52,12 +60,38 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
 
   useEffect(() => {
     if (open) {
+      setInvItems([]);
+      setInvPage({ current: 0, size: PAGE_SIZE, total: 0 });
+      setInvSearch("");
+
       if (isPurchase && editingInvoice) {
         populateFromInvoice(editingInvoice);
+        // Pre-fetch inventory items for linked purchase items
+        const ids = (editingInvoice.items || [])
+          .map((i) => i.itemId)
+          .filter(Boolean);
+        if (ids.length) {
+          Promise.all(ids.map((id) => getItemById(id).catch(() => null)))
+            .then((results) => {
+              const valid = results.filter(Boolean);
+              if (valid.length) setInvItems(valid);
+            });
+        }
       } else {
         fetchCustomers(0, "");
         if (editingInvoice) {
           populateFromInvoice(editingInvoice);
+          // Pre-fetch inventory items for linked sale items
+          const ids = (editingInvoice.items || [])
+            .map((i) => i.inventoryItemId)
+            .filter(Boolean);
+          if (ids.length) {
+            Promise.all(ids.map((id) => getItemById(id).catch(() => null)))
+              .then((results) => {
+                const valid = results.filter(Boolean);
+                if (valid.length) setInvItems(valid);
+              });
+          }
         } else {
           resetAll();
         }
@@ -88,6 +122,77 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     }
   };
 
+  const fetchInvItems = async (pageNo = 0, searchQuery = "") => {
+    setInvLoading(true);
+    try {
+      const res = await getInventoryItems({ page: pageNo + 1, pageSize: PAGE_SIZE, search: searchQuery });
+      const results = res.results || [];
+      setInvItems((prev) => (pageNo === 0 ? results : [...prev, ...results]));
+      setInvPage((prev) => ({ ...prev, current: pageNo, total: res.count || 0 }));
+    } catch {
+      if (pageNo === 0) setInvItems([]);
+    } finally {
+      setInvLoading(false);
+    }
+  };
+
+  // When inventory loads, backfill purchaseRate / inventorySaleRate / code for items that have an inventoryItemId
+  useEffect(() => {
+    if (invItems.length === 0) return;
+    setItems((prev) =>
+      prev.map((item) => {
+        if (!item.inventoryItemId) return item;
+        const inv = invItems.find((i) => i.id === item.inventoryItemId);
+        if (!inv) return item;
+        return {
+          ...item,
+          code:              inv.itemCode            || item.code,
+          purchaseRate:      Number(inv.purchaseRate) || 0,
+          inventorySaleRate: Number(inv.saleRate)     || 0,
+        };
+      })
+    );
+  }, [invItems]);
+
+  const handleInvSearchDebounce = useCallback(
+    _.debounce((value) => {
+      setInvSearch(value);
+      fetchInvItems(0, value);
+    }, 400),
+    []
+  );
+
+  const handleInvScroll = useInfiniteScroll({
+    pageObject: invPage,
+    fetchFunction: fetchInvItems,
+    searchValue: invSearch,
+  });
+
+  const handleInvItemSelect = (index, inventoryItemId) => {
+    const inv = invItems.find((i) => i.id === inventoryItemId);
+    if (!inv) return;
+    const updated           = [...items];
+    const qty               = updated[index].qty      || 0;
+    const discount          = updated[index].discount || 0;
+    const inventorySaleRate = Number(inv.saleRate)    || 0;
+    const purchaseRate      = Number(inv.purchaseRate) || 0;
+    // For purchase invoices default rate to purchaseRate; for sale to inventorySaleRate
+    const defaultRate       = isPurchase ? purchaseRate : inventorySaleRate;
+    const subtotal          = qty * defaultRate;
+    updated[index] = {
+      ...updated[index],
+      inventoryItemId,
+      code:             inv.itemCode || "",
+      name:             inv.name     || "",
+      unit:             inv.unit     || "",
+      purchaseRate,
+      inventorySaleRate,
+      rate:             defaultRate,
+      total:            subtotal - (subtotal * discount / 100),
+    };
+    setItems(updated);
+  };
+
   const populateFromInvoice = (invoice) => {
     setCurrent(0);
     setIsNewCustomer(false);
@@ -106,13 +211,17 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
       setCustomers([vendorObj]);
       setItems(
         (invoice.items || []).map((item) => ({
-          id:       item.id                           || Date.now(),
-          name:     item.productName                  || "",
-          unit:     item.units                        || "NOS",
-          qty:      parseFloat(item.quantity)         || 0,
-          rate:     parseFloat(item.purchasePrice)    || 0,
-          discount: parseFloat(item.discount)         || 0,
-          total:    parseFloat(item.total)            || 0,
+          id:               item.id                        || Date.now(),
+          inventoryItemId:  item.itemId                    || null,
+          code:             item.itemCode                  || "",
+          name:             item.productName || item.name  || "",
+          unit:             item.units       || item.unit  || "NOS",
+          purchaseRate:     0,
+          inventorySaleRate: 0,
+          qty:              parseFloat(item.quantity)      || 0,
+          rate:             parseFloat(item.unitPrice || item.purchasePrice || item.rate) || 0,
+          discount:         parseFloat(item.discount)      || 0,
+          total:            parseFloat(item.total)         || 0,
         }))
       );
       setPayment({
@@ -146,13 +255,17 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
       });
       setItems(
         (invoice.items || []).map((item) => ({
-          id:       item.id       || Date.now(),
-          name:     item.name     || "",
-          unit:     item.unit     || "NOS",
-          qty:      item.qty      || 0,
-          rate:     item.rate     || 0,
-          discount: item.discount || 0,
-          total:    item.total    || 0,
+          id:               item.id              || Date.now(),
+          inventoryItemId:  item.inventoryItemId || null,
+          code:             item.itemCode        || "",
+          name:             item.name            || "",
+          unit:             item.unit            || "",
+          purchaseRate:     0,
+          inventorySaleRate: 0,
+          rate:             item.rate            || 0,
+          qty:              item.qty             || 0,
+          discount:         item.discount        || 0,
+          total:            item.total           || 0,
         }))
       );
       setPayment({
@@ -208,7 +321,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     setCustomerSearch("");
     setCustomerPage({ current: 0, size: PAGE_SIZE, total: 0 });
     resetForm({ phone: "", invoiceNo: "Auto Generated", taxNumber: "", billNumber: "", creditBalance: 0, date: dayjs() });
-    setItems([{ id: 1, name: "", unit: "NOS", qty: 0, rate: 0, discount: 0, total: 0 }]);
+    setItems([emptyItem()]);
     setPayment({ method: "Cash", terms: "Cash", paidAmount: 0, note: "", vatPercentage: "", invoiceDiscount: "", paymentReference: "" });
     setInvoiceStatus("Draft");
   };
@@ -249,9 +362,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     setItems(updated);
   };
 
-  const addItem = () => {
-    setItems([...items, { id: Date.now(), name: "", unit: "NOS", qty: 0, rate: 0, discount: 0, total: 0 }]);
-  };
+  const addItem = () => setItems([...items, emptyItem()]);
 
   const removeItem = (index) => {
     if (items.length > 1) setItems(items.filter((_, i) => i !== index));
@@ -288,36 +399,41 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
         items: items
           .filter((item) => item.name && item.qty > 0)
           .map((item) => ({
-            productName:   item.name,
-            units:         item.unit          || "",
-            quantity:      String(item.qty),
-            purchasePrice: String(item.rate),
-            discount:      String(item.discount || 0),
+            productName: item.name,
+            units:       item.unit || "",
+            quantity:    String(Number(item.qty)      || 0),
+            unitPrice:   String(Number(item.rate)     || 0),
+            discount:    String(Number(item.discount) || 0),
+            ...(item.inventoryItemId ? { itemId: item.inventoryItemId, itemCode: item.code } : {}),
           })),
       };
     } else {
       payload = {
-        date:          invoiceDate,
+        date:              invoiceDate,
         customer_data: {
           customer_id:   selectedCustomer ? selectedCustomer.customerId : null,
           customer_name: selectedCustomer ? selectedCustomer.name : newCustomerName,
           phone:         selectedCustomer ? (selectedCustomer.phone || formValues.phone || null) : (formValues.phone || null),
-          customer_type: selectedCustomer ? selectedCustomer.customerType : "walkin",
+          customer_type: "walkin",
           tax_number:    formValues.taxNumber || null,
         },
-        payment_term:   payment.terms,
-        payment_method: payment.method,
-        paid_amount:    String(paidAmount),
-        notes:          payment.note || null,
-        invoiceStatus:  invoiceStatus,
+        payment_term:      payment.terms,
+        payment_method:    payment.method    || null,
+        paid_amount:       String(paidAmount),
+        payment_reference: payment.paymentReference || null,
+        notes:             payment.note      || null,
+        vat_percentage:    payment.vatPercentage  ? String(payment.vatPercentage)  : "0",
+        invoice_discount:  payment.invoiceDiscount ? String(payment.invoiceDiscount) : "0",
+        invoiceStatus:     invoiceStatus,
         items: items
           .filter((item) => item.name && item.qty > 0)
           .map((item) => ({
-            item_name: item.name,
+            name:      item.name,
             units:     item.unit || "",
-            quantity:  String(item.qty),
-            rate:      String(item.rate),
-            discount:  String(item.discount || 0),
+            quantity:  String(Number(item.qty)  || 0),
+            unitPrice: String(Number(item.rate) || 0),
+            discount:  String(Number(item.discount) || 0),
+            ...(item.inventoryItemId ? { itemId: item.inventoryItemId, itemCode: item.code } : {}),
           })),
       };
     }
@@ -351,7 +467,13 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
 
   const mappedItems = items.filter((item) => item.name && item.qty > 0);
 
-  const next = () => setCurrent(current + 1);
+  const next = () => {
+    const newStep = current + 1;
+    setCurrent(newStep);
+    if (newStep === 1) {
+      fetchInvItems(0, "");
+    }
+  };
   const prev = () => setCurrent(current - 1);
 
   // Supplier Bill Number is mandatory for purchase invoices — block leaving step 1 without it.
@@ -562,30 +684,215 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                     <AppButton type="text" icon={<DeleteOutlined />} size="small" danger onClick={() => removeItem(index)} />
                   )}
                 </section>
-                <Row gutter={12}>
-                  <Col span={16}>
-                    <AppInput label="Item Name" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, "name", e.target.value)} />
-                  </Col>
-                  <Col span={8}>
-                    <AppInput label="Unit" placeholder="e.g. piece, kg" value={item.unit} onChange={(e) => handleItemChange(index, "unit", e.target.value)} />
-                  </Col>
-                </Row>
-                <Row gutter={12}>
-                  <Col span={isPurchase ? 8 : 6}>
-                    <AppInput label="Qty" inputType="number" min={0} value={item.qty} onChange={(val) => handleItemChange(index, "qty", val)} />
-                  </Col>
-                  <Col span={isPurchase ? 8 : 6}>
-                    <AppInput label="Rate" inputType="number" min={0} value={item.rate} onChange={(val) => handleItemChange(index, "rate", val)} />
-                  </Col>
-                  {!isPurchase && (
-                    <Col span={6}>
-                      <AppInput label="Discount (%)" inputType="number" min={0} max={100} value={item.discount} onChange={(val) => handleItemChange(index, "discount", val)} placeholder="%" />
-                    </Col>
-                  )}
-                  <Col span={isPurchase ? 8 : 6}>
-                    <AppInput label="Total" inputType="number" value={item.total} disabled />
-                  </Col>
-                </Row>
+                {/* Sale invoice: inventory select */}
+                {!isPurchase && (
+                  <>
+                    <Row gutter={12}>
+                      <Col span={24}>
+                        <AppSelect
+                          label="Item *"
+                          placeholder="Search inventory items..."
+                          showSearch
+                          filterOption={false}
+                          loading={invLoading}
+                          options={[
+                            // item linked to inventory but not yet in loaded list → show as placeholder option
+                            ...(item.name && item.inventoryItemId && !invItems.find((i) => i.id === item.inventoryItemId)
+                              ? [{ value: item.inventoryItemId, label: item.name }]
+                              : []
+                            ),
+                            // item has no inventory link (old/free-text)
+                            ...(item.name && !item.inventoryItemId
+                              ? [{ value: "__current__", label: item.name }]
+                              : []
+                            ),
+                            ...invItems.map((i) => ({ value: i.id, label: `${i.itemCode} — ${i.name}` })),
+                          ]}
+                          value={item.inventoryItemId || (item.name ? "__current__" : undefined)}
+                          onSearch={handleInvSearchDebounce}
+                          onPopupScroll={handleInvScroll}
+                          onChange={(val) => { if (val !== "__current__") handleInvItemSelect(index, val); }}
+                          notFoundContent={invLoading ? "Loading..." : "No items found"}
+                          optionRender={(option) =>
+                            option.value === "__current__" ? (
+                              <span style={{ color: "var(--color-text-secondary)", fontStyle: "italic" }}>
+                                {option.label} <span style={{ fontSize: 11 }}>(existing — select to change)</span>
+                              </span>
+                            ) : option.label
+                          }
+                        />
+                      </Col>
+                    </Row>
+                    <Row gutter={12}>
+                      <Col span={12}>
+                        <AppInput label="Item Code" value={item.code} disabled onChange={() => {}} placeholder="—" />
+                      </Col>
+                      <Col span={12}>
+                        <AppInput label="Unit" value={item.unit} disabled onChange={() => {}} placeholder="—" />
+                      </Col>
+                    </Row>
+
+                    {/* Rate comparison block */}
+                    <div className={styles.rateBlock}>
+                      <span className={styles.rateBlockLabel}>Rate Analysis</span>
+                      <div className={styles.rateChips}>
+                        <div className={styles.rateChip}>
+                          <div className={styles.rateChipLabel}>Purchase Rate</div>
+                          <div className={styles.rateChipValue}>
+                            {item.purchaseRate > 0 ? formatCurrency(item.purchaseRate) : "—"}
+                          </div>
+                        </div>
+                        <div className={styles.rateChip}>
+                          <div className={styles.rateChipLabel}>Inventory Sale Rate</div>
+                          <div className={styles.rateChipValue} style={{ color: "#7c5cfc" }}>
+                            {item.inventorySaleRate > 0 ? formatCurrency(item.inventorySaleRate) : "—"}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                          <label style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>Your Sale Rate *</label>
+                          {item.inventoryItemId && item.rate > 0 && item.purchaseRate > 0 && (() => {
+                            const profit = item.rate - item.purchaseRate;
+                            const margin = ((profit / item.purchaseRate) * 100).toFixed(1);
+                            const isLoss = profit < 0;
+                            return (
+                              <div className={`${styles.profitBadge} ${isLoss ? styles.profitBadgeLoss : styles.profitBadgeProfit}`}>
+                                {isLoss ? "⚠" : "✓"}
+                                {isLoss
+                                  ? `Loss −${formatCurrency(Math.abs(profit))} (${Math.abs(margin)}%)`
+                                  : `Profit +${formatCurrency(profit)} (${margin}%)`}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <AppInput
+                          inputType="number"
+                          min={0}
+                          value={item.rate}
+                          onChange={(val) => handleItemChange(index, "rate", val)}
+                        />
+                      </div>
+                    </div>
+
+                    <Row gutter={12} style={{ marginTop: 8 }}>
+                      <Col span={8}>
+                        <AppInput label="Qty" inputType="number" min={0} value={item.qty} onChange={(val) => handleItemChange(index, "qty", val)} />
+                      </Col>
+                      <Col span={8}>
+                        <AppInput label="Discount (%)" inputType="number" min={0} max={100} value={item.discount} onChange={(val) => handleItemChange(index, "discount", val)} placeholder="%" />
+                      </Col>
+                      <Col span={8}>
+                        <AppInput label="Total" inputType="number" value={item.total} disabled />
+                      </Col>
+                    </Row>
+                  </>
+                )}
+
+                {/* Purchase invoice: inventory select layout */}
+                {isPurchase && (
+                  <>
+                    <Row gutter={12}>
+                      <Col span={24}>
+                        <AppSelect
+                          label="Item *"
+                          placeholder="Search inventory items..."
+                          showSearch
+                          filterOption={false}
+                          loading={invLoading}
+                          options={[
+                            ...(item.name && item.inventoryItemId && !invItems.find((i) => i.id === item.inventoryItemId)
+                              ? [{ value: item.inventoryItemId, label: item.name }]
+                              : []
+                            ),
+                            ...(item.name && !item.inventoryItemId
+                              ? [{ value: "__current__", label: item.name }]
+                              : []
+                            ),
+                            ...invItems.map((i) => ({ value: i.id, label: `${i.itemCode} — ${i.name}` })),
+                          ]}
+                          value={item.inventoryItemId || (item.name ? "__current__" : undefined)}
+                          onSearch={handleInvSearchDebounce}
+                          onPopupScroll={handleInvScroll}
+                          onChange={(val) => { if (val !== "__current__") handleInvItemSelect(index, val); }}
+                          notFoundContent={invLoading ? "Loading..." : "No items found"}
+                          optionRender={(option) =>
+                            option.value === "__current__" ? (
+                              <span style={{ color: "var(--color-text-secondary)", fontStyle: "italic" }}>
+                                {option.label} <span style={{ fontSize: 11 }}>(existing — select to change)</span>
+                              </span>
+                            ) : option.label
+                          }
+                        />
+                      </Col>
+                    </Row>
+                    <Row gutter={12}>
+                      <Col span={12}>
+                        <AppInput label="Item Code" value={item.code} disabled onChange={() => {}} placeholder="—" />
+                      </Col>
+                      <Col span={12}>
+                        <AppInput label="Unit" value={item.unit} disabled onChange={() => {}} placeholder="—" />
+                      </Col>
+                    </Row>
+
+                    {/* Purchase rate analysis block */}
+                    <div className={styles.rateBlock}>
+                      <span className={styles.rateBlockLabel}>Rate Analysis</span>
+                      <div className={styles.rateChips}>
+                        <div className={styles.rateChip}>
+                          <div className={styles.rateChipLabel}>Inventory Purchase Rate</div>
+                          <div className={styles.rateChipValue}>
+                            {item.purchaseRate > 0 ? formatCurrency(item.purchaseRate) : "—"}
+                          </div>
+                        </div>
+                        <div className={styles.rateChip}>
+                          <div className={styles.rateChipLabel}>Inventory Sale Rate</div>
+                          <div className={styles.rateChipValue} style={{ color: "#7c5cfc" }}>
+                            {item.inventorySaleRate > 0 ? formatCurrency(item.inventorySaleRate) : "—"}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                          <label style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>Purchase Price *</label>
+                          {item.inventoryItemId && item.rate > 0 && item.purchaseRate > 0 && (() => {
+                            const diff   = item.rate - item.purchaseRate;
+                            const pct    = ((diff / item.purchaseRate) * 100).toFixed(1);
+                            const isMore = diff > 0;
+                            return (
+                              <div className={`${styles.profitBadge} ${isMore ? styles.profitBadgeLoss : styles.profitBadgeProfit}`}>
+                                {isMore ? "⚠" : "✓"}
+                                {isMore
+                                  ? `Paying More +${formatCurrency(diff)} (${pct}%)`
+                                  : diff < 0
+                                    ? `Saving ${formatCurrency(Math.abs(diff))} (${Math.abs(pct)}%)`
+                                    : "At Typical Rate"}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <AppInput
+                          inputType="number"
+                          min={0}
+                          value={item.rate}
+                          onChange={(val) => handleItemChange(index, "rate", val)}
+                        />
+                      </div>
+                    </div>
+
+                    <Row gutter={12} style={{ marginTop: 8 }}>
+                      <Col span={8}>
+                        <AppInput label="Qty" inputType="number" min={0} value={item.qty} onChange={(val) => handleItemChange(index, "qty", val)} />
+                      </Col>
+                      <Col span={8}>
+                        <AppInput label="Discount (%)" inputType="number" min={0} max={100} value={item.discount} onChange={(val) => handleItemChange(index, "discount", val)} placeholder="%" />
+                      </Col>
+                      <Col span={8}>
+                        <AppInput label="Total" inputType="number" value={item.total} disabled />
+                      </Col>
+                    </Row>
+                  </>
+                )}
               </section>
             ))}
 
@@ -653,6 +960,36 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                     { label: "Draft",  value: "Draft" },
                     { label: "Saved",  value: "Saved" },
                   ]}
+                />
+              </Col>
+              <Col span={8}>
+                <AppInput
+                  label="VAT %"
+                  inputType="number"
+                  min={0}
+                  placeholder="0"
+                  value={payment.vatPercentage}
+                  onChange={(val) => setPayment({ ...payment, vatPercentage: val ?? "" })}
+                />
+              </Col>
+              <Col span={8}>
+                <AppInput
+                  label="Invoice Discount (%)"
+                  inputType="number"
+                  min={0}
+                  placeholder="0"
+                  value={payment.invoiceDiscount}
+                  onChange={(val) => setPayment({ ...payment, invoiceDiscount: val ?? "" })}
+                />
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={8}>
+                <AppInput
+                  label="Payment Reference"
+                  placeholder="e.g. CHQ-001"
+                  value={payment.paymentReference}
+                  onChange={(e) => setPayment({ ...payment, paymentReference: e.target.value })}
                 />
               </Col>
             </Row>

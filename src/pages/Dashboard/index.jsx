@@ -10,6 +10,7 @@ import {
   FallOutlined, RiseOutlined, ShopOutlined, CheckCircleOutlined, BankOutlined,
   ArrowUpOutlined, ArrowDownOutlined, UserAddOutlined, ThunderboltOutlined,
   InfoCircleOutlined, FundOutlined, SolutionOutlined,
+  AppstoreOutlined, WarningOutlined, StopOutlined, DollarOutlined,
 } from "@ant-design/icons";
 import { CompanyLogo } from "@/components/common";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
@@ -36,6 +37,13 @@ const CARD_META = [
 ];
 
 const HERO_IDS = [1, 4, 6, 13]; // Total Sales, Receivable, Profit, Total Cash Outflow
+
+const INVENTORY_CARDS = [
+  { title: "Total Products",    icon: <AppstoreOutlined />, color: "#7c5cfc", gradient: "linear-gradient(135deg, #7c5cfc22, #a78bfa11)" },
+  { title: "Low Stock Items",   icon: <WarningOutlined />,  color: "#f97316", gradient: "linear-gradient(135deg, #f9731622, #fb923c11)" },
+  { title: "Out of Stock",      icon: <StopOutlined />,     color: "#ef4444", gradient: "linear-gradient(135deg, #ef444422, #f8717111)" },
+  { title: "Inventory Value",   icon: <DollarOutlined />,   color: "#10b981", gradient: "linear-gradient(135deg, #10b98122, #34d39911)" },
+];
 
 const QUICK_ACTIONS = [
   { label: "Sale Invoice",     icon: <ShoppingCartOutlined />, path: "/sale-invoice",     color: "#7c5cfc" },
@@ -246,6 +254,29 @@ const Dashboard = () => {
           </Col>
         ))}
       </Row>
+
+      {/* Inventory Overview */}
+      <section style={{ marginTop: 4 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
+          <AppstoreOutlined style={{ marginRight: 6 }} />Inventory Overview
+        </p>
+        <Row gutter={[14, 14]}>
+          {INVENTORY_CARDS.map((card, i) => (
+            <Col xs={24} sm={12} lg={6} key={card.title}>
+              <section
+                className={`${styles.kpiCard} animate-fade-in-up`}
+                style={{ animationDelay: `${i * 0.04}s`, "--accent": card.color, background: card.gradient, border: `1px solid ${card.color}33` }}
+              >
+                <span className={styles.kpiIcon} style={{ color: card.color }}>{card.icon}</span>
+                <span className={styles.kpiBody}>
+                  <span className={styles.kpiLabel}>{card.title}</span>
+                  <span className={styles.kpiValue} style={{ color: card.color }}>--</span>
+                </span>
+              </section>
+            </Col>
+          ))}
+        </Row>
+      </section>
 
       <Row gutter={[14, 14]}>
         <Col xs={24}>

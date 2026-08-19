@@ -14,9 +14,10 @@ export const FILTER_FIELD_DEFINITIONS = {
   showStatus:          { key: "status",          label: "Status",          type: "select" },
   showInvoiceStatus:   { key: "status",          label: "Invoice Status",  type: "select" },
   showMethod:          { key: "method",          label: "Method",          type: "select" },
-  showCategory:        { key: "category",        label: "Category",        type: "select" },
+  showCategory:        { key: "category",        label: "Category",        type: "select", creatable: true },
   showCategoryText:    { key: "category",        label: "Category",        type: "text",   placeholder: "Filter by category" },
   showOutflowType:     { key: "type",            label: "Type",            type: "select" },
   showPaymentTerm:     { key: "paymentTerm",     label: "Payment Term",    type: "select" },
   showCustomerType:    { key: "customerType",    label: "Customer Type",   type: "select" },
+  showStockStatus:     { key: "status",          label: "Stock Status",    type: "select" },
 };

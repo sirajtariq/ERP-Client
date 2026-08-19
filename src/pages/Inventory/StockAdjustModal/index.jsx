@@ -1,22 +1,33 @@
 import { useState, useEffect } from "react";
-import { Modal, Radio, message } from "antd";
+import { Modal, Radio, message, DatePicker } from "antd";
 import { PlusCircleOutlined, MinusCircleOutlined, SwapOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { AppButton, AppInput, AppSelect } from "@/components/common";
 import { formatCurrency } from "@/utils";
+import { adjustStock } from "@/services/inventoryService";
 import { STOCK_IN_REASONS, STOCK_OUT_REASONS } from "../mockData";
 import styles from "./styles.module.css";
 
-const IN_REASONS  = STOCK_IN_REASONS.map((r)  => ({ value: r, label: r }));
-const OUT_REASONS = STOCK_OUT_REASONS.map((r) => ({ value: r, label: r }));
+const ADD_NEW = "__add__";
 
-const fresh = { qty: "", reason: null, date: new Date().toISOString().slice(0, 10), notes: "" };
+const makeReasons = (list) => [
+  { value: ADD_NEW, label: "+ Add Reason" },
+  ...list.map((r) => ({ value: r, label: r })),
+];
+
+const IN_REASONS  = makeReasons(STOCK_IN_REASONS);
+const OUT_REASONS = makeReasons(STOCK_OUT_REASONS);
+
+const today = () => dayjs();
+const fresh = () => ({ qty: "", reason: null, customReason: "", date: today(), notes: "" });
 
 const StockAdjustModal = ({ open, onClose, item, defaultType = "in", onAdjust }) => {
-  const [type, setType] = useState(defaultType);
-  const [form, setForm] = useState(fresh);
+  const [type,       setType]       = useState(defaultType);
+  const [form,       setForm]       = useState(fresh);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (open) { setType(defaultType); setForm(fresh); }
+    if (open) { setType(defaultType); setForm(fresh()); }
   }, [open, defaultType]);
 
   if (!item) return null;
@@ -24,30 +35,53 @@ const StockAdjustModal = ({ open, onClose, item, defaultType = "in", onAdjust })
   const qty          = Number(form.qty) || 0;
   const stockAfter   = type === "in" ? item.currentStock + qty : Math.max(0, item.currentStock - qty);
   const isOverdrawn  = type === "out" && qty > item.currentStock;
+  const isAddNew     = form.reason === ADD_NEW;
+  const resolvedReason = isAddNew ? form.customReason?.trim() : form.reason;
 
-  const handleSubmit = () => {
-    if (!qty || qty <= 0)    { message.warning("Enter a valid quantity"); return; }
-    if (!form.reason)        { message.warning("Please select a reason"); return; }
-    if (!form.date)          { message.warning("Please select a date"); return; }
-    if (isOverdrawn)         { message.warning(`Cannot deduct more than current stock (${item.currentStock} ${item.unit})`); return; }
+  const handleSubmit = async () => {
+    if (!qty || qty <= 0)        { message.warning("Enter a valid quantity"); return; }
+    if (!resolvedReason)         { message.warning(isAddNew ? "Please type a reason" : "Please select a reason"); return; }
+    if (!form.date)              { message.warning("Please select a date"); return; }
+    if (isOverdrawn)             { message.warning(`Cannot deduct more than current stock (${item.currentStock} ${item.unit})`); return; }
 
-    onAdjust({
-      itemId:     item.id,
-      type,
-      qty,
-      reason:     form.reason,
-      date:       form.date,
-      notes:      form.notes,
-      stockBefore: item.currentStock,
-      stockAfter,
-    });
+    const dateStr = form.date ? dayjs(form.date).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD");
 
-    message.success(
-      type === "in"
-        ? `${qty} ${item.unit} added — stock is now ${stockAfter}`
-        : `${qty} ${item.unit} removed — stock is now ${stockAfter}`
-    );
-    onClose();
+    setSubmitting(true);
+    try {
+      await adjustStock(item.id, {
+        adjustmentType: type === "in" ? "stockIn" : "stockOut",
+        quantity:       String(qty),
+        date:           dateStr,
+        reason:         resolvedReason,
+        note:           form.notes || null,
+      });
+
+      onAdjust({
+        itemId:      item.id,
+        type,
+        qty,
+        reason:      resolvedReason,
+        date:        dateStr,
+        notes:       form.notes,
+        stockBefore: item.currentStock,
+        stockAfter,
+      });
+
+      message.success(
+        type === "in"
+          ? `${qty} ${item.unit} added — stock is now ${stockAfter}`
+          : `${qty} ${item.unit} removed — stock is now ${stockAfter}`
+      );
+      onClose();
+    } catch (err) {
+      const detail = err?.response?.data;
+      const msg = typeof detail === "string"
+        ? detail
+        : Object.values(detail || {})?.[0]?.[0] || "Failed to adjust stock";
+      message.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const isIn = type === "in";
@@ -57,7 +91,7 @@ const StockAdjustModal = ({ open, onClose, item, defaultType = "in", onAdjust })
       open={open}
       onCancel={onClose}
       footer={null}
-      width={500}
+      width={680}
       centered
       destroyOnClose
       closable={false}
@@ -120,12 +154,16 @@ const StockAdjustModal = ({ open, onClose, item, defaultType = "in", onAdjust })
               value={form.qty}
               onChange={(v) => setForm((f) => ({ ...f, qty: v }))}
             />
-            <AppInput
-              inputType="date"
-              label="Date *"
-              value={form.date}
-              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-            />
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>Date *</label>
+              <DatePicker
+                style={{ width: "100%", height: 38 }}
+                value={form.date}
+                onChange={(d) => setForm((f) => ({ ...f, date: d }))}
+                format="DD-MM-YYYY"
+                allowClear={false}
+              />
+            </div>
           </div>
 
           <AppSelect
@@ -133,8 +171,30 @@ const StockAdjustModal = ({ open, onClose, item, defaultType = "in", onAdjust })
             placeholder="Select reason"
             options={isIn ? IN_REASONS : OUT_REASONS}
             value={form.reason}
-            onChange={(v) => setForm((f) => ({ ...f, reason: v }))}
+            onChange={(v) => {
+              setForm((f) => ({ ...f, reason: v, customReason: "" }));
+            }}
+            optionRender={(option) =>
+              option.value === ADD_NEW ? (
+                <span style={{
+                  display: "block", margin: "-5px -12px", padding: "6px 12px",
+                  background: "rgba(124,92,252,0.08)", color: "#7c5cfc", fontWeight: 600,
+                }}>
+                  {option.label}
+                </span>
+              ) : option.label
+            }
           />
+
+          {isAddNew && (
+            <AppInput
+              label="Custom Reason *"
+              placeholder="Type your reason..."
+              value={form.customReason}
+              onChange={(e) => setForm((f) => ({ ...f, customReason: e.target.value }))}
+              autoFocus
+            />
+          )}
 
           <AppInput
             label="Notes"
@@ -165,18 +225,28 @@ const StockAdjustModal = ({ open, onClose, item, defaultType = "in", onAdjust })
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
-          <AppButton onClick={onClose}>Cancel</AppButton>
-          <AppButton
-            type="primary"
-            onClick={handleSubmit}
-            className="btn-dark"
-            style={{ minWidth: 130 }}
-            icon={isIn ? <PlusCircleOutlined /> : <MinusCircleOutlined />}
-          >
-            {isIn ? "Add Stock" : "Remove Stock"}
-          </AppButton>
-        </div>
+      </div>
+
+      {/* Sticky footer */}
+      <div style={{
+        display: "flex", gap: 10, justifyContent: "flex-end",
+        padding: "12px 24px",
+        borderTop: "1px solid var(--color-border)",
+        background: "var(--color-surface)",
+        flexShrink: 0,
+      }}>
+        <AppButton onClick={onClose}>Cancel</AppButton>
+        <AppButton
+          type="primary"
+          onClick={handleSubmit}
+          className="btn-dark"
+          style={{ minWidth: 130 }}
+          loading={submitting}
+          disabled={submitting}
+          icon={isIn ? <PlusCircleOutlined /> : <MinusCircleOutlined />}
+        >
+          {isIn ? "Add Stock" : "Remove Stock"}
+        </AppButton>
       </div>
     </Modal>
   );

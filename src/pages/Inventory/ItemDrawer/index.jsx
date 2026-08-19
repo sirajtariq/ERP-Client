@@ -4,47 +4,65 @@ import { useForm, Controller } from "react-hook-form";
 import { AppDrawer, AppInput, AppSelect } from "@/components/common";
 import { CATEGORIES, UNITS } from "../mockData";
 
-const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: c }));
+const ADD_NEW = "__add__";
+
+const CATEGORY_OPTIONS = [
+  {
+    value: ADD_NEW,
+    label: "+ Add Category",
+    style: { color: "#7c5cfc", fontWeight: 600, background: "rgba(124,92,252,0.07)" },
+  },
+  ...CATEGORIES.map((c) => ({ value: c, label: c })),
+];
 
 const defaultValues = {
-  itemCode: "", name: "", category: null, unit: null,
+  itemCode: "", name: "", category: null, customCategory: "", unit: null,
   purchaseRate: "", saleRate: "",
   openingStock: "", minStock: "",
   description: "",
 };
 
-const ItemDrawer = ({ open, onClose, onSubmit, editingItem, nextCode }) => {
-  const { control, handleSubmit, reset, watch, formState: { errors, isValid } } = useForm({
+const ItemDrawer = ({ open, onClose, onSubmit, editingItem, loading }) => {
+  const { control, handleSubmit, reset, watch, setValue, formState: { errors, isValid } } = useForm({
     mode: "onTouched",
     defaultValues,
   });
 
-  const purchaseRate = watch("purchaseRate");
-  const saleRate     = watch("saleRate");
+  const purchaseRate    = watch("purchaseRate");
+  const saleRate        = watch("saleRate");
+  const category        = watch("category");
+  const customCategory  = watch("customCategory");
+  const isAddNew        = category === ADD_NEW;
+
   const margin = purchaseRate > 0 ? ((saleRate - purchaseRate) / purchaseRate * 100).toFixed(1) : null;
 
   useEffect(() => {
     if (!open) return;
     if (editingItem) {
       reset({
+        ...defaultValues,
         itemCode:     editingItem.itemCode     || "",
         name:         editingItem.name         || "",
         category:     editingItem.category     || null,
         unit:         editingItem.unit         || null,
         purchaseRate: editingItem.purchaseRate ?? "",
         saleRate:     editingItem.saleRate     ?? "",
-        openingStock: "",
         minStock:     editingItem.minStock     ?? "",
         description:  editingItem.description  || "",
       });
     } else {
-      reset({ ...defaultValues, itemCode: nextCode });
+      reset(defaultValues);
     }
   }, [open, editingItem]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onFormSubmit = (data) => {
+    const resolvedCategory = data.category === ADD_NEW
+      ? (data.customCategory || "").trim()
+      : data.category;
+
     onSubmit({
       ...data,
+      category:     resolvedCategory,
       purchaseRate: Number(data.purchaseRate) || 0,
       saleRate:     Number(data.saleRate)     || 0,
       openingStock: Number(data.openingStock) || 0,
@@ -53,6 +71,7 @@ const ItemDrawer = ({ open, onClose, onSubmit, editingItem, nextCode }) => {
     reset(defaultValues);
   };
 
+  const submitDisabled = !isValid || loading || (isAddNew && !customCategory?.trim());
   const isEdit = !!editingItem;
 
   return (
@@ -62,7 +81,8 @@ const ItemDrawer = ({ open, onClose, onSubmit, editingItem, nextCode }) => {
       onClose={() => { onClose(); reset(defaultValues); }}
       onSubmit={handleSubmit(onFormSubmit)}
       submitText={isEdit ? "Update Item" : "Add Item"}
-      submitDisabled={!isValid}
+      submitDisabled={submitDisabled}
+      loading={loading}
       width={520}
     >
       <Row gutter={16}>
@@ -77,21 +97,66 @@ const ItemDrawer = ({ open, onClose, onSubmit, editingItem, nextCode }) => {
       </Row>
 
       <Row gutter={16}>
-        <Col span={14}>
+        <Col span={isAddNew ? 24 : 14}>
           <Controller name="category" control={control} rules={{ required: "Required" }}
             render={({ field }) => (
-              <AppSelect {...field} label="Category" placeholder="Select category"
-                options={CATEGORY_OPTIONS} required errors={errors} />
+              <AppSelect
+                {...field}
+                label="Category"
+                placeholder="Select category"
+                options={CATEGORY_OPTIONS}
+                showSearch
+                required
+                errors={errors}
+                optionRender={(option) =>
+                  option.value === ADD_NEW ? (
+                    <span style={{
+                      display: "block", margin: "-5px -12px", padding: "6px 12px",
+                      background: "rgba(124,92,252,0.08)", color: "#7c5cfc", fontWeight: 600,
+                    }}>
+                      {option.label}
+                    </span>
+                  ) : option.label
+                }
+              />
             )} />
         </Col>
-        <Col span={10}>
-          <Controller name="unit" control={control} rules={{ required: "Required" }}
-            render={({ field }) => (
-              <AppSelect {...field} label="Unit" placeholder="Select unit"
-                options={UNITS} required errors={errors} />
-            )} />
-        </Col>
+        {!isAddNew && (
+          <Col span={10}>
+            <Controller name="unit" control={control} rules={{ required: "Required" }}
+              render={({ field }) => (
+                <AppSelect {...field} label="Unit" placeholder="Select unit"
+                  options={UNITS} required errors={errors} />
+              )} />
+          </Col>
+        )}
       </Row>
+
+      {isAddNew && (
+        <Row gutter={16}>
+          <Col span={14}>
+            <Controller name="customCategory" control={control}
+              rules={{ validate: (v) => !isAddNew || !!v?.trim() || "Category name required" }}
+              render={({ field }) => (
+                <AppInput
+                  {...field}
+                  label="New Category Name"
+                  placeholder="e.g. Solar Equipment"
+                  required
+                  errors={errors}
+                  autoFocus
+                />
+              )} />
+          </Col>
+          <Col span={10}>
+            <Controller name="unit" control={control} rules={{ required: "Required" }}
+              render={({ field }) => (
+                <AppSelect {...field} label="Unit" placeholder="Select unit"
+                  options={UNITS} required errors={errors} />
+              )} />
+          </Col>
+        </Row>
+      )}
 
       <Row gutter={16}>
         <Col span={12}>

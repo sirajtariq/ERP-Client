@@ -121,9 +121,9 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
     { title: "Date", dataIndex: "date", key: "date", width: "12%", render: (val) => val ? formatDate(val) : "-" },
     { title: "Voucher", dataIndex: "voucher", key: "voucher", width: "16%", render: (val) => <span style={{ fontWeight: 600 }}>{val}</span> },
     { title: "Description", dataIndex: "description", key: "description", width: "32%" },
-    { title: "Debit", dataIndex: "debit", key: "debit", width: "12%", align: "right", render: (val) => val ? formatCurrency(val) : "-" },
-    { title: "Credit", dataIndex: "credit", key: "credit", width: "12%", align: "right", render: (val) => val ? formatCurrency(val) : "-" },
-    { title: "Balance", dataIndex: "balance", key: "balance", width: "16%", align: "right", render: (val) => <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{formatCurrency(val || 0)}</span> },
+    { title: "Debit", dataIndex: "debit", key: "debit", width: "12%", align: "left", render: (val) => val ? formatCurrency(val) : "-" },
+    { title: "Credit", dataIndex: "credit", key: "credit", width: "12%", align: "left", render: (val) => val ? formatCurrency(val) : "-" },
+    { title: "Balance", dataIndex: "balance", key: "balance", width: "16%", align: "left", render: (val) => <span style={{ fontWeight: 700, color: "var(--color-text)" }}>{formatCurrency(val || 0)}</span> },
   ];
 
   return (
@@ -359,21 +359,6 @@ const CustomerLedger = ({ open, onClose, customer, onPrint }) => {
                 className={styles.ledgerTable}
                 locale={{ emptyText: "No transactions found" }}
               />
-            </section>
-
-            <section className={styles.finalSection}>
-              <h3 className={styles.ledgerTitle}>Final Payment Details</h3>
-              <section className={styles.finalGrid}>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Opening Balance</span><span className={styles.finalValue}>{formatCurrency(finalPayment.openingBalance || 0)}</span></section>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Total Purchases</span><span className={styles.finalValueBlue}>{formatCurrency(finalPayment.totalPurchases || 0)}</span></section>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Payments Received</span><span className={styles.finalValueGreen}>{formatCurrency(finalPayment.paymentsReceived || 0)}</span></section>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Advance Used</span><span className={styles.finalValueGreen}>{formatCurrency(finalPayment.advanceUsed || 0)}</span></section>
-              </section>
-              <section className={styles.finalGrid}>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Total Collected</span><span className={styles.finalValue}>{formatCurrency(finalPayment.totalCollected || 0)}</span></section>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Available Advance</span><span className={styles.finalValueGreen}>{formatCurrency(finalPayment.availableAdvance || 0)}</span></section>
-                <section className={styles.finalCell}><span className={styles.finalLabel}>Remaining Balance</span><span className={styles.finalValueRed}>{formatCurrency(finalPayment.remainingBalance || 0)}</span></section>
-              </section>
             </section>
 
             <p className={styles.footerNote}>Computer generated ledger ◆ no signature required</p>

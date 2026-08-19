@@ -146,22 +146,71 @@ export const MOCK_STOCK_HISTORY = [
 ];
 
 export const CATEGORIES = [
-  "Lubricants", "Filters", "Brakes", "Electrical", "Engine Parts",
-  "Accessories", "Tyres", "Suspension", "Body Parts", "Other",
+  // Electrical
+  "Switches & Sockets",
+  "Wires & Cables",
+  "Circuit Breakers & MCBs",
+  "Conduit & Fittings",
+  "Lighting & Fixtures",
+  "Motors & Drives",
+  "Control Panels & Components",
+  "Transformers",
+  "Batteries & UPS",
+  "Electric Tools & Equipment",
+  // Engineering / Workshop
+  "Fasteners & Bolts",
+  "Pipes & Pipe Fittings",
+  "Bearings",
+  "Seals & Gaskets",
+  "Hydraulic Parts",
+  "Pneumatic Parts",
+  "Welding Supplies",
+  "Hand Tools",
+  "Power Tools",
+  "Steel & Metal Stock",
+  "Chemicals & Lubricants",
+  "Safety Equipment",
+  // General
+  "Spare Parts",
+  "Raw Material",
+  "Packaging Material",
+  "Other",
 ];
 
 export const UNITS = [
-  { value: "pcs",   label: "Pieces (pcs)" },
-  { value: "set",   label: "Set" },
-  { value: "liter", label: "Liter" },
-  { value: "kg",    label: "Kilogram (kg)" },
-  { value: "gram",  label: "Gram (g)" },
-  { value: "meter", label: "Meter (m)" },
-  { value: "dozen", label: "Dozen" },
-  { value: "box",   label: "Box" },
-  { value: "pack",  label: "Pack" },
-  { value: "can",   label: "Can" },
-  { value: "pair",  label: "Pair" },
+  // Count
+  { value: "pcs",    label: "Pieces (pcs)" },
+  { value: "set",    label: "Set" },
+  { value: "pair",   label: "Pair" },
+  { value: "dozen",  label: "Dozen" },
+  { value: "bundle", label: "Bundle" },
+  // Weight
+  { value: "kg",     label: "Kilogram (kg)" },
+  { value: "gram",   label: "Gram (g)" },
+  { value: "mg",     label: "Milligram (mg)" },
+  { value: "ton",    label: "Ton" },
+  { value: "pound",  label: "Pound (lb)" },
+  // Length
+  { value: "meter",  label: "Meter (m)" },
+  { value: "cm",     label: "Centimeter (cm)" },
+  { value: "mm",     label: "Millimeter (mm)" },
+  { value: "km",     label: "Kilometer (km)" },
+  { value: "inch",   label: "Inch (in)" },
+  { value: "foot",   label: "Foot (ft)" },
+  { value: "yard",   label: "Yard (yd)" },
+  // Volume
+  { value: "liter",  label: "Liter (L)" },
+  { value: "ml",     label: "Milliliter (ml)" },
+  { value: "gallon", label: "Gallon" },
+  // Packaging
+  { value: "box",    label: "Box" },
+  { value: "pack",   label: "Pack" },
+  { value: "can",    label: "Can" },
+  { value: "bag",    label: "Bag" },
+  { value: "roll",   label: "Roll" },
+  { value: "sheet",  label: "Sheet" },
+  { value: "bottle", label: "Bottle" },
+  { value: "carton", label: "Carton" },
 ];
 
 export const STOCK_IN_REASONS  = ["Purchase", "Sale Return", "Opening Stock", "Stock Transfer In", "Correction"];

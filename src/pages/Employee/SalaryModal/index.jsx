@@ -3,8 +3,22 @@ import { Modal, Row, Col, Select, DatePicker, Divider, Radio, message } from "an
 import { DollarOutlined, CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { AppButton, AppInput } from "@/components/common";
 import { formatCurrency, formatDate } from "@/utils";
+import { getCompanyInfo } from "@/utils/companyInfoStore";
 import dayjs from "dayjs";
 import styles from "./styles.module.css";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const calcWorkingDays = (month, year, basis, offDays) => {
+  if (basis === "fixed_30") return 30;
+  const total = new Date(year, month, 0).getDate();
+  if (basis === "month_days") return total;
+  let count = 0;
+  for (let i = 1; i <= total; i++) {
+    if (!offDays.includes(DAY_NAMES[new Date(year, month - 1, i).getDay()])) count++;
+  }
+  return count;
+};
 
 const MONTHS = [
   { value: 1, label: "January" },  { value: 2,  label: "February" },
@@ -79,6 +93,10 @@ const SalaryModal = ({
     () => empRecords.find((r) => r.month === salaryForm.month && r.year === salaryForm.year),
     [empRecords, salaryForm.month, salaryForm.year]
   );
+
+  const { salaryBasis = "month_days", weeklyOffDays = [] } = getCompanyInfo();
+  const workingDays = calcWorkingDays(salaryForm.month, salaryForm.year, salaryBasis, weeklyOffDays);
+  const perDayRate  = workingDays > 0 ? Math.round((employee?.currentSalary || 0) / workingDays) : 0;
 
   // Net salary calculation (for new records)
   const netDue = Math.max(0,
@@ -278,6 +296,9 @@ const SalaryModal = ({
           <Col span={8}>
             <label className={styles.fieldLabel}>Basic Salary</label>
             <div className={styles.readonlyField}>{formatCurrency(employee.currentSalary || 0)}</div>
+            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 }}>
+              {formatCurrency(perDayRate)}/day &nbsp;·&nbsp; {workingDays} days
+            </div>
           </Col>
           <Col span={8}>
             <AppInput inputType="number" label="Bonus (Rs)" min={0} placeholder="0"
