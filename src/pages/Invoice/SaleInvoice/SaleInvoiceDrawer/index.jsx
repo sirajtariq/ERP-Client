@@ -176,7 +176,6 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     const discount          = updated[index].discount || 0;
     const inventorySaleRate = Number(inv.saleRate)    || 0;
     const purchaseRate      = Number(inv.purchaseRate) || 0;
-    // For purchase invoices default rate to purchaseRate; for sale to inventorySaleRate
     const defaultRate       = isPurchase ? purchaseRate : inventorySaleRate;
     const subtotal          = qty * defaultRate;
     updated[index] = {
@@ -191,6 +190,18 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
       total:            subtotal - (subtotal * discount / 100),
     };
     setItems(updated);
+    // Reset search so next dropdown shows full list
+    if (invSearch) {
+      setInvSearch("");
+      fetchInvItems(0, "");
+    }
+  };
+
+  const handleInvDropdownOpen = (visible) => {
+    if (visible && invSearch) {
+      setInvSearch("");
+      fetchInvItems(0, "");
+    }
   };
 
   const populateFromInvoice = (invoice) => {
@@ -696,12 +707,10 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                           filterOption={false}
                           loading={invLoading}
                           options={[
-                            // item linked to inventory but not yet in loaded list → show as placeholder option
                             ...(item.name && item.inventoryItemId && !invItems.find((i) => i.id === item.inventoryItemId)
                               ? [{ value: item.inventoryItemId, label: item.name }]
                               : []
                             ),
-                            // item has no inventory link (old/free-text)
                             ...(item.name && !item.inventoryItemId
                               ? [{ value: "__current__", label: item.name }]
                               : []
@@ -712,6 +721,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                           onSearch={handleInvSearchDebounce}
                           onPopupScroll={handleInvScroll}
                           onChange={(val) => { if (val !== "__current__") handleInvItemSelect(index, val); }}
+                          onDropdownVisibleChange={handleInvDropdownOpen}
                           notFoundContent={invLoading ? "Loading..." : "No items found"}
                           optionRender={(option) =>
                             option.value === "__current__" ? (
@@ -815,6 +825,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                           onSearch={handleInvSearchDebounce}
                           onPopupScroll={handleInvScroll}
                           onChange={(val) => { if (val !== "__current__") handleInvItemSelect(index, val); }}
+                          onDropdownVisibleChange={handleInvDropdownOpen}
                           notFoundContent={invLoading ? "Loading..." : "No items found"}
                           optionRender={(option) =>
                             option.value === "__current__" ? (
