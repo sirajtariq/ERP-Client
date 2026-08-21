@@ -76,9 +76,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid var(--color-primary);
 }
 
 .companyLeft {
@@ -178,15 +176,15 @@
 }
 
 .tableHead {
-  background: var(--color-primary);
+  background: #f1f5f9;
 }
 
 .th, .thRight, .thCenter {
   padding: 10px 10px;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--color-white);
-  border: 1px solid rgba(255,255,255,0.1);
+  font-weight: 700;
+  color: #1e293b;
+  border: 1px solid #d1d5db;
 }
 .th { text-align: left; }
 .thRight { text-align: left; }

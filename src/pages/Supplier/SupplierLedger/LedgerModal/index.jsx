@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { DollarOutlined, FileAddOutlined } from "@ant-design/icons";
 import { AppButton, AppInput, AppSelect, StatCard } from "@/components/common";
 import { getVendorLedger, normalizeVendorLedger, createVendorPayment, patchVendor } from "@/services/supplierService";
-import { formatCurrency } from "@/utils";
+import { formatCurrency, downloadPDF } from "@/utils";
 import { logoSvgString } from "@/utils/logoSvg";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
 import { useAuth } from "@/context/AuthContext";
@@ -46,7 +46,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
     return `<html><head><title>Vendor Ledger - ${supplier.name}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;">
           <div style="display:flex;gap:14px;align-items:flex-start;">
             ${logoSvgString(50)}
             <div>
@@ -61,6 +61,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
             <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
           </div>
         </div>
+        <hr style="border:none;border-top:1px solid #d1d5db;margin:0 0 16px 0;" />
         <div style="border:1px solid #3b82f6;border-radius:6px;padding:16px;margin-bottom:16px;">
           <h3 style="font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin:0 0 8px;">SUPPLIER DETAILS</h3>
           <h4 style="font-size:16px;font-weight:700;margin:0 0 6px;">${supplier.name}</h4>
@@ -80,13 +81,13 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
           ${summaryCell("Remaining Balance", formatCurrency(ledger.remainingBalance), "#dc2626")}
         </div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-          <thead><tr style="background:#141423;">
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Date</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Voucher</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Description</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Debit</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Credit</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Balance</th>
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Date</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Voucher</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Description</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Debit</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Credit</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Balance</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -210,7 +211,7 @@ const LedgerModal = ({ open, onClose, supplier, onUpdated }) => {
           <button className={styles.payBtn} onClick={() => { setPayOpen(true); setOpeningOpen(false); }}><DollarOutlined /> Pay Vendor</button>
           <button className={styles.openingBtn} onClick={() => { setOpeningOpen(true); setPayOpen(false); }}><FileAddOutlined /> Opening Balance</button>
           <button className={styles.printBtn} onClick={handlePrint}>Print</button>
-          <button className={styles.pdfBtn} onClick={handlePrint}>Download PDF</button>
+          <button className={styles.pdfBtn} onClick={() => { const h = buildPrintHTML(); if (h) downloadPDF(h, `vendor-ledger-${supplier?.name || "supplier"}`); }}>Download PDF</button>
           <button className={styles.closeBtn} onClick={onClose}>Close</button>
         </div>
       </div>

@@ -5,7 +5,7 @@
 // Customer
 export const customerFormSchema = {
   name:          { required: "Customer name is required" },
-  phone:         {},
+  phone:         { required: "Phone number is required" },
   email:         {},
   address:       {},
   taxNumber:     {},
@@ -16,7 +16,7 @@ export const customerFormSchema = {
 // Supplier / Vendor
 export const supplierLedgerSchema = {
   vendorName:     { required: "Vendor name is required" },
-  phone:          {},
+  phone:          { required: "Phone number is required" },
   email:          {},
   address:        {},
   taxNumber:      {},
@@ -96,9 +96,10 @@ export const isFormValid = (values, schema) => {
   return true;
 };
 
-export const isQuotationStep1Valid = (selectedCustomer, newCustomerName, isNewCustomer) => {
-  if (isNewCustomer) return newCustomerName && newCustomerName.trim().length > 0;
-  return !!selectedCustomer;
+export const isQuotationStep1Valid = (selectedCustomer, newCustomerName, isNewCustomer, phone) => {
+  const hasPhone = !!String(phone || "").trim();
+  if (isNewCustomer) return !!(newCustomerName && newCustomerName.trim().length > 0) && hasPhone;
+  return !!selectedCustomer && hasPhone;
 };
 
 export const isQuotationStep2Valid = (items) => {

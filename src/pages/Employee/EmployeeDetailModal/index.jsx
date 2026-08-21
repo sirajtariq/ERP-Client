@@ -210,7 +210,7 @@ const EmployeeDetailModal = ({
 <div class="page">
 
   <!-- HEADER -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;border-bottom:2px solid #141423;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;">
     <div>
       <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${co.name || "Company Name"}</h1>
       ${co.address ? `<p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Address:</strong> ${co.address}</p>` : ""}
@@ -224,6 +224,7 @@ const EmployeeDetailModal = ({
       <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Printed:</strong> ${printDate}</p>
     </div>
   </div>
+  <hr style="border:none;border-top:1px solid #d1d5db;margin:0;" />
 
   <!-- EMPLOYEE DETAILS -->
   <div class="section-title">Employee Information</div>
@@ -310,18 +311,18 @@ const EmployeeDetailModal = ({
   </div>
 
   <!-- NET PAY -->
-  <div style="background:linear-gradient(135deg,#7c5cfc 0%,#6d48ef 100%);padding:18px 28px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="background:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border:2px solid #1e293b;border-radius:0 0 12px 12px;">
     <div>
-      <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Net Pay for ${monthName}</div>
-      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px;">${fc(netPay)}</div>
+      <div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Net Pay for ${monthName}</div>
+      <div style="font-size:28px;font-weight:800;color:#1e293b;letter-spacing:-0.5px;">${fc(netPay)}</div>
     </div>
     <div style="text-align:right;">
-      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:4px;">Paid so far</div>
-      <div style="font-size:16px;font-weight:700;color:#86efac;">${fc(amountPaid)}</div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Paid so far</div>
+      <div style="font-size:16px;font-weight:700;color:#16a34a;">${fc(amountPaid)}</div>
       ${remaining > 0 ? `
-      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:6px;margin-bottom:2px;">Remaining</div>
-      <div style="font-size:16px;font-weight:700;color:#fca5a5;">${fc(remaining)}</div>` : `
-      <div style="margin-top:8px;padding:4px 12px;background:rgba(255,255,255,0.15);border-radius:20px;font-size:12px;font-weight:700;color:#fff;">FULLY PAID</div>`}
+      <div style="font-size:11px;color:#64748b;margin-top:6px;margin-bottom:2px;">Remaining</div>
+      <div style="font-size:16px;font-weight:700;color:#dc2626;">${fc(remaining)}</div>` : `
+      <div style="margin-top:8px;padding:4px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:20px;font-size:12px;font-weight:700;color:#16a34a;">FULLY PAID</div>`}
     </div>
   </div>
 

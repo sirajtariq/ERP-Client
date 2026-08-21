@@ -40,9 +40,9 @@ export const deleteSaleInvoice = async (id) => {
   await api.delete(`/sales/invoices/${id}/`);
 };
 
-// PATCH /sales/invoices/{id}/ — status change only
-export const updateSaleInvoiceStatus = async (id, invoiceStatus) => {
-  const response = await api.patch(`/sales/invoices/${id}/`, { invoiceStatus });
+// PATCH /sales/invoices/{id}/ — accepts a pre-built body (must include customer_data + items)
+export const updateSaleInvoiceStatus = async (id, body) => {
+  const response = await api.patch(`/sales/invoices/${id}/`, body);
   return response.data;
 };
 
@@ -67,6 +67,7 @@ export const normalizeSaleInvoice = (inv) => ({
   id:                   inv.id,
   invoiceNo:            inv.invoiceNumber   || inv.invoice_number || "",
   customerName:         inv.customerName    || "",
+  customerType:         inv.customerType    || "permanent",
   total:                parseFloat(inv.total)   || 0,
   paid:                 parseFloat(inv.paid)    || 0,
   pending:              parseFloat(inv.pending) || 0,

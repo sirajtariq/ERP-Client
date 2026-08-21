@@ -347,9 +347,6 @@ const DailyExpense = () => {
           permanentDeleteFn={permanentDeleteExpense}
           onSuccess={() => fetchExpenses(page.current, page.size, searchText, appliedFilters.startDate, appliedFilters.endDate)}
           rowKey="id"
-          searchPlaceholder="Search by expense number..."
-          showDateFilter
-
           columns={[
             { title: "Voucher",  dataIndex: "expenseNumber", key: "expenseNumber", width: 120, render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v || "-"}</span> },
             { title: "Category", dataIndex: "category",      key: "category",      width: 130, ellipsis: true },

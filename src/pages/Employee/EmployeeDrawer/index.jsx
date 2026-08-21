@@ -108,7 +108,8 @@ const EmployeeDrawer = ({ open, onClose, onSubmit, editingEmployee }) => {
       <Row gutter={16}>
         <Col span={12}>
           <Controller name="phone" control={control}
-            render={({ field }) => <AppInput {...field} label="Phone" placeholder="0301-1234567" errors={errors} />} />
+            rules={{ required: "Phone number is required" }}
+            render={({ field }) => <AppInput {...field} label="Phone" placeholder="0301-1234567" required errors={errors} />} />
         </Col>
         <Col span={12}>
           <Controller name="email" control={control}

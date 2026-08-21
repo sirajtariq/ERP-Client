@@ -91,6 +91,7 @@ const ReceiveModal = ({ open, onClose, data }) => {
               <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </div>
           </div>
+          <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "0 0 16px 0" }} />
 
           <div className={styles.receiptBox}>
             <div className={styles.receiptRow}>

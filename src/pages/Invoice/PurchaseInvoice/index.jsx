@@ -240,7 +240,7 @@ const PurchaseInvoice = () => {
           date:       viewInvoice.date          || "",
           items: (viewInvoice.items || []).map((item) => ({
             id:         item.id,
-            name:       item.itemName || item.productName || item.name || "",
+            name:       item.itemName || item.productName || item.name || item.itemCode || "",
             unit:       item.units                        || "",
             qty:        parseFloat(item.quantity)         || 0,
             rate:       parseFloat(item.unitPrice || item.purchasePrice || item.rate) || 0,
@@ -282,9 +282,6 @@ const PurchaseInvoice = () => {
           permanentDeleteFn={permanentDeletePurchaseInvoice}
           onSuccess={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.billNumber, appliedFilters.status, appliedFilters.paymentTerm, appliedFilters.invoiceNumber)}
           rowKey="id"
-          searchPlaceholder="Search by invoice #, bill #..."
-          showDateFilter
-
           columns={[
             { title: "Invoice #", dataIndex: "invoiceNumber", key: "invoiceNumber", width: 130, render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v || "-"}</span> },
             { title: "Bill #",    dataIndex: "billNumber",    key: "billNumber",    width: 110 },

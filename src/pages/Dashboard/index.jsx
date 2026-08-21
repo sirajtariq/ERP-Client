@@ -39,10 +39,11 @@ const CARD_META = [
 const HERO_IDS = [1, 4, 6, 13]; // Total Sales, Receivable, Profit, Total Cash Outflow
 
 const INVENTORY_CARDS = [
-  { title: "Total Products",    icon: <AppstoreOutlined />, color: "#7c5cfc", gradient: "linear-gradient(135deg, #7c5cfc22, #a78bfa11)" },
-  { title: "Low Stock Items",   icon: <WarningOutlined />,  color: "#f97316", gradient: "linear-gradient(135deg, #f9731622, #fb923c11)" },
-  { title: "Out of Stock",      icon: <StopOutlined />,     color: "#ef4444", gradient: "linear-gradient(135deg, #ef444422, #f8717111)" },
-  { title: "Inventory Value",   icon: <DollarOutlined />,   color: "#10b981", gradient: "linear-gradient(135deg, #10b98122, #34d39911)" },
+  { title: "Total Products",       field: "total_products",          format: "count",    icon: <AppstoreOutlined />, color: "#7c5cfc", gradient: "linear-gradient(135deg, #7c5cfc22, #a78bfa11)" },
+  { title: "Low Stock Items",      field: "low_stock_items",         format: "count",    icon: <WarningOutlined />,  color: "#f97316", gradient: "linear-gradient(135deg, #f9731622, #fb923c11)" },
+  { title: "Out of Stock",         field: "out_of_stock_items",      format: "count",    icon: <StopOutlined />,     color: "#ef4444", gradient: "linear-gradient(135deg, #ef444422, #f8717111)" },
+  { title: "Inventory Value",      field: "total_inventory_value",   format: "currency", icon: <DollarOutlined />,   color: "#10b981", gradient: "linear-gradient(135deg, #10b98122, #34d39911)" },
+  { title: "Potential Revenue",    field: "total_potential_revenue", format: "currency", icon: <RiseOutlined />,     color: "#3b82f6", gradient: "linear-gradient(135deg, #3b82f622, #60a5fa11)" },
 ];
 
 const QUICK_ACTIONS = [
@@ -97,6 +98,14 @@ const normalizeCards = (data) => {
   ];
 };
 
+const normalizeInventory = (data) => ({
+  total_products:           parseInt(data.total_products           ?? data.totalProducts           ?? 0) || 0,
+  low_stock_items:          parseInt(data.low_stock_items          ?? data.lowStockItems           ?? 0) || 0,
+  out_of_stock_items:       parseInt(data.out_of_stock_items       ?? data.outOfStockItems         ?? 0) || 0,
+  total_inventory_value:    parseFloat(data.total_inventory_value  ?? data.totalInventoryValue     ?? 0) || 0,
+  total_potential_revenue:  parseFloat(data.total_potential_revenue ?? data.totalPotentialRevenue  ?? 0) || 0,
+});
+
 const normalizeCharts = (data) => {
   const rows = Array.isArray(data) ? data : (data.monthly ?? data.chartData ?? data.data ?? data.results ?? []);
   return rows.map((item) => ({
@@ -139,6 +148,7 @@ const InsightRow = ({ label, value, color, sub }) => (
 const Dashboard = () => {
   const [cards, setCards]         = useState([]);
   const [chartData, setChartData] = useState([]);
+  const [invStats, setInvStats]   = useState({});
   const [loading, setLoading]     = useState(true);
   const [chartGuide, setChartGuide]       = useState(false);
   const [insightsOpen, setInsightsOpen]   = useState(false);
@@ -158,6 +168,7 @@ const Dashboard = () => {
           getDashboardCharts({ fromDate, toDate }),
         ]);
         setCards(normalizeCards(cardsRes));
+        setInvStats(normalizeInventory(cardsRes));
         setChartData(normalizeCharts(chartsRes));
       } catch {
         // keep empty state on error
@@ -261,20 +272,28 @@ const Dashboard = () => {
           <AppstoreOutlined style={{ marginRight: 6 }} />Inventory Overview
         </p>
         <Row gutter={[14, 14]}>
-          {INVENTORY_CARDS.map((card, i) => (
-            <Col xs={24} sm={12} lg={6} key={card.title}>
-              <section
-                className={`${styles.kpiCard} animate-fade-in-up`}
-                style={{ animationDelay: `${i * 0.04}s`, "--accent": card.color, background: card.gradient, border: `1px solid ${card.color}33` }}
-              >
-                <span className={styles.kpiIcon} style={{ color: card.color }}>{card.icon}</span>
-                <span className={styles.kpiBody}>
-                  <span className={styles.kpiLabel}>{card.title}</span>
-                  <span className={styles.kpiValue} style={{ color: card.color }}>--</span>
-                </span>
-              </section>
-            </Col>
-          ))}
+          {INVENTORY_CARDS.map((card, i) => {
+            const raw = invStats[card.field] ?? null;
+            const display = raw === null
+              ? (loading ? "…" : "--")
+              : card.format === "currency"
+                ? formatCurrency(raw)
+                : raw.toLocaleString("en-PK");
+            return (
+              <Col xs={24} sm={12} lg={i < 2 ? 12 : 8} key={card.title}>
+                <section
+                  className={`${styles.kpiCard} animate-fade-in-up`}
+                  style={{ animationDelay: `${i * 0.04}s`, "--accent": card.color, background: card.gradient, border: `1px solid ${card.color}33` }}
+                >
+                  <span className={styles.kpiIcon} style={{ color: card.color }}>{card.icon}</span>
+                  <span className={styles.kpiBody}>
+                    <span className={styles.kpiLabel}>{card.title}</span>
+                    <span className={styles.kpiValue} style={{ color: card.color }}>{display}</span>
+                  </span>
+                </section>
+              </Col>
+            );
+          })}
         </Row>
       </section>
 

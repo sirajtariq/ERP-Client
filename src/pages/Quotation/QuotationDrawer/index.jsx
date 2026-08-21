@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Drawer, Steps, DatePicker, Row, Col, Typography, message, Tooltip, Tag } from "antd";
 import { useForm, Controller } from "react-hook-form";
-import { PlusOutlined, DeleteOutlined, TeamOutlined } from "@ant-design/icons";
+import { DeleteOutlined, TeamOutlined, DatabaseOutlined, FormOutlined } from "@ant-design/icons";
 import _ from "lodash";
 import dayjs from "dayjs";
 import { AppButton, AppInput, AppSelect } from "@/components/common";
 import { getAllCustomers, normalizeCustomer } from "@/services/customerService";
 import { createQuotation, updateQuotation, buildCustomerDataPayload } from "@/services/quotationService";
+import { getItems as getInventoryItems } from "@/services/inventoryService";
+import { UNITS } from "@/pages/Inventory/mockData";
 import { useInfiniteScroll } from "@/hooks";
 import { formatCurrency } from "@/utils";
 import { QUOTATION_STATUS_OPTIONS, QUOTATION_PAYMENT_TERM_OPTIONS } from "@/constants/filterOptions";
@@ -23,6 +25,9 @@ const STEPS = [
   { title: "Items" },
 ];
 
+const emptyItem    = () => ({ id: Date.now(), inventoryItemId: null, code: "", name: "", unit: "NOS", rate: 0, qty: 0, discount: 0, total: 0 });
+const emptyManual  = () => ({ id: Date.now(), inventoryItemId: null, code: "", name: "", unit: "", rate: 0, qty: 0, discount: 0, total: 0, isManual: true });
+
 const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
   const [current, setCurrent]                 = useState(0);
   const [customers, setCustomers]             = useState([]);
@@ -32,9 +37,17 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isNewCustomer, setIsNewCustomer]     = useState(false);
   const [newCustomerName, setNewCustomerName] = useState("");
-  const [items, setItems]                     = useState([{ id: 1, name: "", unit: "NOS", qty: 0, rate: 0, discount: 0, total: 0 }]);
-  const [previewOpen, setPreviewOpen]         = useState(false);
-  const [submitting, setSubmitting]           = useState(false);
+  const [items, setItems]                     = useState([emptyItem()]);
+
+  // ── Inventory items ──
+  const [invItems,   setInvItems]   = useState([]);
+  const [invPage,    setInvPage]    = useState({ current: 0, size: PAGE_SIZE, total: 0 });
+  const [invSearch,  setInvSearch]  = useState("");
+  const [invLoading, setInvLoading] = useState(false);
+
+  const [previewOpen, setPreviewOpen]       = useState(false);
+  const [submitting, setSubmitting]         = useState(false);
+  const [nextLoading, setNextLoading]       = useState(false);
 
   const { control, reset: resetForm, watch, setValue, formState: { errors } } = useForm({
     mode: "onTouched",
@@ -48,6 +61,9 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
 
   useEffect(() => {
     if (open) {
+      setInvItems([]);
+      setInvPage({ current: 0, size: PAGE_SIZE, total: 0 });
+      setInvSearch("");
       fetchCustomers(0, "");
       if (editingQuotation) {
         populateFromQuotation(editingQuotation);
@@ -71,15 +87,71 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
     }
   };
 
+  const fetchInvItems = async (pageNo = 0, searchQuery = "") => {
+    setInvLoading(true);
+    try {
+      const res = await getInventoryItems({ page: pageNo + 1, pageSize: PAGE_SIZE, search: searchQuery });
+      const results = res.results || [];
+      setInvItems((prev) => (pageNo === 0 ? results : [...prev, ...results]));
+      setInvPage((prev) => ({ ...prev, current: pageNo, total: res.count || 0 }));
+    } catch {
+      if (pageNo === 0) setInvItems([]);
+    } finally {
+      setInvLoading(false);
+    }
+  };
+
+  const handleInvSearchDebounce = useCallback(
+    _.debounce((value) => {
+      setInvSearch(value);
+      fetchInvItems(0, value);
+    }, 400),
+    []
+  );
+
+  const handleInvScroll = useInfiniteScroll({
+    pageObject: invPage,
+    fetchFunction: fetchInvItems,
+    searchValue: invSearch,
+  });
+
+  const handleInvItemSelect = (index, inventoryItemId) => {
+    const inv = invItems.find((i) => i.id === inventoryItemId);
+    if (!inv) return;
+    const updated  = [...items];
+    const qty      = updated[index].qty      || 0;
+    const discount = updated[index].discount || 0;
+    const rate     = Number(inv.saleRate)    || 0;
+    const subtotal = qty * rate;
+    updated[index] = {
+      ...updated[index],
+      inventoryItemId,
+      code:  inv.itemCode || "",
+      name:  inv.name     || "",
+      unit:  inv.unit     || "",
+      rate,
+      total: subtotal - (subtotal * discount / 100),
+    };
+    setItems(updated);
+    if (invSearch) {
+      setInvSearch("");
+      fetchInvItems(0, "");
+    }
+  };
+
+  const handleInvDropdownOpen = (visible) => {
+    if (visible && invSearch) {
+      setInvSearch("");
+      fetchInvItems(0, "");
+    }
+  };
+
   const populateFromQuotation = (quotation) => {
     setCurrent(0);
     setIsNewCustomer(false);
     setNewCustomerName("");
     setCustomerSearch("");
 
-    // customer_data is a stored snapshot, not a live customer record — its customer_id
-    // is the business code, so re-use it as the Select's `id` too (same fallback the
-    // Purchase Invoice drawer uses for vendor snapshots).
     const cd = quotation.customer || {};
     if (cd.customerId) {
       const custObj = { id: cd.customerId, customerId: cd.customerId, name: cd.name || "", phone: cd.phone || "", customerType: cd.customerType || "" };
@@ -92,13 +164,16 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
 
     setItems(
       (quotation.items || []).map((item) => ({
-        id:       item.id       || Date.now(),
-        name:     item.name     || "",
-        unit:     item.unit     || "NOS",
-        qty:      item.qty      || 0,
-        rate:     item.rate     || 0,
-        discount: item.discount || 0,
-        total:    item.total    || 0,
+        id:              item.id              || Date.now(),
+        inventoryItemId: item.inventoryItemId || null,
+        isManual:        !item.inventoryItemId,
+        code:            item.code            || "",
+        name:            item.name            || "",
+        unit:            item.unit            || "NOS",
+        rate:            item.rate            || 0,
+        qty:             item.qty             || 0,
+        discount:        item.discount        || 0,
+        total:           item.total           || 0,
       }))
     );
 
@@ -134,8 +209,11 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
     setNewCustomerName("");
     setCustomerSearch("");
     setCustomerPage({ current: 0, size: PAGE_SIZE, total: 0 });
+    setInvItems([]);
+    setInvPage({ current: 0, size: PAGE_SIZE, total: 0 });
+    setInvSearch("");
     resetForm({ date: dayjs(), validDays: "", phone: "", paymentTerm: "cash", discountPercentage: "", vatPercentage: "", status: "draft" });
-    setItems([{ id: 1, name: "", unit: "NOS", qty: 0, rate: 0, discount: 0, total: 0 }]);
+    setItems([emptyItem()]);
   };
 
   const handleCustomerSelect = (customerId) => {
@@ -168,7 +246,7 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
     setItems(updated);
   };
 
-  const addItem = () => setItems([...items, { id: Date.now(), name: "", unit: "NOS", qty: 0, rate: 0, discount: 0, total: 0 }]);
+  const addItem = () => setItems([...items, emptyItem()]);
   const removeItem = (index) => { if (items.length > 1) setItems(items.filter((_, i) => i !== index)); };
 
   const customerOptions = [
@@ -185,7 +263,7 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
   const vatAmount          = taxable * vatPercentage / 100;
   const grandTotal         = taxable + vatAmount;
 
-  const step1Valid = isQuotationStep1Valid(selectedCustomer, newCustomerName, isNewCustomer);
+  const step1Valid = isQuotationStep1Valid(selectedCustomer, newCustomerName, isNewCustomer, formValues.phone);
   const step2Valid = isQuotationStep2Valid(items);
 
   const getPreviewData = () => ({
@@ -233,11 +311,12 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
       items: items
         .filter((item) => item.name)
         .map((item) => ({
-          item_name: item.name,
-          unit:      item.unit || "",
-          qty:       String(item.qty || 0),
-          rate:      String(item.rate || 0),
+          name:      item.name,
+          units:     item.unit || "pcs",
+          quantity:  String(item.qty || 0),
+          unitPrice: String(item.rate || 0),
           discount:  String(item.discount || 0),
+          ...(item.inventoryItemId ? { itemId: item.inventoryItemId, itemCode: item.code || "" } : {}),
         })),
     };
 
@@ -260,7 +339,15 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
     }
   };
 
-  const next = () => setCurrent(current + 1);
+  const next = async () => {
+    const newStep = current + 1;
+    if (newStep === 1) {
+      setNextLoading(true);
+      await fetchInvItems(0, "");
+      setNextLoading(false);
+    }
+    setCurrent(newStep);
+  };
   const prev = () => setCurrent(current - 1);
 
   return (
@@ -285,7 +372,7 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
           <span style={{ flex: 1 }} />
           <AppButton type="default" onClick={() => setPreviewOpen(true)} className="btn-preview">Preview</AppButton>
           {current === 0 && (
-            <AppButton type="primary" onClick={next} className="btn-dark" disabled={!step1Valid}>Next</AppButton>
+            <AppButton type="primary" onClick={next} className="btn-dark" loading={nextLoading} disabled={!step1Valid}>Next</AppButton>
           )}
           {current === 1 && (
             <AppButton type="primary" onClick={handleSubmit} className="btn-dark" disabled={!step2Valid} loading={submitting}>
@@ -376,7 +463,7 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
               <Row gutter={16}>
                 <Col span={12}>
                   <Controller name="phone" control={control} render={({ field }) => (
-                    <AppInput {...field} label="Phone" name="phone" placeholder="Phone number" disabled={!isWalkin && !!selectedCustomer} />
+                    <AppInput {...field} label="Phone" name="phone" placeholder="Phone number" required disabled={!isWalkin && !!selectedCustomer} />
                   )} />
                 </Col>
                 <Col span={12}>
@@ -431,20 +518,81 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                     <AppButton type="text" icon={<DeleteOutlined />} size="small" danger onClick={() => removeItem(index)} />
                   )}
                 </section>
+
+                {/* Existing / inventory-selected item layout */}
+                {!item.isManual && (
+                  <>
+                    <Row gutter={12}>
+                      <Col span={24}>
+                        <AppSelect
+                          label="Item"
+                          required
+                          placeholder="Search inventory items..."
+                          showSearch
+                          filterOption={false}
+                          loading={invLoading}
+                          options={[
+                            ...(item.name && item.inventoryItemId && !invItems.find((i) => i.id === item.inventoryItemId)
+                              ? [{ value: item.inventoryItemId, label: item.name }]
+                              : []
+                            ),
+                            ...(item.name && !item.inventoryItemId
+                              ? [{ value: "__current__", label: item.name }]
+                              : []
+                            ),
+                            ...invItems.map((i) => ({ value: i.id, label: `${i.itemCode} — ${i.name}` })),
+                          ]}
+                          value={item.inventoryItemId || (item.name ? "__current__" : undefined)}
+                          onSearch={handleInvSearchDebounce}
+                          onPopupScroll={handleInvScroll}
+                          onChange={(val) => { if (val !== "__current__") handleInvItemSelect(index, val); }}
+                          onDropdownVisibleChange={handleInvDropdownOpen}
+                          notFoundContent={invLoading ? "Loading..." : "No items found"}
+                          optionRender={(option) =>
+                            option.value === "__current__" ? (
+                              <span style={{ color: "var(--color-text-secondary)", fontStyle: "italic" }}>
+                                {option.label} <span style={{ fontSize: 11 }}>(existing — select to change)</span>
+                              </span>
+                            ) : option.label
+                          }
+                        />
+                      </Col>
+                    </Row>
+                    <Row gutter={12}>
+                      <Col span={12}>
+                        <AppInput label="Item Code" value={item.code} disabled onChange={() => {}} placeholder="—" />
+                      </Col>
+                      <Col span={12}>
+                        <AppInput label="Unit" value={item.unit} disabled onChange={() => {}} placeholder="—" />
+                      </Col>
+                    </Row>
+                  </>
+                )}
+
+                {/* Manual item: plain inputs (old design) */}
+                {item.isManual && (
+                  <Row gutter={12}>
+                    <Col span={12}>
+                      <AppInput label="Item Name" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, "name", e.target.value)} />
+                    </Col>
+                    <Col span={12}>
+                      <AppSelect
+                        label="Unit"
+                        placeholder="Select unit"
+                        options={UNITS}
+                        value={item.unit || undefined}
+                        onChange={(val) => handleItemChange(index, "unit", val)}
+                      />
+                    </Col>
+                  </Row>
+                )}
+
                 <Row gutter={12}>
-                  <Col span={12}>
-                    <AppInput label="Item Name" placeholder="Item name" value={item.name} onChange={(e) => handleItemChange(index, "name", e.target.value)} />
-                  </Col>
-                  <Col span={12}>
-                    <AppInput label="Unit" placeholder="e.g. piece, kg" value={item.unit} onChange={(e) => handleItemChange(index, "unit", e.target.value)} />
-                  </Col>
-                </Row>
-                <Row gutter={12}>
-                  <Col span={6}>
-                    <AppInput label="Qty" inputType="number" min={0} value={item.qty} onChange={(val) => handleItemChange(index, "qty", val)} />
-                  </Col>
                   <Col span={6}>
                     <AppInput label="Rate" inputType="number" min={0} value={item.rate} onChange={(val) => handleItemChange(index, "rate", val)} />
+                  </Col>
+                  <Col span={6}>
+                    <AppInput label="Qty" inputType="number" min={0} value={item.qty} onChange={(val) => handleItemChange(index, "qty", val)} />
                   </Col>
                   <Col span={6}>
                     <AppInput label="Disc (%)" inputType="number" min={0} max={100} value={item.discount} onChange={(val) => handleItemChange(index, "discount", val)} placeholder="%" />
@@ -456,9 +604,26 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
               </section>
             ))}
 
-            <AppButton type="default" icon={<PlusOutlined />} onClick={addItem} block className={styles.addItemBtn}>
-              Add Another Item
-            </AppButton>
+            <div className={styles.addBtnRow}>
+              <button type="button" className={styles.addCardBtn} onClick={addItem}>
+                <span className={styles.addCardBtnIcon} style={{ background: "rgba(59,130,246,0.18)", color: "#3b82f6" }}>
+                  <DatabaseOutlined />
+                </span>
+                <span className={styles.addCardBtnText}>
+                  <span className={styles.addCardBtnTitle}>From Inventory</span>
+                  <span className={styles.addCardBtnSub}>Select existing item</span>
+                </span>
+              </button>
+              <button type="button" className={`${styles.addCardBtn} ${styles.addCardBtnPurple}`} onClick={() => setItems((prev) => [...prev, emptyManual()])}>
+                <span className={styles.addCardBtnIcon} style={{ background: "rgba(124,92,252,0.18)", color: "#7c5cfc" }}>
+                  <FormOutlined />
+                </span>
+                <span className={styles.addCardBtnText}>
+                  <span className={styles.addCardBtnTitle}>Add Manually</span>
+                  <span className={styles.addCardBtnSub}>Type item name & details</span>
+                </span>
+              </button>
+            </div>
 
             <section className={styles.summaryBox}>
               <section className={styles.summaryRow}>

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
-import { formatCurrency } from "@/utils";
+import { formatCurrency, downloadPDF } from "@/utils";
 import { logoSvgString } from "@/utils/logoSvg";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo } from "@/components/common";
@@ -51,7 +51,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
     return `<html><head><title>Quotation - ${customerName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;">
           <div style="display:flex;gap:14px;align-items:flex-start;">
             ${logoSvgString(50)}
             <div>
@@ -86,15 +86,16 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
             ${convertedInvoice ? `<p style="font-size:12px;color:#475569;"><strong>Converted Invoice:</strong> #${convertedInvoice}</p>` : ""}
           </div>
         </div>
+        <hr style="border:none;border-top:1px solid #d1d5db;margin:0 0 16px 0;" />
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
-          <thead><tr style="background:#141423;">
-            <th style="padding:10px;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);width:5%">#</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Item</th>
-            <th style="padding:10px;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);">Unit</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Qty</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Rate</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Disc %</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Total</th>
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;color:#1e293b;text-align:center;border:1px solid #d1d5db;width:5%">#</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Item</th>
+            <th style="padding:10px;color:#1e293b;text-align:center;border:1px solid #d1d5db;">Unit</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Qty</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Rate</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Disc %</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Total</th>
           </tr></thead>
           <tbody>${rows || '<tr><td colspan="7" style="padding:12px;text-align:center;color:#94a3b8;">No items</td></tr>'}</tbody>
         </table>
@@ -124,7 +125,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
         <h2 className={styles.headerTitle}>Quotation Preview - {customerName}</h2>
         <div className={styles.headerActions}>
           <button className={styles.printBtn} onClick={handlePrint}>Print</button>
-          <button className={styles.pdfBtn} onClick={handlePrint}>Download PDF</button>
+          <button className={styles.pdfBtn} onClick={() => downloadPDF(buildPrintHTML(), quotationNo || "quotation")}>Download PDF</button>
           <button className={styles.closeBtn} onClick={onClose}>Close</button>
         </div>
       </div>
@@ -149,6 +150,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
               <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </div>
           </div>
+          <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "0 0 16px 0" }} />
 
           <div className={styles.detailsRow}>
             <div className={styles.billBox}>

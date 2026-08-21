@@ -61,11 +61,11 @@ const ExpenseModal = ({ open, onClose, data, onDeleteItem }) => {
           </div>
         </div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
-          <thead><tr style="background:#141423;">
-            <th style="padding:10px;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);width:8%">#</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Detail</th>
-            <th style="padding:10px;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);width:12%">Qty</th>
-            <th style="padding:10px;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);width:20%">Amount</th>
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;color:#1e293b;text-align:center;border:1px solid #d1d5db;width:8%">#</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Detail</th>
+            <th style="padding:10px;color:#1e293b;text-align:center;border:1px solid #d1d5db;width:12%">Qty</th>
+            <th style="padding:10px;color:#1e293b;text-align:left;border:1px solid #d1d5db;width:20%">Amount</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -104,6 +104,7 @@ const ExpenseModal = ({ open, onClose, data, onDeleteItem }) => {
               <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </div>
           </div>
+          <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "0 0 16px 0" }} />
 
           <div className={styles.infoBox}>
             <div className={styles.infoGrid}>

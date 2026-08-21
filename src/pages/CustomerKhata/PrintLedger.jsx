@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Modal, message } from "antd";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
-import { formatCurrency } from "@/utils";
+import { formatCurrency, downloadPDF } from "@/utils";
 import { logoSvgString } from "@/utils/logoSvg";
 import { useAuth } from "@/context/AuthContext";
 import { SignaturePad, CompanyLogo } from "@/components/common";
@@ -36,7 +36,7 @@ const PrintLedger = ({ open, onClose, customer }) => {
   };
 
   const handleDownloadPDF = () => {
-    handlePrint();
+    downloadPDF(buildPrintHTML(), `ledger-${customer.name || "customer"}`);
   };
 
   const buildPrintHTML = () => {
@@ -71,7 +71,7 @@ const PrintLedger = ({ open, onClose, customer }) => {
       </head>
       <body>
         <!-- Company Header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;">
           <div style="display:flex;gap:14px;align-items:flex-start;">
             ${logoSvgString(50)}
             <div>
@@ -87,6 +87,7 @@ const PrintLedger = ({ open, onClose, customer }) => {
             <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
           </div>
         </div>
+        <hr style="border:none;border-top:1px solid #d1d5db;margin:0 0 16px 0;" />
 
         <!-- Customer + Summary -->
         <div style="display:flex;gap:16px;margin-bottom:16px;">
@@ -99,7 +100,7 @@ const PrintLedger = ({ open, onClose, customer }) => {
             ${customer.address ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Address:</strong> ${customer.address}</p>` : ''}
           </div>
           <div style="flex:1.5;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
-            <div style="background:#141423;color:#fff;padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;">ACCOUNT SUMMARY</div>
+            <div style="background:#f1f5f9;color:#1e293b;padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:2px solid #334155;">ACCOUNT SUMMARY</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:0;">
               ${summaryCell('Opening Balance', formatCurrency(finalPaymentDetails.openingBalance), '#8b5cf6')}
               ${summaryCell('Credit Sales', formatCurrency(s.creditSales), '#3b82f6')}
@@ -121,13 +122,13 @@ const PrintLedger = ({ open, onClose, customer }) => {
         <!-- Ledger Table -->
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
           <thead>
-            <tr style="background:#141423;">
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Date</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Voucher</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Description</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Debit</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Credit</th>
-              <th style="padding:10px 10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Balance</th>
+            <tr style="background:#f1f5f9;">
+              <th style="padding:10px 10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Date</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Voucher</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Description</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Debit</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Credit</th>
+              <th style="padding:10px 10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Balance</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -206,6 +207,7 @@ const PrintLedger = ({ open, onClose, customer }) => {
               <p className={styles.periodText}><strong>Printed:</strong> {printDate}</p>
             </section>
           </section>
+          <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "0 0 16px 0" }} />
 
           {/* Customer Details + Account Summary */}
           <section className={styles.detailsRow}>

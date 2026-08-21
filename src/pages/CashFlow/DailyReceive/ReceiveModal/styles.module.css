@@ -12,7 +12,7 @@
 .scrollArea { flex: 1; overflow-y: auto; padding: 20px; background: #e9ecef; }
 .page { background: #fff; border: 1px solid var(--color-border); border-radius: 4px; padding: 32px; max-width: 550px; margin: 0 auto; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
 
-.companyHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid var(--color-primary); }
+.companyHeader { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; }
 .companyLeft { display: flex; gap: 14px; align-items: flex-start; }
 .companyName { font-size: 18px; font-weight: 800; color: var(--color-text); margin: 0 0 4px; }
 .receiptLabel { font-size: 16px; font-weight: 800; color: var(--color-primary); margin: 0 0 6px; }

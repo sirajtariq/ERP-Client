@@ -4,7 +4,7 @@ import { DeleteOutlined, RollbackOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useForm, Controller } from "react-hook-form";
 import { getCompanyInfo } from "@/utils/companyInfoStore";
-import { formatCurrency } from "@/utils";
+import { formatCurrency, downloadPDF } from "@/utils";
 import { logoSvgString } from "@/utils/logoSvg";
 import { useAuth } from "@/context/AuthContext";
 import { CompanyLogo, AppInput, AppSelect, AppButton } from "@/components/common";
@@ -245,7 +245,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
     return `<html><head><title>Invoice - ${customerName}</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
       </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #141423;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;">
           <div style="display:flex;gap:14px;align-items:flex-start;">
             ${logoSvgString(50)}
             <div>
@@ -262,6 +262,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
             <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
           </div>
         </div>
+        <hr style="border:none;border-top:1px solid #d1d5db;margin:0 0 16px 0;" />
         <div style="display:flex;gap:16px;margin-bottom:16px;">
           <div style="flex:1;border:1px solid #3b82f6;border-radius:6px;padding:16px;">
             <h3 style="font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin:0 0 10px;">BILL TO</h3>
@@ -282,14 +283,14 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
           </div>
         </div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-          <thead><tr style="background:#141423;">
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);width:5%">#</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Item</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:center;border:1px solid rgba(255,255,255,0.1);">Unit</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Qty</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Rate</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Discount</th>
-            <th style="padding:10px;font-size:12px;font-weight:600;color:#fff;text-align:left;border:1px solid rgba(255,255,255,0.1);">Total</th>
+          <thead><tr style="background:#f1f5f9;">
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:center;border:1px solid #d1d5db;width:5%">#</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Item</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:center;border:1px solid #d1d5db;">Unit</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Qty</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Rate</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Discount</th>
+            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Total</th>
           </tr></thead>
           <tbody>${itemRows || '<tr><td colspan="7" style="padding:12px;text-align:center;color:#94a3b8;">No items added yet</td></tr>'}</tbody>
         </table>
@@ -345,7 +346,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
         <section className={styles.headerActions}>
           <AppButton className={styles.recBtn} onClick={() => setReceiveOpen((v) => !v)}>{isPurchase ? "Pay Vendor" : "Receive Payment"}</AppButton>
           <AppButton className={styles.printBtn} onClick={handlePrint}>Print</AppButton>
-          <AppButton className={styles.pdfBtn} onClick={handlePrint}>Download PDF</AppButton>
+          <AppButton className={styles.pdfBtn} onClick={() => downloadPDF(buildPrintHTML(), invoiceNo || "invoice")}>Download PDF</AppButton>
           <AppButton className={styles.closeBtn} onClick={onClose}>Close</AppButton>
         </section>
       </section>
@@ -434,6 +435,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
               <p className={styles.detail}><strong>Printed:</strong> {printDate}</p>
             </section>
           </section>
+          <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "0 0 16px 0" }} />
 
           {/* Bill To + Payment */}
           <section className={styles.detailsRow}>

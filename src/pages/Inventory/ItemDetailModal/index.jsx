@@ -36,17 +36,17 @@ const ItemDetailModal = ({ open, onClose, item, onStockIn, onStockOut }) => {
 
   if (!item) return null;
 
-  const st             = STATUS_MAP[item.stockStatus] || STATUS_MAP["in_stock"];
-  const totalIn        = Number(item.totalIn  ?? 0);
-  const totalOut       = Number(item.totalOut ?? 0);
-  const profitPerUnit  = item.profitPerItem ?? (item.saleRate - item.purchaseRate);
-  const margin         = item.profitMargin  ?? (item.purchaseRate > 0 ? ((item.saleRate - item.purchaseRate) / item.purchaseRate * 100) : 0);
-  const purchaseValue  = item.currentStock * item.purchaseRate;
-  const saleValue      = item.currentStock * item.saleRate;
-  const potentialProfit = saleValue - purchaseValue;
-  const totalInvested   = totalIn  * item.purchaseRate;
-  const realizedRevenue = totalOut * item.saleRate;
-  const realizedProfit  = totalOut * profitPerUnit;
+  const st              = STATUS_MAP[item.stockStatus] || STATUS_MAP["in_stock"];
+  const totalIn         = Number(item.totalIn       ?? 0);
+  const totalOut        = Number(item.totalOut      ?? 0);
+  const profitPerUnit   = Number(item.profitPerUnit ?? item.profitPerItem ?? 0);
+  const margin          = Number(item.profitMargin  ?? 0);
+  const purchaseValue   = Number(item.stockValue)       || 0;
+  const saleValue       = Number(item.saleValue)        || 0;
+  const potentialProfit = Number(item.potentialProfit)  || 0;
+  const totalInvested   = Number(item.totalInvested)    || 0;
+  const realizedRevenue = Number(item.revenueFromSales) || 0;
+  const realizedProfit  = Number(item.realizedProfit)   || 0;
 
   return (
     <>

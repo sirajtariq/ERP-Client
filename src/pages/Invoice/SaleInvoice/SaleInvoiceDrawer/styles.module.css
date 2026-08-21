@@ -44,16 +44,21 @@
 
 .stepContent {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 
 @keyframes slideIn {
   from {
@@ -138,9 +143,6 @@
     box-shadow: 0 4px 14px rgba(124, 92, 252, 0.1);
   }
 
-  & + & {
-    margin-top: 12px;
-  }
 }
 
 .itemHeader {
@@ -187,20 +189,79 @@
   white-space: nowrap;
 }
 
-.addItemBtn {
-  margin-top: 4px;
-  border: 1.5px dashed var(--color-accent-light);
-  border-radius: 10px;
-  height: 42px;
-  font-weight: 600;
-  color: var(--color-accent);
-  background: var(--color-accent-bg);
+.addBtnRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.addCardBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.06));
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.18);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  width: 100%;
+  text-align: left;
+  outline: none;
 
   &:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-    background: var(--color-accent-bg);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
   }
+}
+
+.addCardBtnPurple {
+  border-color: #7c5cfc;
+  background: linear-gradient(135deg, rgba(124, 92, 252, 0.14), rgba(124, 92, 252, 0.06));
+  box-shadow: 0 2px 10px rgba(124, 92, 252, 0.18);
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(124, 92, 252, 0.22), rgba(124, 92, 252, 0.1));
+    box-shadow: 0 8px 20px rgba(124, 92, 252, 0.25);
+  }
+}
+
+.addCardBtnIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.addCardBtnText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.addCardBtnTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addCardBtnSub {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grandTotal {
@@ -237,52 +298,34 @@
   }
 }
 
-/* Rate comparison block */
-.rateBlock {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 12px 14px 10px;
-  background: var(--color-bg);
+/* Rate reference strip (replaces old chip grid) */
+.rateRefStrip {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
 }
 
-.rateBlockLabel {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--color-text-secondary);
-  margin-bottom: -4px;
-}
-
-.rateChips {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.rateChip {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
-
-.rateChipLabel {
-  font-size: 10px;
+.rateRefBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--color-text-secondary);
-  margin-bottom: 3px;
 }
 
-.rateChipValue {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--color-text-secondary);
+.rateRefBadgePurchase {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+.rateRefBadgeSale {
+  background: rgba(124, 92, 252, 0.1);
+  color: #7c5cfc;
+  border: 1px solid rgba(124, 92, 252, 0.22);
 }
 
 .profitBadge {
