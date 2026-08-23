@@ -37,4 +37,8 @@ export const filterConfig = {
     showCategory:     true,
     showStockStatus:  true,
   },
+  employee: {
+    showStatus:         true,
+    showDepartmentText: true,
+  },
 };

@@ -9,6 +9,7 @@ const AppModal = ({
   submitText = "OK",
   cancelText = "Cancel",
   loading = false,
+  submitDisabled = false,
   width = 480,
   children,
   footer,
@@ -24,7 +25,7 @@ const AppModal = ({
         <button
           className={`${styles.submitBtn} ${danger ? styles.dangerBtn : styles.primaryBtn}`}
           onClick={onSubmit}
-          disabled={loading}
+          disabled={loading || submitDisabled}
         >
           {submitText}
         </button>
