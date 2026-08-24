@@ -213,8 +213,8 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   const customerId = customer?.customerId || "";
   const customerType = customer?.customerType || "";
 
-  const PAYMENT_STATUS_COLORS = { Paid: "#22c55e", Unpaid: "#ef4444", Partial: "#f97316", Advance: "#3b82f6" };
-  const INVOICE_STATUS_COLORS = { Saved: "#22c55e", Draft: "#ef4444" };
+  const PAYMENT_STATUS_COLORS = { Paid: "#15803d", Unpaid: "#dc2626", Partial: "#c2410c", Advance: "#1d4ed8" };
+  const INVOICE_STATUS_COLORS = { Saved: "#15803d", Draft: "#dc2626" };
   const displayPaymentStatus = paymentStatus || (paidAmount >= grandTotal ? "Paid" : paidAmount > 0 ? "Partial" : "Unpaid");
 
   const validItems = (items || []).filter((i) => i.name || i.qty || i.rate || i.total);
@@ -227,106 +227,137 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   };
 
   const buildPrintHTML = () => {
+    const TH = `padding:10px 12px;font-size:11px;font-weight:700;color:#fff;border:1px solid #334155;`;
+    const TD = `padding:9px 12px;font-size:12px;color:#1e293b;border:1px solid #e2e8f0;`;
+
     const itemRows = validItems.map((item, i) => `
-      <tr style="${item.isReturned ? 'background:rgba(239,68,68,0.06);' : ''}">
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:center;white-space:nowrap;">${i + 1}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;word-break:break-word;${item.isReturned ? 'border-left:3px solid #ef4444;' : ''}">
-          <span style="${item.isReturned ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${item.name}</span>
-          ${item.isReturned ? '<span style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:1px 6px;border-radius:20px;">RETURNED</span>' : ''}
+      <tr style="background:${item.isReturned ? 'rgba(220,38,38,0.04)' : i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="${TD}text-align:center;">${i + 1}</td>
+        <td style="${TD}word-break:break-word;${item.isReturned ? 'border-left:3px solid #dc2626;' : ''}">
+          <span style="${item.isReturned ? 'text-decoration:line-through;color:#6b7280;' : ''}">${item.name}</span>
+          ${item.isReturned ? '<span style="margin-left:6px;font-size:10px;font-weight:700;color:#dc2626;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);padding:1px 6px;border-radius:20px;">RETURNED</span>' : ''}
         </td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;text-align:center;white-space:nowrap;">${item.unit || "-"}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${item.qty || 0}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${formatCurrency(item.rate || 0)}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;white-space:nowrap;">${parseFloat(item.discount) > 0 ? item.discount + '%' : '-'}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:700;white-space:nowrap;${item.isReturned ? 'color:#94a3b8;' : ''}">${formatCurrency(item.total || 0)}</td>
+        <td style="${TD}text-align:center;">${item.unit || "-"}</td>
+        <td style="${TD}text-align:right;">${item.qty || 0}</td>
+        <td style="${TD}text-align:right;">${formatCurrency(item.rate || 0)}</td>
+        <td style="${TD}text-align:center;">${parseFloat(item.discount) > 0 ? item.discount + '%' : '-'}</td>
+        <td style="${TD}text-align:right;font-weight:700;${item.isReturned ? 'color:#6b7280;' : ''}">${formatCurrency(item.total || 0)}</td>
       </tr>
     `).join("");
 
     return `<html><head><title>Invoice - ${customerName}</title>
-      <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;color:#1e293b;padding:28px;font-size:12px}@media print{body{padding:16px}}</style>
-      </head><body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;">
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;color:#1e293b;background:#fff;font-size:12px;}
+        @media print{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      </style>
+      </head><body style="padding:24px;">
+        <!-- Purple gradient top bar -->
+        <div style="height:6px;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:3px;margin-bottom:20px;"></div>
+
+        <!-- Company header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
           <div style="display:flex;gap:14px;align-items:flex-start;">
             ${logoSvgString(50)}
             <div>
-              <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${companyInfo.name}</h1>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Contact:</strong> ${companyInfo.contact} &nbsp;&nbsp;<strong>WhatsApp:</strong> ${companyInfo.whatsapp}</p>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Email:</strong> ${companyInfo.email}</p>
-              <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Address:</strong> ${companyInfo.address}</p>
+              <h1 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 4px;">${companyInfo.name}</h1>
+              <p style="font-size:11px;color:#111827;margin:2px 0;"><strong>Contact:</strong> ${companyInfo.contact} &nbsp;&nbsp;<strong>WhatsApp:</strong> ${companyInfo.whatsapp}</p>
+              <p style="font-size:11px;color:#111827;margin:2px 0;"><strong>Email:</strong> ${companyInfo.email}</p>
+              <p style="font-size:11px;color:#111827;margin:2px 0;"><strong>Address:</strong> ${companyInfo.address}</p>
             </div>
           </div>
           <div style="text-align:right;">
-            <h2 style="font-size:18px;font-weight:800;color:#141423;margin:0 0 6px;">${invoiceLabel}</h2>
-            <p style="font-size:12px;color:#475569;"><strong>Invoice:</strong> ${invoiceNo}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Date:</strong> ${invoiceDate}</p>
-            <p style="font-size:12px;color:#475569;"><strong>Printed:</strong> ${printDate}</p>
+            <div style="display:inline-block;background:linear-gradient(135deg,#7c5cfc,#a78bfa);color:#fff;font-size:15px;font-weight:800;padding:6px 20px;border-radius:20px;margin-bottom:10px;letter-spacing:0.5px;">${invoiceLabel}</div>
+            <p style="font-size:12px;color:#374151;margin:3px 0;"><strong>Invoice #:</strong> ${invoiceNo}</p>
+            <p style="font-size:12px;color:#374151;margin:3px 0;"><strong>Date:</strong> ${invoiceDate}</p>
+            <p style="font-size:12px;color:#374151;margin:3px 0;"><strong>Printed:</strong> ${printDate}</p>
           </div>
         </div>
-        <hr style="border:none;border-top:1px solid #d1d5db;margin:0 0 16px 0;" />
-        <div style="display:flex;gap:16px;margin-bottom:16px;">
-          <div style="flex:1;border:1px solid #3b82f6;border-radius:6px;padding:16px;">
-            <h3 style="font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin:0 0 10px;">BILL TO</h3>
-            <h4 style="font-size:16px;font-weight:700;margin:0 0 8px;">${customerName}</h4>
-            ${customerId ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Customer ID:</strong> ${customerId}</p>` : ""}
-            ${customerType ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Type:</strong> ${customerType}</p>` : ""}
-            ${customerPhone ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Phone:</strong> ${customerPhone}</p>` : ""}
-            ${customerAddress ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Address:</strong> ${customerAddress}</p>` : ""}
-            ${isPurchase && billNumber ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Vendor Bill #:</strong> ${billNumber}</p>` : ""}
+
+        <!-- Divider -->
+        <div style="height:1px;background:linear-gradient(90deg,rgba(124,92,252,0.4),#e2e8f0);margin-bottom:16px;"></div>
+
+        <!-- Bill To + Payment Info -->
+        <div style="display:flex;gap:16px;margin-bottom:18px;">
+          <div style="flex:1;border-left:4px solid #7c5cfc;background:#faf8ff;border-radius:0 6px 6px 0;padding:14px 16px;">
+            <h3 style="font-size:10px;font-weight:700;color:#7c5cfc;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 8px;">Bill To</h3>
+            <h4 style="font-size:15px;font-weight:700;color:#0f172a;margin:0 0 7px;">${customerName}</h4>
+            ${customerId ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Customer ID:</strong> ${customerId}</p>` : ""}
+            ${customerType ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Type:</strong> ${customerType}</p>` : ""}
+            ${customerPhone ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Phone:</strong> ${customerPhone}</p>` : ""}
+            ${customerAddress ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Address:</strong> ${customerAddress}</p>` : ""}
+            ${isPurchase && billNumber ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Vendor Bill #:</strong> ${billNumber}</p>` : ""}
           </div>
-          <div style="flex:1;border:1px solid #e2e8f0;border-radius:6px;padding:16px;">
-            <h3 style="font-size:11px;font-weight:700;color:#141423;text-transform:uppercase;margin:0 0 10px;">PAYMENT INFO</h3>
-            <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Method:</strong> ${paymentMethod}</p>
-            <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Terms:</strong> ${paymentTerms}</p>
-            ${payment?.paymentReference ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Reference:</strong> ${payment.paymentReference}</p>` : ""}
-            <p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Payment Status:</strong> <span style="font-weight:700;color:${PAYMENT_STATUS_COLORS[displayPaymentStatus] || "#64748b"}">${displayPaymentStatus}</span></p>
-            ${invoiceStatus ? `<p style="font-size:12px;color:#475569;margin:3px 0;"><strong>Invoice Status:</strong> <span style="font-weight:700;color:${INVOICE_STATUS_COLORS[invoiceStatus] || "#64748b"}">${invoiceStatus}</span></p>` : ""}
+          <div style="flex:1;border-left:4px solid #94a3b8;background:#f8fafc;border-radius:0 6px 6px 0;padding:14px 16px;">
+            <h3 style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 8px;">Payment Info</h3>
+            <p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Method:</strong> ${paymentMethod}</p>
+            <p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Terms:</strong> ${paymentTerms}</p>
+            ${payment?.paymentReference ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Reference:</strong> ${payment.paymentReference}</p>` : ""}
+            <p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Payment Status:</strong> <span style="font-weight:700;color:${PAYMENT_STATUS_COLORS[displayPaymentStatus] || "#374151"}">${displayPaymentStatus}</span></p>
+            ${invoiceStatus ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Invoice Status:</strong> <span style="font-weight:700;color:${INVOICE_STATUS_COLORS[invoiceStatus] || "#374151"}">${invoiceStatus}</span></p>` : ""}
           </div>
         </div>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-          <thead><tr style="background:#f1f5f9;">
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:center;border:1px solid #d1d5db;width:5%">#</th>
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Item</th>
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:center;border:1px solid #d1d5db;">Unit</th>
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Qty</th>
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Rate</th>
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Discount</th>
-            <th style="padding:10px;font-size:12px;font-weight:700;color:#1e293b;text-align:left;border:1px solid #d1d5db;">Total</th>
-          </tr></thead>
-          <tbody>${itemRows || '<tr><td colspan="7" style="padding:12px;text-align:center;color:#94a3b8;">No items added yet</td></tr>'}</tbody>
-        </table>
+
+        <!-- Items table -->
+        <div style="margin-bottom:18px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:linear-gradient(90deg,#1e293b,#334155);">
+                <th style="${TH}text-align:center;width:4%">#</th>
+                <th style="${TH}text-align:left;width:40%">Item</th>
+                <th style="${TH}text-align:center;width:8%">Unit</th>
+                <th style="${TH}text-align:right;width:7%">Qty</th>
+                <th style="${TH}text-align:right;width:14%">Rate</th>
+                <th style="${TH}text-align:center;width:10%">Discount</th>
+                <th style="${TH}text-align:right;width:17%">Total</th>
+              </tr>
+            </thead>
+            <tbody>${itemRows || `<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8;border:1px solid #e2e8f0;">No items added yet</td></tr>`}</tbody>
+          </table>
+        </div>
+
+        <!-- Totals -->
         <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
-          <div style="width:280px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
-            ${subtotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Subtotal</span><span style="font-weight:700;">${formatCurrency(subtotal)}</span></div>` : ""}
-            ${totalLineDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Line Discount</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(totalLineDiscount)}</span></div>` : ""}
-            ${invoiceDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Invoice Discount</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(invoiceDiscount)}</span></div>` : ""}
-            ${taxAmount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Tax${payment?.vatPercentage ? ` (${payment.vatPercentage}%)` : ""}</span><span style="font-weight:700;">${formatCurrency(taxAmount)}</span></div>` : ""}
-            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;">
-              <span style="color:#64748b;">Grand Total</span><span style="font-weight:700;">${formatCurrency(grandTotal)}</span>
+          <div style="width:290px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+            ${subtotal > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Subtotal</span><span style="font-weight:700;color:#1e293b;">${formatCurrency(subtotal)}</span></div>` : ""}
+            ${totalLineDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Line Discount</span><span style="font-weight:700;color:#dc2626;">-${formatCurrency(totalLineDiscount)}</span></div>` : ""}
+            ${invoiceDiscount > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Invoice Discount</span><span style="font-weight:700;color:#dc2626;">-${formatCurrency(invoiceDiscount)}</span></div>` : ""}
+            ${taxAmount > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Tax${payment?.vatPercentage ? ` (${payment.vatPercentage}%)` : ""}</span><span style="font-weight:700;color:#1e293b;">${formatCurrency(taxAmount)}</span></div>` : ""}
+            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:#1e293b;">
+              <span style="color:#e2e8f0;font-weight:700;font-size:13px;">Grand Total</span><span style="font-weight:800;color:#fff;font-size:13px;">${formatCurrency(grandTotal)}</span>
             </div>
-            ${returnedItemsCount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Returns (${returnedItemsCount} item${returnedItemsCount > 1 ? "s" : ""})</span><span style="font-weight:700;color:#ef4444;">- ${formatCurrency(totalReturnedAmount)}</span></div>` : ""}
-            ${returnedItemsCount > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Net After Returns</span><span style="font-weight:700;">${formatCurrency(netTotalAfterReturns)}</span></div>` : ""}
-            ${advanceApplied > 0 ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#64748b;">Advance Applied</span><span style="font-weight:700;color:#22c55e;">- ${formatCurrency(advanceApplied)}</span></div>` : ""}
-            <div style="display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;">
-              <span style="color:#64748b;">Paid</span><span style="font-weight:700;color:#22c55e;">${formatCurrency(paidAmount)}</span>
+            ${returnedItemsCount > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;border-top:1px solid #e2e8f0;"><span style="color:#374151;">Returns (${returnedItemsCount} item${returnedItemsCount > 1 ? "s" : ""})</span><span style="font-weight:700;color:#dc2626;">-${formatCurrency(totalReturnedAmount)}</span></div>` : ""}
+            ${returnedItemsCount > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Net After Returns</span><span style="font-weight:700;color:#1e293b;">${formatCurrency(netTotalAfterReturns)}</span></div>` : ""}
+            ${advanceApplied > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;border-top:${returnedItemsCount > 0 ? "0" : "1px solid #e2e8f0"};"><span style="color:#374151;">Advance Applied</span><span style="font-weight:700;color:#15803d;">-${formatCurrency(advanceApplied)}</span></div>` : ""}
+            <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;border-top:1px solid #e2e8f0;">
+              <span style="color:#374151;">Paid</span><span style="font-weight:700;color:#15803d;">${formatCurrency(paidAmount)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f8fafc;">
-              <span style="color:#64748b;">Remaining</span><span style="font-weight:700;color:${remaining > 0 ? '#ef4444' : '#22c55e'};">${formatCurrency(remaining)}</span>
+              <span style="color:#374151;font-weight:700;">Remaining</span><span style="font-weight:700;color:${remaining > 0 ? "#dc2626" : "#15803d"};">${formatCurrency(remaining)}</span>
             </div>
           </div>
         </div>
-        ${notes ? `<div style="border:1px solid #e2e8f0;border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#475569;"><strong>Notes:</strong> ${notes}</div>` : ""}
-        <div style="border:1px solid #e2e8f0;border-radius:4px;padding:12px 16px;margin:20px 0;font-size:12px;color:#475569;line-height:1.7;">
-          <p><strong>Generated:</strong> ${printDate}</p>
-          <p><strong>Generated By:</strong> ${user?.name || user?.username}</p>
-          <p>Computer generated invoice.</p>
+
+        ${notes ? `<div style="border-left:4px solid #7c5cfc;background:#faf8ff;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#374151;"><strong style="color:#7c5cfc;">Notes:</strong> ${notes}</div>` : ""}
+
+        <!-- Thank you card -->
+        <div style="background:linear-gradient(135deg,#7c5cfc,#a78bfa);border-radius:8px;padding:14px 20px;margin-bottom:20px;text-align:center;">
+          <p style="color:#fff;font-size:14px;font-weight:700;margin:0 0 3px;">Thank you for your business!</p>
+          <p style="color:rgba(255,255,255,0.85);font-size:11px;margin:0;">${companyInfo.name} &bull; ${companyInfo.contact}</p>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;">
-          <span>Computer generated sale invoice.</span>
+
+        <!-- Footer -->
+        <div style="border-top:2px solid rgba(124,92,252,0.2);padding-top:12px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;color:#64748b;">
+          <div>
+            <p style="margin:2px 0;color:#374151;"><strong>Generated:</strong> ${printDate} &nbsp; <strong>By:</strong> ${user?.name || user?.username}</p>
+            <p style="margin:2px 0;">Computer generated invoice.</p>
+          </div>
           <div style="text-align:center;">
-            <div style="width:160px;border-bottom:1px solid #1e293b;margin-bottom:6px;"></div>
-            <span>Authorized Signature</span>
+            <div style="width:150px;border-bottom:1px solid #94a3b8;margin-bottom:5px;"></div>
+            <span style="color:#374151;">Authorized Signature</span>
           </div>
         </div>
+        <div style="height:4px;background:linear-gradient(90deg,#7c5cfc,#a78bfa);border-radius:2px;margin-top:14px;"></div>
       </body></html>`;
   };
 
@@ -481,14 +512,14 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                     <Tooltip title="Mark item(s) for a return / reverse entry">Return</Tooltip>
                   </th>
                 )}
-                <th className={styles.thCenter} style={{ width: "5%" }}>#</th>
-                <th className={styles.th} style={{ width: showReturnColumn ? "13%" : "22%" }}>Item</th>
-                <th className={styles.thCenter} style={{ width: "10%" }}>Unit</th>
-                <th className={styles.thRight} style={{ width: "10%" }}>Qty</th>
+                <th className={styles.thCenter} style={{ width: "4%" }}>#</th>
+                <th className={styles.th} style={{ width: showReturnColumn ? "31%" : "40%" }}>Item</th>
+                <th className={styles.thCenter} style={{ width: "8%" }}>Unit</th>
+                <th className={styles.thRight} style={{ width: "7%" }}>Qty</th>
                 <th className={styles.thRight} style={{ width: "13%" }}>Rate</th>
-                <th className={styles.thRight} style={{ width: "11%" }}>Discount</th>
-                <th className={styles.thRight} style={{ width: "17%" }}>Total</th>
-                {onDeleteItem && <th className={styles.thCenter} style={{ width: "10%" }}>Action</th>}
+                <th className={styles.thRight} style={{ width: "9%" }}>Discount</th>
+                <th className={styles.thRight} style={{ width: "15%" }}>Total</th>
+                {onDeleteItem && <th className={styles.thCenter} style={{ width: "5%" }}>Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -707,9 +738,9 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                   <span className={styles.bold}>{formatCurrency(taxAmount)}</span>
                 </section>
               )}
-              <section className={styles.totalRow}>
+              <section className={`${styles.totalRow} ${styles.totalRowGrand}`}>
                 <span>Grand Total</span>
-                <span className={styles.bold}>{formatCurrency(grandTotal)}</span>
+                <span style={{ color: "#fff", fontWeight: 800 }}>{formatCurrency(grandTotal)}</span>
               </section>
               {returnedItemsCount > 0 && (
                 <section className={styles.totalRow}>
