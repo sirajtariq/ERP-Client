@@ -8,7 +8,7 @@ import { AppButton, AppInput, AppSelect } from "@/components/common";
 import { getAllCustomers, normalizeCustomer } from "@/services/customerService";
 import { createQuotation, updateQuotation, buildCustomerDataPayload } from "@/services/quotationService";
 import { getItems as getInventoryItems } from "@/services/inventoryService";
-import { UNITS } from "@/pages/Inventory/mockData";
+import { UNIT_OPTIONS, ADD_NEW_UNIT } from "@/pages/Inventory/mockData";
 import { useInfiniteScroll } from "@/hooks";
 import { formatCurrency } from "@/utils";
 import { QUOTATION_STATUS_OPTIONS, QUOTATION_PAYMENT_TERM_OPTIONS } from "@/constants/filterOptions";
@@ -119,16 +119,19 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
     const inv = invItems.find((i) => i.id === inventoryItemId);
     if (!inv) return;
     const updated  = [...items];
-    const qty      = updated[index].qty      || 0;
+    const itemType = inv.itemType || "product";
+    const qty      = itemType === "service" ? 1 : (updated[index].qty || 0);
     const discount = updated[index].discount || 0;
     const rate     = Number(inv.saleRate)    || 0;
     const subtotal = qty * rate;
     updated[index] = {
       ...updated[index],
       inventoryItemId,
-      code:  inv.itemCode || "",
-      name:  inv.name     || "",
-      unit:  inv.unit     || "",
+      code:     inv.itemCode || "",
+      name:     inv.name     || "",
+      unit:     inv.unit     || "",
+      itemType,
+      qty,
       rate,
       total: subtotal - (subtotal * discount / 100),
     };
@@ -312,7 +315,7 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
         .filter((item) => item.name)
         .map((item) => ({
           name:      item.name,
-          units:     item.unit || "pcs",
+          units:     (item.unit === ADD_NEW_UNIT ? (item.customUnit || "").trim() : item.unit) || "pcs",
           quantity:  String(item.qty || 0),
           unitPrice: String(item.rate || 0),
           discount:  String(item.discount || 0),
@@ -512,6 +515,9 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                 <section className={styles.itemHeader}>
                   <span className={styles.itemBadge}>{index + 1}</span>
                   <span className={styles.itemHeaderLabel}>{item.name || `Item ${index + 1}`}</span>
+                  {item.itemType === "service" && (
+                    <Tag color="purple" style={{ fontSize: 10, fontWeight: 700, borderRadius: 4, padding: "0 5px", lineHeight: "16px", margin: 0 }}>SERVICE</Tag>
+                  )}
                   <span className={styles.itemHeaderSpacer} />
                   <span className={styles.itemHeaderTotal}>{formatCurrency(item.total || 0)}</span>
                   {items.length > 1 && (
@@ -540,7 +546,11 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                               ? [{ value: "__current__", label: item.name }]
                               : []
                             ),
-                            ...invItems.map((i) => ({ value: i.id, label: `${i.itemCode} — ${i.name}` })),
+                            ...invItems.map((i) => ({
+                              value: i.id,
+                              label: `${i.itemCode} — ${i.name}`,
+                              itemType: i.itemType || "product",
+                            })),
                           ]}
                           value={item.inventoryItemId || (item.name ? "__current__" : undefined)}
                           onSearch={handleInvSearchDebounce}
@@ -553,7 +563,14 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                               <span style={{ color: "var(--color-text-secondary)", fontStyle: "italic" }}>
                                 {option.label} <span style={{ fontSize: 11 }}>(existing — select to change)</span>
                               </span>
-                            ) : option.label
+                            ) : (
+                              <span style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
+                                <span>{option.label}</span>
+                                {option.data?.itemType === "service" && (
+                                  <Tag color="purple" style={{ fontSize: 10, fontWeight: 700, borderRadius: 4, padding: "0 5px", lineHeight: "16px", margin: 0, flexShrink: 0 }}>SERVICE</Tag>
+                                )}
+                              </span>
+                            )
                           }
                         />
                       </Col>
@@ -579,11 +596,29 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                       <AppSelect
                         label="Unit"
                         placeholder="Select unit"
-                        options={UNITS}
+                        options={UNIT_OPTIONS}
                         value={item.unit || undefined}
                         onChange={(val) => handleItemChange(index, "unit", val)}
+                        optionRender={(option) =>
+                          option.value === ADD_NEW_UNIT ? (
+                            <span style={{ display: "block", margin: "-5px -12px", padding: "6px 12px", background: "rgba(124,92,252,0.08)", color: "#7c5cfc", fontWeight: 600 }}>
+                              {option.label}
+                            </span>
+                          ) : option.label
+                        }
                       />
                     </Col>
+                    {item.unit === ADD_NEW_UNIT && (
+                      <Col span={24} style={{ marginTop: 8 }}>
+                        <AppInput
+                          label="New Unit Name"
+                          placeholder="e.g. Roll, Bundle, Sq.Ft"
+                          value={item.customUnit || ""}
+                          onChange={(e) => handleItemChange(index, "customUnit", e.target.value)}
+                          autoFocus
+                        />
+                      </Col>
+                    )}
                   </Row>
                 )}
 
@@ -592,7 +627,14 @@ const QuotationDrawer = ({ open, onClose, onSubmit, editingQuotation }) => {
                     <AppInput label="Rate" inputType="number" min={0} value={item.rate} onChange={(val) => handleItemChange(index, "rate", val)} />
                   </Col>
                   <Col span={6}>
-                    <AppInput label="Qty" inputType="number" min={0} value={item.qty} onChange={(val) => handleItemChange(index, "qty", val)} />
+                    <AppInput
+                      label="Qty"
+                      inputType="number"
+                      min={0}
+                      value={item.itemType === "service" ? 1 : item.qty}
+                      onChange={(val) => handleItemChange(index, "qty", val)}
+                      disabled={item.itemType === "service"}
+                    />
                   </Col>
                   <Col span={6}>
                     <AppInput label="Disc (%)" inputType="number" min={0} max={100} value={item.discount} onChange={(val) => handleItemChange(index, "discount", val)} placeholder="%" />

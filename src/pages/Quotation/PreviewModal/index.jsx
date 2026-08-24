@@ -38,6 +38,8 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
   const buildPrintHTML = () => {
     const TH = `padding:10px 12px;font-size:11px;font-weight:700;color:#fff;border:1px solid #334155;`;
     const TD = `padding:9px 12px;font-size:12px;color:#1e293b;border:1px solid #e2e8f0;`;
+    const hasAnyDiscount = validItems.some((item) => parseFloat(item.discount) > 0);
+    const totalColWidth = hasAnyDiscount ? 17 : 27;
 
     const rows = validItems.map((item, i) => `
       <tr style="background:${i % 2 === 0 ? "#ffffff" : "#f8fafc"};">
@@ -46,7 +48,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
         <td style="${TD}text-align:center;">${item.unit || "-"}</td>
         <td style="${TD}text-align:right;">${item.qty || 0}</td>
         <td style="${TD}text-align:right;">${formatCurrency(item.rate || 0)}</td>
-        <td style="${TD}text-align:center;">${parseFloat(item.discount) > 0 ? item.discount + "%" : "-"}</td>
+        ${hasAnyDiscount ? `<td style="${TD}text-align:center;">${parseFloat(item.discount) > 0 ? item.discount + "%" : "-"}</td>` : ""}
         <td style="${TD}text-align:right;font-weight:700;">${formatCurrency(item.total || 0)}</td>
       </tr>
     `).join("");
@@ -97,7 +99,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
           <div style="flex:1;border-left:4px solid #94a3b8;background:#f8fafc;border-radius:0 6px 6px 0;padding:14px 16px;">
             <h3 style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;margin:0 0 8px;">Terms</h3>
             <p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Payment:</strong> ${paymentTerm || "N/A"}</p>
-            <p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Discount:</strong> ${discountPercent || 0}%</p>
+            ${discountAmount > 0 ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Discount:</strong> ${discountPercent || 0}%</p>` : ""}
             <p style="font-size:11px;color:#374151;margin:3px 0;"><strong>VAT:</strong> ${vatPercent || 0}%</p>
             ${convertedInvoice ? `<p style="font-size:11px;color:#374151;margin:3px 0;"><strong>Converted Invoice:</strong> #${convertedInvoice}</p>` : ""}
           </div>
@@ -113,11 +115,11 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
                 <th style="${TH}text-align:center;width:8%">Unit</th>
                 <th style="${TH}text-align:right;width:7%">Qty</th>
                 <th style="${TH}text-align:right;width:14%">Rate</th>
-                <th style="${TH}text-align:center;width:10%">Disc %</th>
-                <th style="${TH}text-align:right;width:17%">Total</th>
+                ${hasAnyDiscount ? `<th style="${TH}text-align:center;width:10%">Disc %</th>` : ""}
+                <th style="${TH}text-align:right;width:${totalColWidth}%">Total</th>
               </tr>
             </thead>
-            <tbody>${rows || `<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8;border:1px solid #e2e8f0;">No items</td></tr>`}</tbody>
+            <tbody>${rows || `<tr><td colspan="${hasAnyDiscount ? 7 : 6}" style="padding:16px;text-align:center;color:#94a3b8;border:1px solid #e2e8f0;">No items</td></tr>`}</tbody>
           </table>
         </div>
 
@@ -125,7 +127,7 @@ const PreviewModal = ({ open, onClose, data, onDeleteItem }) => {
         <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
           <div style="width:290px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
             <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Items Total</span><span style="font-weight:700;color:#1e293b;">${formatCurrency(itemsTotal)}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Discount (${discountPercent || 0}%)</span><span style="font-weight:700;color:#dc2626;">-${formatCurrency(discountAmount || 0)}</span></div>
+            ${discountAmount > 0 ? `<div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">Discount (${discountPercent || 0}%)</span><span style="font-weight:700;color:#dc2626;">-${formatCurrency(discountAmount)}</span></div>` : ""}
             <div style="display:flex;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #e2e8f0;"><span style="color:#374151;">VAT (${vatPercent || 0}%)</span><span style="font-weight:700;color:#1e293b;">${formatCurrency(vatAmount || 0)}</span></div>
             <div style="display:flex;justify-content:space-between;padding:11px 14px;background:#1e293b;">
               <span style="color:#e2e8f0;font-weight:700;font-size:13px;">Grand Total</span><span style="font-weight:800;color:#fff;font-size:13px;">${formatCurrency(grandTotal)}</span>

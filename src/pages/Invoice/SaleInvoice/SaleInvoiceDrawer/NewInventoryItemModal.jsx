@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Modal, Row, Col } from "antd";
 import { useForm, Controller } from "react-hook-form";
 import { AppInput, AppSelect, AppButton } from "@/components/common";
-import { CATEGORIES, UNITS } from "@/pages/Inventory/mockData";
+import { CATEGORIES, UNIT_OPTIONS, ADD_NEW_UNIT } from "@/pages/Inventory/mockData";
 
 const ADD_NEW = "__add__";
 
@@ -15,9 +15,16 @@ const CATEGORY_OPTIONS = [
   ...CATEGORIES.map((c) => ({ value: c, label: c })),
 ];
 
+const renderUnitOption = (option) =>
+  option.value === ADD_NEW_UNIT ? (
+    <span style={{ display: "block", margin: "-5px -12px", padding: "6px 12px", background: "rgba(124,92,252,0.08)", color: "#7c5cfc", fontWeight: 600 }}>
+      {option.label}
+    </span>
+  ) : option.label;
+
 const defaultValues = {
   itemCode: "", name: "", category: null, customCategory: "",
-  unit: null, purchaseRate: "", saleRate: "",
+  unit: null, customUnit: "", purchaseRate: "", saleRate: "",
   openingStock: "0", minStock: "0", description: "",
 };
 
@@ -31,7 +38,10 @@ const NewInventoryItemModal = ({ open, onClose, onAdd, initialData }) => {
   const saleRate       = watch("saleRate");
   const category       = watch("category");
   const customCategory = watch("customCategory");
+  const unit           = watch("unit");
+  const customUnit     = watch("customUnit");
   const isAddNew       = category === ADD_NEW;
+  const isAddNewUnit   = unit === ADD_NEW_UNIT;
   const margin         = purchaseRate > 0
     ? (((saleRate - purchaseRate) / purchaseRate) * 100).toFixed(1)
     : null;
@@ -44,9 +54,13 @@ const NewInventoryItemModal = ({ open, onClose, onAdd, initialData }) => {
     const resolvedCategory = data.category === ADD_NEW
       ? (data.customCategory || "").trim()
       : data.category;
+    const resolvedUnit = data.unit === ADD_NEW_UNIT
+      ? (data.customUnit || "").trim()
+      : data.unit;
     onAdd({
       ...data,
       category:     resolvedCategory,
+      unit:         resolvedUnit,
       purchaseRate: Number(data.purchaseRate) || 0,
       saleRate:     Number(data.saleRate)     || 0,
       openingStock: Number(data.openingStock) || 0,
@@ -54,7 +68,9 @@ const NewInventoryItemModal = ({ open, onClose, onAdd, initialData }) => {
     });
   };
 
-  const submitDisabled = !isValid || (isAddNew && !customCategory?.trim());
+  const submitDisabled = !isValid
+    || (isAddNew && !customCategory?.trim())
+    || (isAddNewUnit && !customUnit?.trim());
 
   return (
     <Modal
@@ -108,7 +124,7 @@ const NewInventoryItemModal = ({ open, onClose, onAdd, initialData }) => {
             <Col span={10}>
               <Controller name="unit" control={control} rules={{ required: "Required" }}
                 render={({ field }) => (
-                  <AppSelect {...field} label="Unit" placeholder="Select unit" options={UNITS} required errors={errors} />
+                  <AppSelect {...field} label="Unit" placeholder="Select unit" options={UNIT_OPTIONS} required errors={errors} optionRender={renderUnitOption} />
                 )} />
             </Col>
           )}
@@ -126,7 +142,19 @@ const NewInventoryItemModal = ({ open, onClose, onAdd, initialData }) => {
             <Col span={10}>
               <Controller name="unit" control={control} rules={{ required: "Required" }}
                 render={({ field }) => (
-                  <AppSelect {...field} label="Unit" placeholder="Select unit" options={UNITS} required errors={errors} />
+                  <AppSelect {...field} label="Unit" placeholder="Select unit" options={UNIT_OPTIONS} required errors={errors} optionRender={renderUnitOption} />
+                )} />
+            </Col>
+          </Row>
+        )}
+
+        {isAddNewUnit && (
+          <Row gutter={16}>
+            <Col span={24}>
+              <Controller name="customUnit" control={control}
+                rules={{ validate: (v) => !isAddNewUnit || !!v?.trim() || "Unit name required" }}
+                render={({ field }) => (
+                  <AppInput {...field} label="New Unit Name" placeholder="e.g. Roll, Bundle, Sq.Ft" required errors={errors} autoFocus />
                 )} />
             </Col>
           </Row>

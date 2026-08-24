@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import dayjs from "dayjs";
-import { Modal, Tabs, Table, Tag, Divider, Spin } from "antd";
+import { Modal, Tabs, Table, Tag, Divider, Spin, message } from "antd";
 import {
   UserOutlined, PhoneOutlined, MailOutlined, EnvironmentOutlined,
   IdcardOutlined, CalendarOutlined, RiseOutlined, DollarOutlined,
@@ -8,9 +8,9 @@ import {
   PrinterOutlined,
 } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
-import { getEmployeeAdvancesTab, getEmployeeIncrementsTab, getEmployeeSalariesTab, getEmployeeAttendance, saveBulkAttendance, updateAttendance } from "@/services/employeeService";
+import { getEmployeeAdvancesTab, getEmployeeIncrementsTab, getEmployeeSalariesTab, getEmployeeAttendance, saveBulkAttendance, updateAttendance, getSalaryPayslip } from "@/services/employeeService";
 import { formatCurrency, formatDate } from "@/utils";
-import { getCompanyInfo } from "@/utils/companyInfoStore";
+import SalarySlipModal from "../SalarySlipModal";
 import styles from "./styles.module.css";
 
 const MONTHS = [
@@ -114,6 +114,9 @@ const EmployeeDetailModal = ({
   const [attData,            setAttData]            = useState(null);
   const [attLoading,         setAttLoading]         = useState(false);
   const [saveDayLoading,     setSaveDayLoading]     = useState(false);
+  const [slipLoading,        setSlipLoading]        = useState(false);
+  const [slipData,           setSlipData]           = useState(null);
+  const [slipOpen,           setSlipOpen]           = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -233,254 +236,18 @@ const EmployeeDetailModal = ({
 
   const attSummary = attData?.summary ?? { present: 0, absent: 0, halfDay: 0, leave: 0, offDays: 0, notMarked: 0 };
 
-  const buildSalarySlipHTML = (row) => {
-    const { month, year, record } = row;
-    const co = getCompanyInfo();
-    const monthStr  = `${year}-${String(month).padStart(2, "0")}`;
-    const monthName = new Date(year, month - 1, 1).toLocaleString("en-PK", { month: "long", year: "numeric" });
-    const printDate = new Date().toLocaleDateString("en-PK", { day: "2-digit", month: "2-digit", year: "numeric" });
-    const slipNo    = `SS-${year}${String(month).padStart(2, "0")}-${(employee.empNo || "").replace("-", "")}`;
-
-    const monthAtt = empAttendance.filter((a) => a.date.startsWith(monthStr));
-    const dim = new Date(year, month, 0).getDate();
-    let workingDays = 0;
-    for (let d = 1; d <= dim; d++) {
-      if (new Date(year, month - 1, d).getDay() !== 5) workingDays++;
+  const printSalarySlip = async (row) => {
+    setSlipLoading(true);
+    try {
+      const payslip = await getSalaryPayslip(employee.id, row.record.id);
+      setSlipData(payslip);
+      setSlipOpen(true);
+    } catch (err) {
+      message.error("Failed to load payslip data");
+      console.error(err);
+    } finally {
+      setSlipLoading(false);
     }
-    const fridaysOff = dim - workingDays;
-
-    const present      = monthAtt.filter((a) => a.status === "present").length;
-    const absent       = monthAtt.filter((a) => a.status === "absent").length;
-    const halfPaid     = monthAtt.filter((a) => a.status === "half_paid").length;
-    const halfUnpaid   = monthAtt.filter((a) => a.status === "half_unpaid").length;
-    const leavePaid    = monthAtt.filter((a) => a.status === "leave_paid").length;
-    const leaveUnpaid  = monthAtt.filter((a) => a.status === "leave_unpaid").length;
-    const notMarked    = Math.max(0, workingDays - present - absent - halfPaid - halfUnpaid - leavePaid - leaveUnpaid);
-
-    const monthlySalary = employee.currentSalary || 0;
-    const perDay        = workingDays > 0 ? monthlySalary / workingDays : 0;
-    const absentDeduct      = absent      * perDay;
-    const halfUnpaidDeduct  = halfUnpaid  * (perDay / 2);
-    const leaveUnpaidDeduct = leaveUnpaid * perDay;
-    const attDeduct     = absentDeduct + halfUnpaidDeduct + leaveUnpaidDeduct;
-    const bonus         = record?.bonus         || 0;
-    const manualDeduct  = record?.deductions    || 0;
-    const advDeduct     = record?.advanceDeduction || 0;
-    const totalDeduct   = attDeduct + manualDeduct + advDeduct;
-    const grossEarnings = monthlySalary + bonus;
-    const netPay        = record?.netSalary ?? (grossEarnings - totalDeduct);
-    const amountPaid    = record?.amountPaid  || 0;
-    const remaining     = netPay - amountPaid;
-
-    const fc = (n) => `Rs. ${Number(n || 0).toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-
-    const attRow = (label, val, color, hint) => `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;border-right:1px solid #e2e8f0;min-width:0;flex:1;">
-        <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:4px;text-align:center;">${label}</div>
-        <div style="font-size:22px;font-weight:800;color:${color};">${val}</div>
-        ${hint ? `<div style="font-size:9px;color:#94a3b8;margin-top:2px;">${hint}</div>` : ""}
-      </div>`;
-
-    const earnRow = (label, val, color) => `
-      <tr>
-        <td style="padding:8px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#374151;">${label}</td>
-        <td style="padding:8px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:700;text-align:right;color:${color || "#1e293b"};">${fc(val)}</td>
-      </tr>`;
-
-    const dedRow = (label, val, sub) => val > 0 ? `
-      <tr>
-        <td style="padding:8px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#374151;">${label}${sub ? `<span style="font-size:10px;color:#94a3b8;margin-left:6px;">${sub}</span>` : ""}</td>
-        <td style="padding:8px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:700;text-align:right;color:#ef4444;">- ${fc(val)}</td>
-      </tr>` : "";
-
-    const paymentRows = (record?.payments || []).map((p) => `
-      <tr>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${p.date}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;font-weight:700;">${fc(p.amount)}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;">${p.method}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;color:#475569;">${p.paidBy || "—"}</td>
-        <td style="padding:8px 10px;border:1px solid #d1d5db;font-size:12px;color:#475569;">${p.remarks || "—"}</td>
-      </tr>`).join("");
-
-    const absRemark = monthAtt.filter((a) => a.status === "absent" && a.remarks).map((a) => `${a.date}: ${a.remarks}`).join(", ");
-    const halfURemark = monthAtt.filter((a) => a.status === "half_unpaid" && a.remarks).map((a) => `${a.date}: ${a.remarks}`).join(", ");
-    const leaveURemark = monthAtt.filter((a) => a.status === "leave_unpaid" && a.remarks).map((a) => `${a.date}: ${a.remarks}`).join(", ");
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<title>Salary Slip — ${employee.name} — ${monthName}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #1e293b; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .page { max-width: 780px; margin: 24px auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; padding: 10px 20px 6px; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
-  @media print {
-    body { background: #fff; }
-    .page { border: none; border-radius: 0; margin: 0; max-width: 100%; }
-    @page { margin: 15mm; size: A4 portrait; }
-  }
-</style>
-</head>
-<body>
-<div class="page">
-
-  <!-- HEADER -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:20px 28px;">
-    <div>
-      <h1 style="font-size:20px;font-weight:800;margin:0 0 4px;">${co.name || "Company Name"}</h1>
-      ${co.address ? `<p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Address:</strong> ${co.address}</p>` : ""}
-      ${co.contact ? `<p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Tel:</strong> ${co.contact}${co.whatsapp ? `&nbsp;&nbsp;<strong>WhatsApp:</strong> ${co.whatsapp}` : ""}</p>` : ""}
-      ${co.email   ? `<p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Email:</strong> ${co.email}</p>` : ""}
-    </div>
-    <div style="text-align:right;">
-      <h2 style="font-size:18px;font-weight:800;color:#141423;margin:0 0 6px;">SALARY SLIP</h2>
-      <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Month:</strong> ${monthName}</p>
-      <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Slip No:</strong> ${slipNo}</p>
-      <p style="font-size:12px;color:#475569;margin:2px 0;"><strong>Printed:</strong> ${printDate}</p>
-    </div>
-  </div>
-  <hr style="border:none;border-top:1px solid #d1d5db;margin:0;" />
-
-  <!-- EMPLOYEE DETAILS -->
-  <div class="section-title">Employee Information</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid #e2e8f0;">
-    <div style="padding:10px 20px;border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;">
-      <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Employee Name</div>
-      <div style="font-size:14px;font-weight:700;">${employee.name}</div>
-    </div>
-    <div style="padding:10px 20px;border-bottom:1px solid #f1f5f9;">
-      <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Employee No.</div>
-      <div style="font-size:14px;font-weight:700;">${employee.empNo || "—"}</div>
-    </div>
-    <div style="padding:10px 20px;border-right:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;">
-      <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Designation</div>
-      <div style="font-size:13px;font-weight:600;">${employee.designation || "—"}</div>
-    </div>
-    <div style="padding:10px 20px;border-bottom:1px solid #f1f5f9;">
-      <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Department</div>
-      <div style="font-size:13px;font-weight:600;">${employee.department || "—"}</div>
-    </div>
-    <div style="padding:10px 20px;border-right:1px solid #f1f5f9;">
-      <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Joining Date</div>
-      <div style="font-size:13px;font-weight:600;">${employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</div>
-    </div>
-    <div style="padding:10px 20px;">
-      <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;">Status</div>
-      <div style="font-size:13px;font-weight:700;color:${employee.status === "active" ? "#22c55e" : "#ef4444"};text-transform:capitalize;">${employee.status}</div>
-    </div>
-  </div>
-
-  <!-- ATTENDANCE SUMMARY -->
-  <div class="section-title">Attendance Summary — ${monthName} (Working Days: ${workingDays} | Month Days: ${dim})</div>
-  <div style="display:flex;border-bottom:1px solid #e2e8f0;">
-    ${attRow("Present",       present,      "#22c55e")}
-    ${attRow("Absent",        absent,       "#ef4444",  absent      > 0 ? "deducted" : "")}
-    ${attRow("Half Day (P)",  halfPaid,     "#f97316",  "no deduct")}
-    ${attRow("Half Day (U)",  halfUnpaid,   "#c2410c",  halfUnpaid  > 0 ? "deducted" : "no deduct")}
-    ${attRow("Leave (P)",     leavePaid,    "#3b82f6",  "no deduct")}
-    ${attRow("Leave (U)",     leaveUnpaid,  "#7c3aed",  leaveUnpaid > 0 ? "deducted" : "no deduct")}
-    ${attRow("Fri. Off",      fridaysOff,   "#94a3b8")}
-    ${notMarked > 0 ? attRow("Unmarked", notMarked, "#cbd5e1") : ""}
-  </div>
-  ${absRemark || halfURemark || leaveURemark ? `
-  <div style="padding:8px 20px;background:#fffbeb;border-bottom:1px solid #fef3c7;font-size:11px;color:#92400e;">
-    <span style="font-weight:700;">Remarks:</span>
-    ${absRemark    ? `<span style="margin-left:8px;"><b>Absent:</b> ${absRemark}</span>`       : ""}
-    ${halfURemark  ? `<span style="margin-left:8px;"><b>Half Unpaid:</b> ${halfURemark}</span>` : ""}
-    ${leaveURemark ? `<span style="margin-left:8px;"><b>Leave Unpaid:</b> ${leaveURemark}</span>` : ""}
-  </div>` : ""}
-
-  <!-- EARNINGS & DEDUCTIONS -->
-  <div class="section-title">Earnings &amp; Deductions</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid #e2e8f0;">
-    <div style="border-right:2px solid #e2e8f0;">
-      <div style="padding:8px 14px;background:#f0fdf4;border-bottom:1px solid #dcfce7;">
-        <span style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.3px;">Earnings</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;">
-        ${earnRow("Monthly Salary", monthlySalary, "#1e293b")}
-        ${bonus > 0 ? earnRow("Bonus / Incentive", bonus, "#22c55e") : ""}
-      </table>
-      <div style="padding:10px 14px;background:#f0fdf4;border-top:1px solid #dcfce7;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;font-weight:700;color:#16a34a;text-transform:uppercase;">Gross Earnings</span>
-        <span style="font-size:15px;font-weight:800;color:#16a34a;">${fc(grossEarnings)}</span>
-      </div>
-    </div>
-    <div>
-      <div style="padding:8px 14px;background:#fef2f2;border-bottom:1px solid #fecaca;">
-        <span style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.3px;">Deductions</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;">
-        ${dedRow(`Absent (${absent} day${absent !== 1 ? "s" : ""})`, absentDeduct)}
-        ${dedRow(`Half Day Unpaid (${halfUnpaid})`,    halfUnpaidDeduct)}
-        ${dedRow(`Leave Unpaid (${leaveUnpaid})`,      leaveUnpaidDeduct)}
-        ${dedRow("Advance Deduction",                  advDeduct)}
-        ${dedRow("Other Deductions",                   manualDeduct)}
-        ${totalDeduct === 0 ? `<tr><td colspan="2" style="padding:8px 14px;font-size:12px;color:#94a3b8;font-style:italic;">No deductions this month</td></tr>` : ""}
-      </table>
-      <div style="padding:10px 14px;background:#fef2f2;border-top:1px solid #fecaca;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;font-weight:700;color:#dc2626;text-transform:uppercase;">Total Deductions</span>
-        <span style="font-size:15px;font-weight:800;color:#dc2626;">${fc(totalDeduct)}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- NET PAY -->
-  <div style="background:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border:2px solid #1e293b;border-radius:0 0 12px 12px;">
-    <div>
-      <div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">Net Pay for ${monthName}</div>
-      <div style="font-size:28px;font-weight:800;color:#1e293b;letter-spacing:-0.5px;">${fc(netPay)}</div>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Paid so far</div>
-      <div style="font-size:16px;font-weight:700;color:#16a34a;">${fc(amountPaid)}</div>
-      ${remaining > 0 ? `
-      <div style="font-size:11px;color:#64748b;margin-top:6px;margin-bottom:2px;">Remaining</div>
-      <div style="font-size:16px;font-weight:700;color:#dc2626;">${fc(remaining)}</div>` : `
-      <div style="margin-top:8px;padding:4px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:20px;font-size:12px;font-weight:700;color:#16a34a;">FULLY PAID</div>`}
-    </div>
-  </div>
-
-  ${(record?.payments?.length || 0) > 0 ? `
-  <!-- PAYMENT HISTORY -->
-  <div class="section-title">Payment History</div>
-  <table style="width:100%;border-collapse:collapse;">
-    <thead>
-      <tr style="background:#f8fafc;">
-        <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;text-transform:uppercase;">Date</th>
-        <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;text-transform:uppercase;">Amount</th>
-        <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;text-transform:uppercase;">Method</th>
-        <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;text-transform:uppercase;">Paid By</th>
-        <th style="padding:8px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:left;border-bottom:1px solid #e2e8f0;text-transform:uppercase;">Remarks</th>
-      </tr>
-    </thead>
-    <tbody>${paymentRows}</tbody>
-  </table>` : ""}
-
-  <!-- FOOTER -->
-  <div style="padding:24px 28px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:flex-end;">
-    <div style="font-size:10px;color:#94a3b8;">
-      <div>Generated by system</div>
-      <div>This is a computer-generated document.</div>
-    </div>
-    <div style="text-align:center;">
-      <div style="width:160px;border-top:1.5px solid #334155;padding-top:6px;font-size:11px;font-weight:600;color:#475569;">Authorized Signature</div>
-    </div>
-  </div>
-
-</div>
-</body>
-</html>`;
-  };
-
-  const printSalarySlip = (row) => {
-    const html = buildSalarySlipHTML(row);
-    const win  = window.open("", "_blank");
-    win.document.write(html);
-    win.document.close();
-    setTimeout(() => { win.print(); }, 400);
   };
 
   if (!employee) return null;
@@ -491,7 +258,27 @@ const EmployeeDetailModal = ({
   const attAlert   = tabBadges.attendanceAlertBadge || "";
   const unpaidCount = tabBadges.unpaidSalariesCount || 0;
 
-  const totalIncremented = (employee.currentSalary || 0) - (employee.basicSalary || 0);
+  const topMetrics = employee.topMetrics || {
+    currentSalary:      employee.currentSalary || 0,
+    pendingSalary:       totalPendingSalary,
+    advanceBalance:      advanceBalance,
+    salaryRecordsCount:  empSalaryRecords.length,
+    noOfIncrements:      empIncrements.length,
+  };
+
+  const salaryInfo = employee.salaryInfo || {
+    basicSalary:            employee.basicSalary   || 0,
+    currentSalary:          employee.currentSalary || 0,
+    totalIncremented:       (employee.currentSalary || 0) - (employee.basicSalary || 0),
+    noOfIncrements:         empIncrements.length,
+    totalEarned:            0,
+    totalPaid:              0,
+    pendingBalance:         0,
+    baseSalary:             employee.currentSalary || 0,
+    currentMonthDaysWorked: 0,
+    currentMonthAccrued:    0,
+    netSettlementAmount:    0,
+  };
 
   // ── Attendance calendar cells (built from API calendarGrid) ──
   const attOffset = attMonth.startOf("month").day() === 0 ? 6 : attMonth.startOf("month").day() - 1;
@@ -609,11 +396,22 @@ const EmployeeDetailModal = ({
           <Divider style={{ margin: "16px 0 14px" }} />
 
           <h3 className={styles.sectionTitle}><DollarOutlined style={{ marginRight: 6 }} />Salary Info</h3>
-          <div className={styles.infoBox}>
-            <InfoRow icon={<DollarOutlined />} label="Basic Salary"      value={formatCurrency(employee.basicSalary || 0)} />
-            <InfoRow icon={<DollarOutlined />} label="Current Salary"    value={formatCurrency(employee.currentSalary || 0)} />
-            <InfoRow icon={<RiseOutlined />}   label="Total Incremented" value={`+ ${formatCurrency(totalIncremented)}`} />
-            <InfoRow icon={<RiseOutlined />}   label="No. of Increments" value={empIncrements.length} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+            <MiniCard label="Basic Salary"      value={formatCurrency(salaryInfo.basicSalary)}                    color="#64748b" bg="rgba(100,116,139,0.07)" border="rgba(100,116,139,0.2)" />
+            <MiniCard label="Base Salary"       value={formatCurrency(salaryInfo.baseSalary)}                     color="#0ea5e9" bg="rgba(14,165,233,0.07)"  border="rgba(14,165,233,0.2)" />
+            <MiniCard label="Current Salary"    value={formatCurrency(salaryInfo.currentSalary)}                  color="#7c5cfc" bg="rgba(124,92,252,0.07)" border="rgba(124,92,252,0.2)" />
+            <MiniCard label="Total Incremented" value={`+ ${formatCurrency(salaryInfo.totalIncremented)}`}        color="#22c55e" bg="rgba(34,197,94,0.07)"  border="rgba(34,197,94,0.2)" />
+            <MiniCard label="No. of Increments" value={salaryInfo.noOfIncrements}                                 color="#3b82f6" bg="rgba(59,130,246,0.07)" border="rgba(59,130,246,0.2)" />
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+            <MiniCard label="Total Earned"      value={formatCurrency(salaryInfo.totalEarned)}                    color="#22c55e" bg="rgba(34,197,94,0.07)"  border="rgba(34,197,94,0.2)" />
+            <MiniCard label="Total Paid"        value={formatCurrency(salaryInfo.totalPaid)}                      color="#16a34a" bg="rgba(34,197,94,0.07)"  border="rgba(34,197,94,0.2)" />
+            <MiniCard label="Pending Balance"   value={formatCurrency(salaryInfo.pendingBalance)}                 color={salaryInfo.pendingBalance > 0 ? "#ef4444" : "#22c55e"} bg={salaryInfo.pendingBalance > 0 ? "rgba(239,68,68,0.07)" : "rgba(34,197,94,0.07)"} border={salaryInfo.pendingBalance > 0 ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)"} />
+            <MiniCard label="Net Settlement"    value={formatCurrency(salaryInfo.netSettlementAmount)}            color="#f97316" bg="rgba(249,115,22,0.07)" border="rgba(249,115,22,0.2)" />
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <MiniCard label="Days Worked (This Month)" value={salaryInfo.currentMonthDaysWorked}                  color="#64748b" bg="rgba(100,116,139,0.07)" border="rgba(100,116,139,0.2)" />
+            <MiniCard label="Accrued (This Month)"     value={formatCurrency(salaryInfo.currentMonthAccrued)}     color="#7c5cfc" bg="rgba(124,92,252,0.07)" border="rgba(124,92,252,0.2)" />
           </div>
         </div>
       ),
@@ -644,13 +442,27 @@ const EmployeeDetailModal = ({
               const tb  = salarySummary?.totalBonus     ?? 0;
               const ps  = salarySummary?.pendingSalary  ?? 0;
               const ppc = salarySummary?.partialPendingCount ?? 0;
+              const te  = salarySummary?.totalEarned            ?? 0;
+              const bs  = salarySummary?.baseSalary             ?? 0;
+              const nsa = salarySummary?.netSettlementAmount    ?? 0;
+              const dw  = salarySummary?.currentMonthDaysWorked ?? 0;
+              const acc = salarySummary?.currentMonthAccrued    ?? 0;
               return (
-                <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                  <MiniCard label="Total Paid"       value={formatCurrency(tp)} color="#22c55e" bg="rgba(34,197,94,0.07)"  border="rgba(34,197,94,0.2)" />
-                  <MiniCard label="Total Bonus"      value={formatCurrency(tb)} color="#3b82f6" bg="rgba(59,130,246,0.07)" border="rgba(59,130,246,0.2)" />
-                  <MiniCard label="Pending Salary"   value={formatCurrency(ps)} color={ps  > 0 ? "#ef4444" : "#22c55e"} bg={ps  > 0 ? "rgba(239,68,68,0.07)"  : "rgba(34,197,94,0.07)"}  border={ps  > 0 ? "rgba(239,68,68,0.2)"  : "rgba(34,197,94,0.2)"} />
-                  <MiniCard label="Partial / Pending" value={ppc}               color={ppc > 0 ? "#f97316" : "#22c55e"} bg={ppc > 0 ? "rgba(249,115,22,0.07)" : "rgba(34,197,94,0.07)"}  border={ppc > 0 ? "rgba(249,115,22,0.2)" : "rgba(34,197,94,0.2)"} />
-                </div>
+                <>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+                    <MiniCard label="Total Paid"       value={formatCurrency(tp)} color="#22c55e" bg="rgba(34,197,94,0.07)"  border="rgba(34,197,94,0.2)" />
+                    <MiniCard label="Total Bonus"      value={formatCurrency(tb)} color="#3b82f6" bg="rgba(59,130,246,0.07)" border="rgba(59,130,246,0.2)" />
+                    <MiniCard label="Pending Salary"   value={formatCurrency(ps)} color={ps  > 0 ? "#ef4444" : "#22c55e"} bg={ps  > 0 ? "rgba(239,68,68,0.07)"  : "rgba(34,197,94,0.07)"}  border={ps  > 0 ? "rgba(239,68,68,0.2)"  : "rgba(34,197,94,0.2)"} />
+                    <MiniCard label="Partial / Pending" value={ppc}               color={ppc > 0 ? "#f97316" : "#22c55e"} bg={ppc > 0 ? "rgba(249,115,22,0.07)" : "rgba(34,197,94,0.07)"}  border={ppc > 0 ? "rgba(249,115,22,0.2)" : "rgba(34,197,94,0.2)"} />
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+                    <MiniCard label="Total Earned"     value={formatCurrency(te)}  color="#22c55e" bg="rgba(34,197,94,0.07)"    border="rgba(34,197,94,0.2)" />
+                    <MiniCard label="Base Salary"      value={formatCurrency(bs)}  color="#0ea5e9" bg="rgba(14,165,233,0.07)"   border="rgba(14,165,233,0.2)" />
+                    <MiniCard label="Net Settlement"   value={formatCurrency(nsa)} color="#f97316" bg="rgba(249,115,22,0.07)"   border="rgba(249,115,22,0.2)" />
+                    <MiniCard label="Days Worked (This Month)" value={dw}                     color="#64748b" bg="rgba(100,116,139,0.07)" border="rgba(100,116,139,0.2)" />
+                    <MiniCard label="Accrued (This Month)"     value={formatCurrency(acc)}    color="#7c5cfc" bg="rgba(124,92,252,0.07)"  border="rgba(124,92,252,0.2)" />
+                  </div>
+                </>
               );
             })()}
             <Table
@@ -736,6 +548,7 @@ const EmployeeDetailModal = ({
                   render: (_, r) => (
                     <AppButton type="text" size="small" icon={<PrinterOutlined />} title="Print Salary Slip"
                       onClick={() => printSalarySlip({ month: r.month, year: r.year, record: r })}
+                      loading={slipLoading}
                       style={{ color: "#7c5cfc" }} />
                   ),
                 },
@@ -935,6 +748,7 @@ const EmployeeDetailModal = ({
   ];
 
   return (
+    <>
     <Modal
       open={open}
       onCancel={onClose}
@@ -980,11 +794,11 @@ const EmployeeDetailModal = ({
       <div style={{ flex: 1, overflowY: "auto" }}>
         {/* Overall summary cards */}
         <div style={{ display: "flex", gap: 10, padding: "16px 24px 4px" }}>
-          <StatCard label="Current Salary"    value={formatCurrency(employee.currentSalary || 0)} color="#7c5cfc" />
-          <StatCard label="Pending Salary"    value={formatCurrency(totalPendingSalary)}           color={totalPendingSalary > 0 ? "#ef4444" : "#22c55e"} />
-          <StatCard label="Advance Balance"   value={formatCurrency(advanceBalance)}               color={advanceBalance > 0 ? "#f97316" : "#22c55e"} />
-          <StatCard label="Salary Records"    value={empSalaryRecords.length}                      color="#3b82f6" />
-          <StatCard label="No. of Increments" value={empIncrements.length}                         color="#22c55e" />
+          <StatCard label="Current Salary"    value={formatCurrency(topMetrics.currentSalary)}  color="#7c5cfc" />
+          <StatCard label="Pending Salary"    value={formatCurrency(topMetrics.pendingSalary)}   color={topMetrics.pendingSalary > 0 ? "#ef4444" : "#22c55e"} />
+          <StatCard label="Advance Balance"   value={formatCurrency(topMetrics.advanceBalance)}  color={topMetrics.advanceBalance > 0 ? "#f97316" : "#22c55e"} />
+          <StatCard label="Salary Records"    value={topMetrics.salaryRecordsCount}              color="#3b82f6" />
+          <StatCard label="No. of Increments" value={topMetrics.noOfIncrements}                  color="#22c55e" />
         </div>
 
         <div style={{ padding: "8px 24px 24px" }}>
@@ -1138,6 +952,13 @@ const EmployeeDetailModal = ({
         );
       })()}
     </Modal>
+
+    <SalarySlipModal
+      open={slipOpen}
+      onClose={() => setSlipOpen(false)}
+      data={slipData}
+    />
+    </>
   );
 };
 

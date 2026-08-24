@@ -9,6 +9,8 @@ const STATUS_MAP = {
   out_of_stock:  { label: "Out of Stock", color: "error",   text: "#ef4444" },
 };
 
+const isServiceItem = (item) => item.itemType === "service";
+
 const stockStatus = (item) =>
   STATUS_MAP[item.stockStatus] || STATUS_MAP["in_stock"];
 
@@ -23,13 +25,17 @@ export const getInventoryColumns = ({ onView, onEdit, onAdjust, onDelete, isAdmi
     title: "Item Name",
     dataIndex: "name",
     key: "name",
-    ellipsis: true,
     render: (val, record) => (
       <Tooltip title={record.description ? `${val} — ${record.description}` : val} placement="topLeft">
-        <div>
-          <div style={{ fontWeight: 700, color: "var(--color-text)", fontSize: 13 }}>{val}</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", rowGap: 2 }}>
+            <span style={{ fontWeight: 700, color: "var(--color-text)", fontSize: 13, wordBreak: "break-word", overflowWrap: "anywhere" }}>{val}</span>
+            {isServiceItem(record) && (
+              <Tag color="purple" style={{ fontSize: 10, fontWeight: 700, borderRadius: 4, padding: "0 5px", lineHeight: "18px", margin: 0, flexShrink: 0 }}>SERVICE</Tag>
+            )}
+          </div>
           {record.description && (
-            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 11, color: "var(--color-text-secondary)", marginTop: 1, wordBreak: "break-word", overflowWrap: "anywhere" }}>
               {record.description}
             </div>
           )}
@@ -74,6 +80,9 @@ export const getInventoryColumns = ({ onView, onEdit, onAdjust, onDelete, isAdmi
     dataIndex: "currentStock",
     key: "currentStock",
     render: (v, record) => {
+      if (isServiceItem(record)) {
+        return <span style={{ fontSize: 13, color: "var(--color-text-muted)", fontStyle: "italic" }}>—</span>;
+      }
       const st = stockStatus(record);
       return (
         <span style={{ fontWeight: 800, color: st.text, fontSize: 14 }}>
@@ -86,6 +95,9 @@ export const getInventoryColumns = ({ onView, onEdit, onAdjust, onDelete, isAdmi
     title: "Status",
     key: "status",
     render: (_, record) => {
+      if (isServiceItem(record)) {
+        return <Tag color="purple" style={{ borderRadius: 6, fontWeight: 600, fontSize: 11 }}>Service</Tag>;
+      }
       const st = stockStatus(record);
       return <Tag color={st.color} style={{ borderRadius: 6, fontWeight: 600, fontSize: 11 }}>{st.label}</Tag>;
     },
@@ -98,9 +110,11 @@ export const getInventoryColumns = ({ onView, onEdit, onAdjust, onDelete, isAdmi
         <Tooltip title="View Details">
           <AppButton type="text" size="small" icon={<EyeOutlined style={{ color: "#7c5cfc" }} />} onClick={() => onView(record)} />
         </Tooltip>
-        <Tooltip title="Adjust Stock">
-          <AppButton type="text" size="small" icon={<SwapOutlined style={{ color: "#22c55e" }} />} onClick={() => onAdjust(record)} />
-        </Tooltip>
+        {!isServiceItem(record) && (
+          <Tooltip title="Adjust Stock">
+            <AppButton type="text" size="small" icon={<SwapOutlined style={{ color: "#22c55e" }} />} onClick={() => onAdjust(record)} />
+          </Tooltip>
+        )}
         <Tooltip title="Edit">
           <AppButton type="text" size="small" icon={<EditOutlined />} onClick={() => onEdit(record)} />
         </Tooltip>

@@ -36,7 +36,8 @@ const ItemDetailModal = ({ open, onClose, item, onStockIn, onStockOut }) => {
 
   if (!item) return null;
 
-  const st              = STATUS_MAP[item.stockStatus] || STATUS_MAP["in_stock"];
+  const isService        = item.itemType === "service";
+  const st               = STATUS_MAP[item.stockStatus] || STATUS_MAP["in_stock"];
   const totalIn         = Number(item.totalIn       ?? 0);
   const totalOut        = Number(item.totalOut      ?? 0);
   const profitPerUnit   = Number(item.profitPerUnit ?? item.profitPerItem ?? 0);
@@ -72,42 +73,52 @@ const ItemDetailModal = ({ open, onClose, item, onStockIn, onStockOut }) => {
               <p className={styles.sub}>
                 {item.itemCode} &nbsp;·&nbsp; {item.category} &nbsp;·&nbsp; {item.unit}
               </p>
-              <Tag color={st.color} style={{ borderRadius: 6, fontWeight: 600, marginTop: 4, fontSize: 11 }}>
-                {st.label}
-              </Tag>
+              {isService ? (
+                <Tag color="purple" style={{ borderRadius: 6, fontWeight: 600, marginTop: 4, fontSize: 11 }}>
+                  Service
+                </Tag>
+              ) : (
+                <Tag color={st.color} style={{ borderRadius: 6, fontWeight: 600, marginTop: 4, fontSize: 11 }}>
+                  {st.label}
+                </Tag>
+              )}
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <AppButton
-              size="small"
-              icon={<PlusCircleOutlined />}
-              style={{ color: "#22c55e", borderColor: "rgba(34,197,94,0.4)", background: "rgba(34,197,94,0.07)" }}
-              onClick={() => { onClose(); onStockIn(item); }}
-            >
-              Stock In
-            </AppButton>
-            <AppButton
-              size="small"
-              icon={<MinusCircleOutlined />}
-              style={{ color: "#f97316", borderColor: "rgba(249,115,22,0.4)", background: "rgba(249,115,22,0.07)" }}
-              onClick={() => { onClose(); onStockOut(item); }}
-            >
-              Stock Out
-            </AppButton>
-            <AppButton
-              size="small"
-              icon={<HistoryOutlined />}
-              style={{
-                color: "#fff",
-                borderColor: "#7c5cfc",
-                background: "linear-gradient(135deg, #7c5cfc 0%, #5b3de8 100%)",
-                fontWeight: 700,
-                boxShadow: "0 2px 8px rgba(124,92,252,0.45)",
-              }}
-              onClick={() => setHistoryOpen(true)}
-            >
-              Stock History
-            </AppButton>
+            {!isService && (
+              <>
+                <AppButton
+                  size="small"
+                  icon={<PlusCircleOutlined />}
+                  style={{ color: "#22c55e", borderColor: "rgba(34,197,94,0.4)", background: "rgba(34,197,94,0.07)" }}
+                  onClick={() => { onClose(); onStockIn(item); }}
+                >
+                  Stock In
+                </AppButton>
+                <AppButton
+                  size="small"
+                  icon={<MinusCircleOutlined />}
+                  style={{ color: "#f97316", borderColor: "rgba(249,115,22,0.4)", background: "rgba(249,115,22,0.07)" }}
+                  onClick={() => { onClose(); onStockOut(item); }}
+                >
+                  Stock Out
+                </AppButton>
+                <AppButton
+                  size="small"
+                  icon={<HistoryOutlined />}
+                  style={{
+                    color: "#fff",
+                    borderColor: "#7c5cfc",
+                    background: "linear-gradient(135deg, #7c5cfc 0%, #5b3de8 100%)",
+                    fontWeight: 700,
+                    boxShadow: "0 2px 8px rgba(124,92,252,0.45)",
+                  }}
+                  onClick={() => setHistoryOpen(true)}
+                >
+                  Stock History
+                </AppButton>
+              </>
+            )}
             <button className={styles.closeBtn} onClick={onClose}>✕</button>
           </div>
         </div>
@@ -116,11 +127,22 @@ const ItemDetailModal = ({ open, onClose, item, onStockIn, onStockOut }) => {
         <div style={{ flex: 1, overflowY: "auto" }}>
           {/* Summary stat cards */}
           <div style={{ display: "flex", gap: 10, padding: "16px 24px 4px" }}>
-            <StatCard label="Current Stock"    value={`${item.currentStock} ${item.unit}`} color={st.text}  bg={`${st.text}12`}              border={`${st.text}30`} />
-            <StatCard label="Stock Value"        value={formatCurrency(purchaseValue)}        color="#64748b"  bg="rgba(100,116,139,0.07)"       border="rgba(100,116,139,0.2)" />
-            <StatCard label="Sale Value"       value={formatCurrency(saleValue)}            color="#7c5cfc"  bg="rgba(124,92,252,0.07)"        border="rgba(124,92,252,0.2)" />
-            <StatCard label="Potential Profit" value={formatCurrency(potentialProfit)}      color="#22c55e"  bg="rgba(34,197,94,0.07)"         border="rgba(34,197,94,0.2)" />
-            <StatCard label="Profit Margin"    value={`${Number(margin).toFixed(1)}%`}      color={Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444"} bg="rgba(34,197,94,0.07)" border="rgba(34,197,94,0.2)" />
+            {isService ? (
+              <>
+                <StatCard label="Cost Rate"     value={formatCurrency(item.purchaseRate)}    color="#64748b"  bg="rgba(100,116,139,0.07)"  border="rgba(100,116,139,0.2)" />
+                <StatCard label="Billing Rate"  value={formatCurrency(item.saleRate)}         color="#7c5cfc"  bg="rgba(124,92,252,0.07)"   border="rgba(124,92,252,0.2)" />
+                <StatCard label="Profit / Item" value={formatCurrency(profitPerUnit)}         color="#22c55e"  bg="rgba(34,197,94,0.07)"    border="rgba(34,197,94,0.2)" />
+                <StatCard label="Profit Margin" value={`${Number(margin).toFixed(1)}%`}       color={Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444"} bg="rgba(34,197,94,0.07)" border="rgba(34,197,94,0.2)" />
+              </>
+            ) : (
+              <>
+                <StatCard label="Current Stock"    value={`${item.currentStock} ${item.unit}`} color={st.text}  bg={`${st.text}12`}              border={`${st.text}30`} />
+                <StatCard label="Stock Value"        value={formatCurrency(purchaseValue)}        color="#64748b"  bg="rgba(100,116,139,0.07)"       border="rgba(100,116,139,0.2)" />
+                <StatCard label="Sale Value"       value={formatCurrency(saleValue)}            color="#7c5cfc"  bg="rgba(124,92,252,0.07)"        border="rgba(124,92,252,0.2)" />
+                <StatCard label="Potential Profit" value={formatCurrency(potentialProfit)}      color="#22c55e"  bg="rgba(34,197,94,0.07)"         border="rgba(34,197,94,0.2)" />
+                <StatCard label="Profit Margin"    value={`${Number(margin).toFixed(1)}%`}      color={Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444"} bg="rgba(34,197,94,0.07)" border="rgba(34,197,94,0.2)" />
+              </>
+            )}
           </div>
 
           <div style={{ padding: "12px 24px 24px" }}>
@@ -131,20 +153,35 @@ const ItemDetailModal = ({ open, onClose, item, onStockIn, onStockOut }) => {
                 <InfoRow label="Item Code"   value={val(item.itemCode)} />
                 <InfoRow label="Category"    value={val(item.category)} />
                 <InfoRow label="Unit"        value={val(item.unit)} />
-                <InfoRow label="Min Stock"   value={item.minStock != null ? `${item.minStock} ${item.unit}` : "--"} />
+                {!isService && (
+                  <InfoRow label="Min Stock" value={item.minStock != null ? `${item.minStock} ${item.unit}` : "--"} />
+                )}
                 <InfoRow label="Description" value={val(item.description)} />
               </div>
               <div className={styles.infoBox}>
-                <div className={styles.boxTitle}><DollarOutlined style={{ marginRight: 6 }} />Stock Summary</div>
-                <InfoRow label="Opening Stock" value={item.openingStock != null ? `${item.openingStock} ${item.unit}` : "--"} />
-                <InfoRow label="Total In"      value={<span style={{ color: "#22c55e", fontWeight: 700 }}>{totalIn} {item.unit}</span>} />
-                <InfoRow label="Total Out"     value={<span style={{ color: "#f97316", fontWeight: 700 }}>{totalOut} {item.unit}</span>} />
-                <InfoRow label="Current Stock" value={<span style={{ color: st.text, fontWeight: 800 }}>{item.currentStock} {item.unit}</span>} />
-                <InfoRow label="Profit / Item" value={<span style={{ color: "#22c55e", fontWeight: 700 }}>+{formatCurrency(profitPerUnit)}</span>} />
+                {isService ? (
+                  <>
+                    <div className={styles.boxTitle}><DollarOutlined style={{ marginRight: 6 }} />Pricing</div>
+                    <InfoRow label="Cost Rate"     value={formatCurrency(item.purchaseRate)} />
+                    <InfoRow label="Billing Rate"  value={formatCurrency(item.saleRate)} />
+                    <InfoRow label="Profit / Item" value={<span style={{ color: "#22c55e", fontWeight: 700 }}>{formatCurrency(profitPerUnit)}</span>} />
+                    <InfoRow label="Profit Margin" value={<span style={{ color: Number(margin) >= 20 ? "#22c55e" : Number(margin) >= 10 ? "#f97316" : "#ef4444", fontWeight: 700 }}>{Number(margin).toFixed(1)}%</span>} />
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.boxTitle}><DollarOutlined style={{ marginRight: 6 }} />Stock Summary</div>
+                    <InfoRow label="Opening Stock" value={item.openingStock != null ? `${item.openingStock} ${item.unit}` : "--"} />
+                    <InfoRow label="Total In"      value={<span style={{ color: "#22c55e", fontWeight: 700 }}>{totalIn} {item.unit}</span>} />
+                    <InfoRow label="Total Out"     value={<span style={{ color: "#f97316", fontWeight: 700 }}>{totalOut} {item.unit}</span>} />
+                    <InfoRow label="Current Stock" value={<span style={{ color: st.text, fontWeight: 800 }}>{item.currentStock} {item.unit}</span>} />
+                    <InfoRow label="Profit / Item" value={<span style={{ color: "#22c55e", fontWeight: 700 }}>+{formatCurrency(profitPerUnit)}</span>} />
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Stock Value Analysis */}
+            {/* Stock Value Analysis — not applicable to service items (no stock quantity) */}
+            {!isService && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)", marginBottom: 12 }}>
                 <DollarOutlined style={{ marginRight: 6, color: "#7c5cfc" }} />
@@ -200,6 +237,7 @@ const ItemDetailModal = ({ open, onClose, item, onStockIn, onStockOut }) => {
                 </div>
               )}
             </div>
+            )}
 
           </div>
         </div>

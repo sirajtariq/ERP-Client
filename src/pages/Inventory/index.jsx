@@ -26,6 +26,11 @@ const STOCK_STATUS_OPTIONS = [
   { value: "out", label: "Out of Stock" },
 ];
 
+const ITEM_TYPE_OPTIONS = [
+  { value: "product", label: "Product" },
+  { value: "service", label: "Service" },
+];
+
 let nextHistId = 30;
 const PAGE_SIZE = 10;
 
@@ -71,9 +76,11 @@ const Inventory = () => {
         search,
         category: filters.category || "",
         status:   filters.status   || "",
+        itemType: filters.itemType || "",
       });
       const normalized = (data.results || []).map((i) => ({
         ...i,
+        itemType:     i.itemType     || "product",
         purchaseRate: Number(i.purchaseRate),
         saleRate:     Number(i.saleRate),
         currentStock: Number(i.currentStock),
@@ -129,6 +136,7 @@ const Inventory = () => {
       const d = await getItemById(item.id);
       setViewItem({
         id:               d.id,
+        itemType:         d.itemType             || "product",
         name:             d.itemName            || "--",
         itemCode:         d.itemCode            || "--",
         category:         d.category            || "--",
@@ -169,6 +177,7 @@ const Inventory = () => {
       const detail = await getItemById(item.id);
       setEditingItem({
         id:           detail.id,
+        itemType:     detail.itemType     || "product",
         itemCode:     detail.itemCode,
         name:         detail.itemName,
         category:     detail.category,
@@ -197,6 +206,7 @@ const Inventory = () => {
         name:         payload.name,
         category:     payload.category,
         unit:         payload.unit,
+        itemType:     payload.itemType || "product",
         purchaseRate: String(payload.purchaseRate || 0),
         saleRate:     String(payload.saleRate     || 0),
         openingStock: String(payload.openingStock  || 0),
@@ -240,6 +250,7 @@ const Inventory = () => {
         name:         payload.name,
         category:     payload.category,
         unit:         payload.unit,
+        itemType:     payload.itemType || "product",
         purchaseRate: String(payload.purchaseRate || 0),
         saleRate:     String(payload.saleRate     || 0),
         openingStock: String(payload.openingStock  || 0),
@@ -299,7 +310,7 @@ const Inventory = () => {
           <>
             <FilterPanel
               config={filterConfig.inventory}
-              options={{ category: CATEGORY_OPTIONS, status: STOCK_STATUS_OPTIONS }}
+              options={{ category: CATEGORY_OPTIONS, status: STOCK_STATUS_OPTIONS, itemType: ITEM_TYPE_OPTIONS }}
               values={appliedFilters}
               onApply={handleApplyFilters}
               onReset={handleResetFilters}

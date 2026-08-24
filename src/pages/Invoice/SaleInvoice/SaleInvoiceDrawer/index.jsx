@@ -130,7 +130,12 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
   const fetchInvItems = async (pageNo = 0, searchQuery = "") => {
     setInvLoading(true);
     try {
-      const res = await getInventoryItems({ page: pageNo + 1, pageSize: PAGE_SIZE, search: searchQuery });
+      const res = await getInventoryItems({
+        page: pageNo + 1,
+        pageSize: PAGE_SIZE,
+        search: searchQuery,
+        itemType: isPurchase ? "product" : "",
+      });
       const results = res.results || [];
       setInvItems((prev) => (pageNo === 0 ? results : [...prev, ...results]));
       setInvPage((prev) => ({ ...prev, current: pageNo, total: res.count || 0 }));
@@ -152,6 +157,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
         return {
           ...item,
           code:              inv.itemCode                  || item.code,
+          itemType:          inv.itemType                  || "product",
           purchaseRate:      Number(inv.purchaseRate)      || 0,
           inventorySaleRate: Number(inv.saleRate)          || 0,
           currentStock:      parseFloat(inv.currentStock)  ?? 0,
@@ -178,7 +184,8 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     const inv = invItems.find((i) => i.id === inventoryItemId);
     if (!inv) return;
     const updated           = [...items];
-    const qty               = updated[index].qty      || 0;
+    const itemType          = inv.itemType || "product";
+    const qty               = itemType === "service" ? 1 : (updated[index].qty || 0);
     const discount          = updated[index].discount || 0;
     const inventorySaleRate = Number(inv.saleRate)    || 0;
     const purchaseRate      = Number(inv.purchaseRate) || 0;
@@ -190,6 +197,8 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
       code:             inv.itemCode || "",
       name:             inv.name     || "",
       unit:             inv.unit     || "",
+      itemType,
+      qty,
       purchaseRate,
       inventorySaleRate,
       rate:             defaultRate,
@@ -592,7 +601,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
     && items.every((item) => item.name && item.qty > 0 && item.rate > 0)
     && (!isPurchase
       ? items.every((item) =>
-          !item.inventoryItemId || item.currentStock === null || item.qty <= item.currentStock
+          !item.inventoryItemId || item.currentStock === null || item.itemType === "service" || item.qty <= item.currentStock
         )
       : true);
 
@@ -815,6 +824,9 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                 <section className={styles.itemHeader}>
                   <span className={styles.itemBadge}>{index + 1}</span>
                   <span className={styles.itemHeaderLabel}>{item.name || `Item ${index + 1}`}</span>
+                  {!isPurchase && item.itemType === "service" && (
+                    <Tag color="purple" style={{ fontSize: 10, fontWeight: 700, borderRadius: 4, padding: "0 5px", lineHeight: "16px", margin: 0 }}>SERVICE</Tag>
+                  )}
                   <span className={styles.itemHeaderSpacer} />
                   <span className={styles.itemHeaderTotal}>{formatCurrency(item.total || 0)}</span>
                   {item.isNew && (
@@ -845,7 +857,11 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                               ? [{ value: "__current__", label: item.name }]
                               : []
                             ),
-                            ...invItems.map((i) => ({ value: i.id, label: `${i.itemCode} — ${i.name}` })),
+                            ...invItems.map((i) => ({
+                              value: i.id,
+                              label: `${i.itemCode} — ${i.name}`,
+                              itemType: i.itemType || "product",
+                            })),
                           ]}
                           value={item.inventoryItemId || (item.name ? "__current__" : undefined)}
                           onSearch={handleInvSearchDebounce}
@@ -858,7 +874,14 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                               <span style={{ color: "var(--color-text-secondary)", fontStyle: "italic" }}>
                                 {option.label} <span style={{ fontSize: 11 }}>(existing — select to change)</span>
                               </span>
-                            ) : option.label
+                            ) : (
+                              <span style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
+                                <span>{option.label}</span>
+                                {option.data?.itemType === "service" && (
+                                  <Tag color="purple" style={{ fontSize: 10, fontWeight: 700, borderRadius: 4, padding: "0 5px", lineHeight: "16px", margin: 0, flexShrink: 0 }}>SERVICE</Tag>
+                                )}
+                              </span>
+                            )
                           }
                         />
                       </Col>
@@ -872,7 +895,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                       </Col>
                     </Row>
 
-                    {item.inventoryItemId && item.currentStock !== null && (
+                    {item.inventoryItemId && item.currentStock !== null && item.itemType !== "service" && (
                       <div style={{
                         display: "flex", alignItems: "center", gap: 6, marginBottom: 4,
                         padding: "5px 10px", borderRadius: 7,
@@ -891,7 +914,9 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                     {/* Rate input */}
                     <div>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>Your Sale Rate <span style={{ color: "#ef4444", marginLeft: 2 }}>*</span></label>
+                        <label style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>
+                          {item.itemType === "service" ? "Your Billing Rate" : "Your Sale Rate"} <span style={{ color: "#ef4444", marginLeft: 2 }}>*</span>
+                        </label>
                         {item.inventoryItemId && item.rate > 0 && item.purchaseRate > 0 && (() => {
                           const profit = item.rate - item.purchaseRate;
                           const margin = ((profit / item.purchaseRate) * 100).toFixed(1);
@@ -930,9 +955,10 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                           required
                           inputType="number"
                           min={0}
-                          value={item.qty}
+                          value={item.itemType === "service" ? 1 : item.qty}
                           onChange={(val) => handleItemChange(index, "qty", val)}
-                          status={item.inventoryItemId && item.currentStock !== null && item.qty > item.currentStock ? "error" : ""}
+                          disabled={item.itemType === "service"}
+                          status={item.inventoryItemId && item.currentStock !== null && item.itemType !== "service" && item.qty > item.currentStock ? "error" : ""}
                         />
                       </Col>
                       <Col span={8}>
@@ -942,7 +968,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                         <AppInput label="Total" inputType="number" value={item.total} disabled />
                       </Col>
                     </Row>
-                    {item.inventoryItemId && item.currentStock !== null && item.qty > item.currentStock && item.currentStock > 0 && (
+                    {item.inventoryItemId && item.currentStock !== null && item.itemType !== "service" && item.qty > item.currentStock && item.currentStock > 0 && (
                       <div style={{
                         display: "flex", alignItems: "center", gap: 6, marginTop: 6,
                         padding: "5px 10px", borderRadius: 7,
@@ -955,7 +981,7 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                         </span>
                       </div>
                     )}
-                    {item.inventoryItemId && item.currentStock !== null && item.currentStock <= 0 && (
+                    {item.inventoryItemId && item.currentStock !== null && item.itemType !== "service" && item.currentStock <= 0 && (
                       <div style={{
                         display: "flex", alignItems: "center", gap: 6, marginTop: 6,
                         padding: "5px 10px", borderRadius: 7,
@@ -1059,7 +1085,11 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                               ? [{ value: "__current__", label: item.name }]
                               : []
                             ),
-                            ...invItems.map((i) => ({ value: i.id, label: `${i.itemCode} — ${i.name}` })),
+                            ...invItems.map((i) => ({
+                              value: i.id,
+                              label: `${i.itemCode} — ${i.name}`,
+                              itemType: i.itemType || "product",
+                            })),
                           ]}
                           value={item.inventoryItemId || (item.name ? "__current__" : undefined)}
                           onSearch={handleInvSearchDebounce}
@@ -1072,7 +1102,14 @@ const InvoiceDrawer = ({ open, onClose, onSubmit, editingInvoice, type = "sale" 
                               <span style={{ color: "var(--color-text-secondary)", fontStyle: "italic" }}>
                                 {option.label} <span style={{ fontSize: 11 }}>(existing — select to change)</span>
                               </span>
-                            ) : option.label
+                            ) : (
+                              <span style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
+                                <span>{option.label}</span>
+                                {option.data?.itemType === "service" && (
+                                  <Tag color="purple" style={{ fontSize: 10, fontWeight: 700, borderRadius: 4, padding: "0 5px", lineHeight: "16px", margin: 0, flexShrink: 0 }}>SERVICE</Tag>
+                                )}
+                              </span>
+                            )
                           }
                         />
                       </Col>

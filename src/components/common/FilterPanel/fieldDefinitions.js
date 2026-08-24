@@ -20,5 +20,6 @@ export const FILTER_FIELD_DEFINITIONS = {
   showPaymentTerm:     { key: "paymentTerm",     label: "Payment Term",    type: "select" },
   showCustomerType:    { key: "customerType",    label: "Customer Type",   type: "select" },
   showStockStatus:     { key: "status",          label: "Stock Status",    type: "select" },
+  showItemType:        { key: "itemType",        label: "Item Type",       type: "select" },
   showDepartmentText:  { key: "department",      label: "Department",      type: "text",   placeholder: "Filter by department" },
 };

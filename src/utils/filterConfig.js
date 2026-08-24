@@ -36,6 +36,7 @@ export const filterConfig = {
   inventory: {
     showCategory:     true,
     showStockStatus:  true,
+    showItemType:     true,
   },
   employee: {
     showStatus:         true,

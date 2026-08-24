@@ -219,6 +219,12 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
   const partialPending = apiSummary?.partialPendingCount ?? pendingRecords.length;
   const totalRecords   = apiRecords.length;
 
+  const totalEarned      = apiSummary?.totalEarned            ?? 0;
+  const baseSalaryVal    = apiSummary?.baseSalary              ?? 0;
+  const netSettlement    = apiSummary?.netSettlementAmount     ?? 0;
+  const daysWorked       = apiSummary?.currentMonthDaysWorked  ?? 0;
+  const accruedThisMonth = apiSummary?.currentMonthAccrued     ?? 0;
+
   // ── Pay Tab rendering ──
   const renderPayTab = () => {
     const monthYearPicker = (
@@ -486,11 +492,18 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
       <div style={{ flex: 1, overflowY: "auto" }}>
         <Spin spinning={loadingData}>
           {/* Stats */}
-          <div style={{ display: "flex", gap: 12, padding: "18px 24px 16px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "18px 24px 0" }}>
             {statCard("Current Salary",      formatCurrency(employee.currentSalary || 0), "#7c5cfc", "rgba(124,92,252,0.07)", "rgba(124,92,252,0.2)")}
             {statCard("Advance Outstanding", formatCurrency(advanceBalance),               "#f97316", "rgba(249,115,22,0.07)", "rgba(249,115,22,0.2)")}
             {statCard("Pending Salary",      formatCurrency(pendingSalary),                pendingSalary > 0 ? "#ef4444" : "#22c55e", pendingSalary > 0 ? "rgba(239,68,68,0.07)" : "rgba(34,197,94,0.07)", pendingSalary > 0 ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)")}
             {statCard("Partial / Pending",   partialPending,                               partialPending > 0 ? "#f97316" : "#22c55e", partialPending > 0 ? "rgba(249,115,22,0.07)" : "rgba(34,197,94,0.07)", partialPending > 0 ? "rgba(249,115,22,0.2)" : "rgba(34,197,94,0.2)")}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "12px 24px 16px" }}>
+            {statCard("Total Earned",              formatCurrency(totalEarned),      "#22c55e", "rgba(34,197,94,0.07)",    "rgba(34,197,94,0.2)")}
+            {statCard("Base Salary",               formatCurrency(baseSalaryVal),    "#0ea5e9", "rgba(14,165,233,0.07)",   "rgba(14,165,233,0.2)")}
+            {statCard("Net Settlement",            formatCurrency(netSettlement),    "#f97316", "rgba(249,115,22,0.07)",   "rgba(249,115,22,0.2)")}
+            {statCard("Days Worked (This Month)",  daysWorked,                       "#64748b", "rgba(100,116,139,0.07)",  "rgba(100,116,139,0.2)")}
+            {statCard("Accrued (This Month)",      formatCurrency(accruedThisMonth), "#7c5cfc", "rgba(124,92,252,0.07)",   "rgba(124,92,252,0.2)")}
           </div>
 
           {/* Pending months */}

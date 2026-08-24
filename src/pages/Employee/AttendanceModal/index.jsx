@@ -45,8 +45,8 @@ const AttendanceModal = ({ open, onClose, employees, onSave }) => {
     setLoading(true);
     try {
       const res     = await getBulkAttendance(dayjs.isDayjs(d) ? d.format("YYYY-MM-DD") : d);
-      const records = res.records ?? [];
-      setAlreadyMarked(res.isAlreadyMarked ?? false);
+      const records = Array.isArray(res) ? res : (res.records ?? res.results ?? []);
+      setAlreadyMarked(records.length > 0 && records.every((r) => r.isMarked));
       setApiEmployees(records);
       const init = {};
       records.forEach((r) => {

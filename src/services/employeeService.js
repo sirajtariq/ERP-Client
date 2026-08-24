@@ -51,6 +51,11 @@ export const getEmployeeSalariesTab = async (id, page = 1) => {
   return response.data;
 };
 
+export const getSalaryPayslip = async (employeeId, salaryId) => {
+  const response = await api.get(`/employees/${employeeId}/salaries/${salaryId}/payslip/`);
+  return response.data;
+};
+
 export const getEmployeeIncrementsTab = async (id, page = 1) => {
   const response = await api.get(`/employees/${id}/increments-tab/?page=${page}&page_size=10`);
   return response.data;
@@ -108,6 +113,26 @@ export const normalizeEmployee = (emp) => {
       address:       emp.personalInfo?.address || "",
       advanceBalance: parseFloat(emp.topMetrics?.advanceBalance) || 0,
       tabBadges: emp.tabBadges || { unpaidSalariesCount: 0, incrementsCount: 0, advancesCount: 0, attendanceAlertBadge: "" },
+      topMetrics: {
+        currentSalary:      parseFloat(emp.topMetrics?.currentSalary)      || 0,
+        pendingSalary:      parseFloat(emp.topMetrics?.pendingSalary)      || 0,
+        advanceBalance:     parseFloat(emp.topMetrics?.advanceBalance)     || 0,
+        salaryRecordsCount: emp.topMetrics?.salaryRecordsCount             || 0,
+        noOfIncrements:     emp.topMetrics?.noOfIncrements                 || 0,
+      },
+      salaryInfo: {
+        basicSalary:            parseFloat(emp.salaryInfo?.basicSalary)            || 0,
+        currentSalary:          parseFloat(emp.salaryInfo?.currentSalary)          || 0,
+        totalIncremented:       parseFloat(emp.salaryInfo?.totalIncremented)       || 0,
+        noOfIncrements:         emp.salaryInfo?.noOfIncrements                     || 0,
+        totalEarned:            parseFloat(emp.salaryInfo?.totalEarned)            || 0,
+        totalPaid:              parseFloat(emp.salaryInfo?.totalPaid)              || 0,
+        pendingBalance:         parseFloat(emp.salaryInfo?.pendingBalance)         || 0,
+        baseSalary:             parseFloat(emp.salaryInfo?.baseSalary)             || 0,
+        currentMonthDaysWorked: parseFloat(emp.salaryInfo?.currentMonthDaysWorked) || 0,
+        currentMonthAccrued:    parseFloat(emp.salaryInfo?.currentMonthAccrued)    || 0,
+        netSettlementAmount:    parseFloat(emp.salaryInfo?.netSettlementAmount)    || 0,
+      },
     };
   }
 

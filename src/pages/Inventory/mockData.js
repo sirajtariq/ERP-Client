@@ -213,5 +213,16 @@ export const UNITS = [
   { value: "carton", label: "Carton" },
 ];
 
+export const ADD_NEW_UNIT = "__add_unit__";
+
+export const UNIT_OPTIONS = [
+  {
+    value: ADD_NEW_UNIT,
+    label: "+ Add Unit",
+    style: { color: "#7c5cfc", fontWeight: 600, background: "rgba(124,92,252,0.07)" },
+  },
+  ...UNITS,
+];
+
 export const STOCK_IN_REASONS  = ["Purchase", "Sale Return", "Opening Stock", "Stock Transfer In", "Correction"];
 export const STOCK_OUT_REASONS = ["Sale", "Damaged / Expired", "Stock Transfer Out", "Sample / Testing", "Correction"];

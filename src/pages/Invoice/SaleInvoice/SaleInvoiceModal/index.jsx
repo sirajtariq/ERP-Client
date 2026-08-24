@@ -229,6 +229,8 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
   const buildPrintHTML = () => {
     const TH = `padding:10px 12px;font-size:11px;font-weight:700;color:#fff;border:1px solid #334155;`;
     const TD = `padding:9px 12px;font-size:12px;color:#1e293b;border:1px solid #e2e8f0;`;
+    const hasAnyDiscount = validItems.some((item) => parseFloat(item.discount) > 0);
+    const totalColWidth = hasAnyDiscount ? 17 : 27;
 
     const itemRows = validItems.map((item, i) => `
       <tr style="background:${item.isReturned ? 'rgba(220,38,38,0.04)' : i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
@@ -240,7 +242,7 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
         <td style="${TD}text-align:center;">${item.unit || "-"}</td>
         <td style="${TD}text-align:right;">${item.qty || 0}</td>
         <td style="${TD}text-align:right;">${formatCurrency(item.rate || 0)}</td>
-        <td style="${TD}text-align:center;">${parseFloat(item.discount) > 0 ? item.discount + '%' : '-'}</td>
+        ${hasAnyDiscount ? `<td style="${TD}text-align:center;">${parseFloat(item.discount) > 0 ? item.discount + '%' : '-'}</td>` : ""}
         <td style="${TD}text-align:right;font-weight:700;${item.isReturned ? 'color:#6b7280;' : ''}">${formatCurrency(item.total || 0)}</td>
       </tr>
     `).join("");
@@ -308,11 +310,11 @@ const InvoicePreview = ({ open, onClose, invoiceData, onDeleteItem, onRefresh })
                 <th style="${TH}text-align:center;width:8%">Unit</th>
                 <th style="${TH}text-align:right;width:7%">Qty</th>
                 <th style="${TH}text-align:right;width:14%">Rate</th>
-                <th style="${TH}text-align:center;width:10%">Discount</th>
-                <th style="${TH}text-align:right;width:17%">Total</th>
+                ${hasAnyDiscount ? `<th style="${TH}text-align:center;width:10%">Discount</th>` : ""}
+                <th style="${TH}text-align:right;width:${totalColWidth}%">Total</th>
               </tr>
             </thead>
-            <tbody>${itemRows || `<tr><td colspan="7" style="padding:16px;text-align:center;color:#94a3b8;border:1px solid #e2e8f0;">No items added yet</td></tr>`}</tbody>
+            <tbody>${itemRows || `<tr><td colspan="${hasAnyDiscount ? 7 : 6}" style="padding:16px;text-align:center;color:#94a3b8;border:1px solid #e2e8f0;">No items added yet</td></tr>`}</tbody>
           </table>
         </div>
 
