@@ -167,7 +167,6 @@ const SupplierLedger = () => {
           permanentDeleteFn={permanentDeleteVendor}
           onSuccess={() => fetchVendors(page.current, page.size, searchText)}
           rowKey="vendorId"
-          searchPlaceholder="Search by name..."
           columns={[
             { title: "ID",    dataIndex: "vendorId",   key: "vendorId",   width: 80,  render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v}</span> },
             { title: "Name",  dataIndex: "vendorName", key: "vendorName", ellipsis: true, render: (v) => <span style={{ fontWeight: 600 }}>{v || "-"}</span> },

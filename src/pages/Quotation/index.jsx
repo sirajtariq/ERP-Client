@@ -153,11 +153,12 @@ const Quotation = () => {
         vat_percentage:      String(d.vatPercentage || 0),
         status:              d.status,
         items: d.items.map((item) => ({
-          item_name: item.name,
-          unit:      item.unit || "",
-          qty:       String(item.qty),
-          rate:      String(item.rate),
+          name:      item.name,
+          units:     item.unit || "pcs",
+          quantity:  String(item.qty  || 0),
+          unitPrice: String(item.rate || 0),
           discount:  String(item.discount || 0),
+          ...(item.inventoryItemId ? { itemId: item.inventoryItemId, itemCode: item.code || "" } : {}),
         })),
       };
       await convertQuotationToInvoice(convertModal.quotation.id, payload);

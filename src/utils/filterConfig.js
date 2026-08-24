@@ -33,4 +33,13 @@ export const filterConfig = {
     showCategoryText: true,
     showOutflowType:  true,
   },
+  inventory: {
+    showCategory:     true,
+    showStockStatus:  true,
+    showItemType:     true,
+  },
+  employee: {
+    showStatus:         true,
+    showDepartmentText: true,
+  },
 };

@@ -279,16 +279,16 @@
 
     & .ledgerTable {
       & :global(.ant-table-thead > tr > th) {
-        background: var(--color-primary);
-        color: var(--color-white);
+        background: #f1f5f9;
+        color: #1e293b;
         font-weight: 600;
         font-size: 13px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid #d1d5db !important;
         padding: 10px 12px;
       }
 
       & :global(.ant-table-thead > tr > th::before) {
-        background: rgba(255, 255, 255, 0.15);
+        background: #94a3b8;
       }
 
       & :global(.ant-table-tbody > tr > td) {

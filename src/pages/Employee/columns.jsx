@@ -115,9 +115,9 @@ export const getEmployeeColumns = ({ onView, onSalary, onAdvance, onIncrement, o
           <Tooltip title="View Details">
             <AppButton type="text" size="small" icon={<EyeOutlined style={{ color: "#7c5cfc" }} />} onClick={() => onView(record)} />
           </Tooltip>
-          <Tooltip title={inactive ? inactiveMsg : "Pay Salary"}>
-            <AppButton type="text" size="small" icon={<DollarOutlined style={{ color: inactive ? "#cbd5e1" : "#22c55e" }} />}
-              disabled={inactive} onClick={() => !inactive && onSalary(record)} />
+          <Tooltip title="Pay Salary">
+            <AppButton type="text" size="small" icon={<DollarOutlined style={{ color: "#22c55e" }} />}
+              onClick={() => onSalary(record)} />
           </Tooltip>
           <Tooltip title={inactive ? inactiveMsg : "Give Advance"}>
             <AppButton type="text" size="small" icon={<CreditCardOutlined style={{ color: inactive ? "#cbd5e1" : "#f97316" }} />}
@@ -130,19 +130,17 @@ export const getEmployeeColumns = ({ onView, onSalary, onAdvance, onIncrement, o
           <Tooltip title="Edit">
             <AppButton type="text" size="small" icon={<EditOutlined />} onClick={() => onEdit(record)} />
           </Tooltip>
-          {isAdmin && (
-            <Tooltip title={inactive ? "Reactivate" : "Mark Inactive"}>
-              <AppButton
-                type="text" size="small"
-                icon={
-                  inactive
-                    ? <UserAddOutlined style={{ color: "#22c55e" }} />
-                    : <PoweroffOutlined style={{ color: "#ef4444" }} />
-                }
-                onClick={() => onStatusToggle(record)}
-              />
-            </Tooltip>
-          )}
+          <Tooltip title={inactive ? "Mark Active" : "Mark Inactive"}>
+            <AppButton
+              type="text" size="small"
+              icon={
+                inactive
+                  ? <UserAddOutlined style={{ color: "#22c55e" }} />
+                  : <PoweroffOutlined style={{ color: "#ef4444" }} />
+              }
+              onClick={() => onStatusToggle(record)}
+            />
+          </Tooltip>
           {isAdmin && (
             <Tooltip title="Delete">
               <AppButton type="text" size="small" icon={<DeleteOutlined />} danger onClick={() => onDelete(record)} />

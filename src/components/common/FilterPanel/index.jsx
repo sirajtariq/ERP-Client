@@ -9,20 +9,16 @@ import { countActiveFilters } from "@/utils/filterUtils";
 import { FILTER_FIELD_DEFINITIONS } from "./fieldDefinitions";
 import styles from "./styles.module.css";
 
-// Business start date — no records exist before this, so date filters shouldn't allow it.
+const ADD_NEW = "__add__";
 const MIN_FILTER_DATE = dayjs("2026-01-01");
 
-// config: filterConfig[pageKey] — which fields to show
-// options: { [fieldKey]: [{label, value}] } — select options, per page
-// values: currently applied filters — { [fieldKey]: value }
-// onApply(filters) / onReset() — whether `filters` reaches the API depends on the
-// caller's fetch function; some pages don't have backend support for every field yet.
 const FilterPanel = ({ config = {}, options = {}, values = {}, onApply, onReset }) => {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(values);
+  const [customText, setCustomText] = useState({});
 
   useEffect(() => {
-    if (open) setDraft(values);
+    if (open) { setDraft(values); setCustomText({}); }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeFields = Object.keys(config).filter((flag) => config[flag] && FILTER_FIELD_DEFINITIONS[flag]);
@@ -39,12 +35,20 @@ const FilterPanel = ({ config = {}, options = {}, values = {}, onApply, onReset 
   };
 
   const handleApply = () => {
-    onApply?.(draft);
+    const resolved = { ...draft };
+    // resolve __add__ keys to their typed custom value
+    Object.keys(resolved).forEach((key) => {
+      if (resolved[key] === ADD_NEW) {
+        resolved[key] = customText[key]?.trim() || "";
+      }
+    });
+    onApply?.(resolved);
     setOpen(false);
   };
 
   const handleReset = () => {
     setDraft({});
+    setCustomText({});
     onReset?.();
     setOpen(false);
   };
@@ -58,7 +62,6 @@ const FilterPanel = ({ config = {}, options = {}, values = {}, onApply, onReset 
       const startVal = draft.startDate ? dayjs(draft.startDate) : null;
       const lowerBound = isEndDate && startVal && startVal.isAfter(MIN_FILTER_DATE) ? startVal : MIN_FILTER_DATE;
       const endDisabled = isEndDate && !draft.startDate;
-
       return (
         <section key={key} className={styles.field}>
           <label className={styles.label}>{label}</label>
@@ -74,6 +77,46 @@ const FilterPanel = ({ config = {}, options = {}, values = {}, onApply, onReset 
       );
     }
 
+    if (type === "select" && def.creatable) {
+      const isAddNew = draft[key] === ADD_NEW;
+      return (
+        <section key={key} className={styles.field}>
+          <AppSelect
+            label={label}
+            name={key}
+            placeholder={`Select ${label.toLowerCase()}`}
+            options={options[key] || []}
+            value={draft[key] || undefined}
+            onChange={(val) => {
+              handleFieldChange(key, val);
+              if (val !== ADD_NEW) setCustomText((prev) => ({ ...prev, [key]: "" }));
+            }}
+            allowClear
+            showSearch
+            optionRender={(option) =>
+              option.value === ADD_NEW ? (
+                <span style={{
+                  display: "block", margin: "-5px -12px", padding: "6px 12px",
+                  background: "rgba(124,92,252,0.08)", color: "#7c5cfc", fontWeight: 600,
+                }}>
+                  {option.label}
+                </span>
+              ) : option.label
+            }
+          />
+          {isAddNew && (
+            <AppInput
+              style={{ marginTop: 6 }}
+              placeholder="Type category name to filter..."
+              value={customText[key] || ""}
+              onChange={(e) => setCustomText((prev) => ({ ...prev, [key]: e.target.value }))}
+              autoFocus
+            />
+          )}
+        </section>
+      );
+    }
+
     if (type === "select") {
       return (
         <section key={key} className={styles.field}>
@@ -85,6 +128,7 @@ const FilterPanel = ({ config = {}, options = {}, values = {}, onApply, onReset 
             value={draft[key] || undefined}
             onChange={(val) => handleFieldChange(key, val)}
             allowClear
+            showSearch={!!def.showSearch}
           />
         </section>
       );
