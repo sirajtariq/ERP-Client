@@ -296,6 +296,7 @@ ipcMain.handle("dialog:selectDirectory", async () => {
   return result.canceled ? null : result.filePaths[0];
 });
 
+
 app.whenReady().then(() => {
   if (!isDev) {
     try {

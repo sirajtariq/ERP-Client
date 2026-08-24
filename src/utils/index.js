@@ -4,3 +4,5 @@ export {
   getBalanceColor,
   getTransactionColor,
 } from "./helpers";
+
+export { downloadPDF } from "./downloadPDF";

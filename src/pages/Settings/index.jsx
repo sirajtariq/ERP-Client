@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Switch, Row, Col, Upload, message } from "antd";
-import { UploadOutlined, CloudServerOutlined } from "@ant-design/icons";
+import { Card, Switch, Row, Col, Upload, message, Checkbox } from "antd";
+import { UploadOutlined, CloudServerOutlined, CalendarOutlined, DollarOutlined } from "@ant-design/icons";
 import { useForm, Controller } from "react-hook-form";
-import { AppInput, AppButton, PageHeader, CompanyLogo } from "@/components/common";
+import { AppInput, AppButton, AppSelect, PageHeader, CompanyLogo } from "@/components/common";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import { getCompanyInfo, saveCompanyInfo } from "@/utils/companyInfoStore";
@@ -22,7 +22,11 @@ const Settings = () => {
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm({
     mode: "onTouched",
-    defaultValues: { name: "", contact: "", whatsapp: "", email: "", address: "" },
+    defaultValues: {
+      name: "", contact: "", whatsapp: "", email: "", address: "",
+      salaryBasis: "working_days",
+      weeklyOffDays: ["Sunday"],
+    },
   });
 
   useEffect(() => {
@@ -32,11 +36,13 @@ const Settings = () => {
         const data = await getBusinessSettings();
         const info = normalizeBusinessSettings(data);
         reset({
-          name:     info.name,
-          contact:  info.contact,
-          whatsapp: info.whatsapp,
-          email:    info.email,
-          address:  info.address,
+          name:          info.name,
+          contact:       info.contact,
+          whatsapp:      info.whatsapp,
+          email:         info.email,
+          address:       info.address,
+          salaryBasis:   info.salaryBasis,
+          weeklyOffDays: info.weeklyOffDays,
         });
         saveCompanyInfo(info);
         setLogoPreview(info.logo || null);
@@ -74,11 +80,13 @@ const Settings = () => {
     setSaving(true);
     try {
       const formData = new FormData();
-      formData.append("business_name", values.name);
-      formData.append("contact",  values.contact  || "");
-      formData.append("whatsapp", values.whatsapp || "");
-      formData.append("email",    values.email    || "");
-      formData.append("address",  values.address  || "");
+      formData.append("business_name",            values.name);
+      formData.append("contact",                  values.contact  || "");
+      formData.append("whatsapp",                 values.whatsapp || "");
+      formData.append("email",                    values.email    || "");
+      formData.append("address",                  values.address  || "");
+      formData.append("salary_calculation_basis", values.salaryBasis || "30_days");
+      formData.append("weekly_off_days",          JSON.stringify(values.weeklyOffDays || []));
       if (logoFile) formData.append("logo", logoFile);
 
       const data = await updateBusinessSettings(formData);
@@ -111,78 +119,141 @@ const Settings = () => {
         </section>
       </section>
 
-      <Row gutter={[24, 24]}>
-        <Col xs={24}>
-          <Card title="Business Information" loading={loading}>
-            <section style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-              <section
-                style={{
-                  width: 72, height: 72, borderRadius: 12, overflow: "hidden",
-                  border: "1px solid var(--color-border)", background: "var(--color-bg)",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}
-              >
-                {logoPreview ? (
-                  <img src={logoPreview} alt="Company logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                ) : (
-                  <CompanyLogo size={60} />
-                )}
-              </section>
-              <section>
-                <Upload showUploadList={false} beforeUpload={handleLogoSelect} accept="image/*">
-                  <AppButton icon={<UploadOutlined />}>Upload Logo</AppButton>
-                </Upload>
-                <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 6 }}>
-                  PNG, JPG or SVG. Square image works best.
-                </p>
-              </section>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Business Information */}
+        <Card title="Business Information" loading={loading} style={{ marginBottom: 24 }}>
+          <section style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+            <section
+              style={{
+                width: 72, height: 72, borderRadius: 12, overflow: "hidden",
+                border: "1px solid var(--color-border)", background: "var(--color-bg)",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}
+            >
+              {logoPreview ? (
+                <img src={logoPreview} alt="Company logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              ) : (
+                <CompanyLogo size={60} />
+              )}
             </section>
+            <section>
+              <Upload showUploadList={false} beforeUpload={handleLogoSelect} accept="image/*">
+                <AppButton icon={<UploadOutlined />}>Upload Logo</AppButton>
+              </Upload>
+              <p style={{ fontSize: 12, color: "var(--color-text-muted)", marginTop: 6 }}>
+                PNG, JPG or SVG. Square image works best.
+              </p>
+            </section>
+          </section>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Controller
-                name="name"
-                control={control}
-                rules={{ required: "Business name is required" }}
-                render={({ field }) => (
-                  <AppInput {...field} label="Business Name" placeholder="Enter business name" required errors={errors} />
-                )}
-              />
-              <Controller
-                name="contact"
-                control={control}
-                render={({ field }) => (
-                  <AppInput {...field} label="Contact" placeholder="Enter contact number" errors={errors} />
-                )}
-              />
-              <Controller
-                name="whatsapp"
-                control={control}
-                render={({ field }) => (
-                  <AppInput {...field} label="WhatsApp" placeholder="Enter WhatsApp number" errors={errors} />
-                )}
-              />
-              <Controller
-                name="email"
-                control={control}
-                rules={{ pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email" } }}
-                render={({ field }) => (
-                  <AppInput {...field} label="Email" placeholder="Enter email" errors={errors} />
-                )}
-              />
-              <Controller
-                name="address"
-                control={control}
-                render={({ field }) => (
-                  <AppInput {...field} inputType="textarea" label="Address" placeholder="Enter address" rows={3} errors={errors} />
-                )}
-              />
-              <AppButton type="primary" htmlType="submit" className="btn-dark" loading={saving}>
-                Save Changes
-              </AppButton>
-            </form>
-          </Card>
-        </Col>
-      </Row>
+          <Controller
+            name="name"
+            control={control}
+            rules={{ required: "Business name is required" }}
+            render={({ field }) => (
+              <AppInput {...field} label="Business Name" placeholder="Enter business name" required errors={errors} />
+            )}
+          />
+          <Controller
+            name="contact"
+            control={control}
+            render={({ field }) => (
+              <AppInput {...field} label="Contact" placeholder="Enter contact number" errors={errors} />
+            )}
+          />
+          <Controller
+            name="whatsapp"
+            control={control}
+            render={({ field }) => (
+              <AppInput {...field} label="WhatsApp" placeholder="Enter WhatsApp number" errors={errors} />
+            )}
+          />
+          <Controller
+            name="email"
+            control={control}
+            rules={{ pattern: { value: /^\S+@\S+\.\S+$/, message: "Enter a valid email" } }}
+            render={({ field }) => (
+              <AppInput {...field} label="Email" placeholder="Enter email" errors={errors} />
+            )}
+          />
+          <Controller
+            name="address"
+            control={control}
+            render={({ field }) => (
+              <AppInput {...field} inputType="textarea" label="Address" placeholder="Enter address" rows={3} errors={errors} />
+            )}
+          />
+        </Card>
+
+        {/* Payroll Settings */}
+        <Card
+          title={<span><DollarOutlined style={{ marginRight: 8, color: "#7c5cfc" }} />Payroll Settings</span>}
+          loading={loading}
+          style={{ marginBottom: 24 }}
+        >
+          <Row gutter={[32, 0]}>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: 4 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>
+                  Salary Calculation Basis
+                </label>
+                <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 10, marginTop: 0 }}>
+                  Determines whether salary is calculated on all calendar days or working days only
+                </p>
+                <Controller
+                  name="salaryBasis"
+                  control={control}
+                  render={({ field }) => (
+                    <AppSelect
+                      {...field}
+                      options={[
+                        { value: "working_days", label: "Working Days — Excluding weekends" },
+                        { value: "fixed_30",     label: "Fixed 30 — Always divide by 30" },
+                        { value: "month_days",   label: "Month Days — Actual days in month (÷ 28/29/30/31)" },
+                      ]}
+                    />
+                  )}
+                />
+              </div>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <div>
+                <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 4 }}>
+                  <CalendarOutlined style={{ color: "#7c5cfc" }} />
+                  Weekly Off Days
+                </label>
+                <p style={{ fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 10, marginTop: 0 }}>
+                  Employees do not work on these days (affects attendance &amp; salary)
+                </p>
+                <Controller
+                  name="weeklyOffDays"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox.Group
+                      value={field.value}
+                      onChange={field.onChange}
+                      style={{ display: "flex", flexWrap: "wrap", gap: "10px 0" }}
+                    >
+                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                        <div key={day} style={{ width: "50%" }}>
+                          <Checkbox value={day}>
+                            <span style={{ fontSize: 13 }}>{day}</span>
+                          </Checkbox>
+                        </div>
+                      ))}
+                    </Checkbox.Group>
+                  )}
+                />
+              </div>
+            </Col>
+          </Row>
+        </Card>
+
+        <AppButton type="primary" htmlType="submit" className="btn-dark" loading={saving}>
+          Save Changes
+        </AppButton>
+      </form>
 
       <BackupModal open={backupOpen} onClose={() => setBackupOpen(false)} />
     </section>

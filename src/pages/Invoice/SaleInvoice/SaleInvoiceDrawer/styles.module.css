@@ -44,16 +44,21 @@
 
 .stepContent {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 
 @keyframes slideIn {
   from {
@@ -138,9 +143,6 @@
     box-shadow: 0 4px 14px rgba(124, 92, 252, 0.1);
   }
 
-  & + & {
-    margin-top: 12px;
-  }
 }
 
 .itemHeader {
@@ -187,20 +189,79 @@
   white-space: nowrap;
 }
 
-.addItemBtn {
-  margin-top: 4px;
-  border: 1.5px dashed var(--color-accent-light);
-  border-radius: 10px;
-  height: 42px;
-  font-weight: 600;
-  color: var(--color-accent);
-  background: var(--color-accent-bg);
+.addBtnRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.addCardBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.06));
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.18);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  width: 100%;
+  text-align: left;
+  outline: none;
 
   &:hover {
-    border-color: var(--color-accent);
-    color: var(--color-accent);
-    background: var(--color-accent-bg);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
   }
+}
+
+.addCardBtnPurple {
+  border-color: #7c5cfc;
+  background: linear-gradient(135deg, rgba(124, 92, 252, 0.14), rgba(124, 92, 252, 0.06));
+  box-shadow: 0 2px 10px rgba(124, 92, 252, 0.18);
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(124, 92, 252, 0.22), rgba(124, 92, 252, 0.1));
+    box-shadow: 0 8px 20px rgba(124, 92, 252, 0.25);
+  }
+}
+
+.addCardBtnIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.addCardBtnText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.addCardBtnTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addCardBtnSub {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grandTotal {
@@ -235,6 +296,61 @@
     padding-bottom: 0;
     border-bottom: none;
   }
+}
+
+/* Rate reference strip (replaces old chip grid) */
+.rateRefStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.rateRefBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rateRefBadgePurchase {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+.rateRefBadgeSale {
+  background: rgba(124, 92, 252, 0.1);
+  color: #7c5cfc;
+  border: 1px solid rgba(124, 92, 252, 0.22);
+}
+
+.profitBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.profitBadgeProfit {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.profitBadgeLoss {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 /* Footer */

@@ -79,7 +79,7 @@ export const getVendorColumns = ({ onView, onEdit, onDelete }) => [
     render: (_, record) => <PersonalDetailsPopover record={record} />,
   },
   {
-    title: "Opening Balance",
+    title: "Opening Payable",
     dataIndex: "openingPayable",
     key: "openingPayable",
     width: "12%",

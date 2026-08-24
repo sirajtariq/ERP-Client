@@ -260,8 +260,9 @@ const CustomerKhata = () => {
         <Controller
           name="phone"
           control={control}
+          rules={customerFormSchema.phone}
           render={({ field }) => (
-            <AppInput {...field} label="Phone" name="phone" placeholder="e.g. 0301-1234567" errors={errors} />
+            <AppInput {...field} label="Phone" name="phone" placeholder="e.g. 0301-1234567" required errors={errors} />
           )}
         />
         <Controller
@@ -341,8 +342,6 @@ const CustomerKhata = () => {
           permanentDeleteFn={permanentDeleteCustomer}
           onSuccess={() => fetchCustomers(page.current, page.size, searchText)}
           rowKey="customerId"
-          searchPlaceholder="Search by name..."
-
           columns={[
             { title: "ID",    dataIndex: "customerId", key: "customerId", width: 80,  render: (v) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{v}</span> },
             { title: "Name",  dataIndex: "customerName", key: "customerName", ellipsis: true, render: (v) => <span style={{ fontWeight: 600 }}>{v || "-"}</span> },

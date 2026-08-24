@@ -1,10 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import _ from "lodash";
-import { Drawer, Table, Modal, Input, Space, Empty, message, Tag, DatePicker } from "antd";
-import { DeleteOutlined, UndoOutlined, UserSwitchOutlined, WarningOutlined, SearchOutlined } from "@ant-design/icons";
+import { useState, useEffect, useCallback } from "react";
+import { Drawer, Table, Modal, Input, Space, Empty, message, Tag } from "antd";
+import { DeleteOutlined, UndoOutlined, UserSwitchOutlined, WarningOutlined } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
 
-const { RangePicker } = DatePicker;
 const CONFIRM_WORD = "Confirm";
 
 const TrashDrawer = ({
@@ -19,8 +17,6 @@ const TrashDrawer = ({
   columns = [],
   rowKey = "id",
   pageSize = 10,
-  searchPlaceholder = "Search...",
-  showDateFilter = false,
 }) => {
   const [data, setData]                   = useState([]);
   const [loading, setLoading]             = useState(false);
@@ -29,23 +25,11 @@ const TrashDrawer = ({
   const [actionLoading, setActionLoading] = useState({});
   const [confirmId, setConfirmId]         = useState(null);
   const [confirmText, setConfirmText]     = useState("");
-  const [searchVal, setSearchVal]         = useState("");
-  const [dateRange, setDateRange]         = useState(null);
 
-  // Refs so action handlers (restore/delete) can reload with current filters
-  const searchRef = useRef("");
-  const dateRef   = useRef(null);
-
-  const load = useCallback(async (p, search = "", dates = null) => {
+  const load = useCallback(async (p) => {
     setLoading(true);
     try {
-      const res = await fetchFn({
-        page:      p,
-        pageSize,
-        search,
-        startDate: dates?.[0]?.format("YYYY-MM-DD") || "",
-        endDate:   dates?.[1]?.format("YYYY-MM-DD") || "",
-      });
+      const res = await fetchFn({ page: p, pageSize });
       setData(res.results || []);
       setTotal(res.count || 0);
     } catch {
@@ -55,46 +39,12 @@ const TrashDrawer = ({
     }
   }, [fetchFn, pageSize]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loadDebounced = useCallback(
-    _.debounce((p, search, dates) => load(p, search, dates), 500),
-    [load]
-  );
-
   useEffect(() => {
     if (open) {
       setPage(1);
-      setSearchVal("");
-      setDateRange(null);
-      searchRef.current = "";
-      dateRef.current   = null;
-      load(1, "", null);
+      load(1);
     }
   }, [open, load]);
-
-  const handleSearchChange = (e) => {
-    const val = e.target.value;
-    setSearchVal(val);
-    searchRef.current = val;
-    setPage(1);
-    loadDebounced(1, val, dateRef.current);
-  };
-
-  const handleDateChange = (range) => {
-    setDateRange(range);
-    dateRef.current = range;
-    setPage(1);
-    load(1, searchRef.current, range);
-  };
-
-  const handleClearFilters = () => {
-    setSearchVal("");
-    setDateRange(null);
-    searchRef.current = "";
-    dateRef.current   = null;
-    setPage(1);
-    load(1, "", null);
-  };
 
   const setLoaderFor = (id, state) =>
     setActionLoading((prev) =>
@@ -109,7 +59,7 @@ const TrashDrawer = ({
     try {
       await restoreFn(id);
       message.success("Restored successfully");
-      load(page, searchRef.current, dateRef.current);
+      load(page);
       onSuccess?.();
     } catch (err) {
       message.error(err?.response?.data?.detail || "Restore failed");
@@ -124,7 +74,7 @@ const TrashDrawer = ({
     try {
       await convertFn(id);
       message.success("Converted to permanent customer");
-      load(page, searchRef.current, dateRef.current);
+      load(page);
       onSuccess?.();
     } catch (err) {
       message.error(err?.response?.data?.detail || "Conversion failed");
@@ -142,7 +92,7 @@ const TrashDrawer = ({
     try {
       await permanentDeleteFn(id);
       message.success("Permanently deleted");
-      load(page, searchRef.current, dateRef.current);
+      load(page);
       onSuccess?.();
     } catch (err) {
       message.error(err?.response?.data?.detail || "Delete failed");
@@ -150,8 +100,6 @@ const TrashDrawer = ({
       setLoaderFor(id, null);
     }
   };
-
-  const hasActiveFilter = searchVal.trim() || (showDateFilter && dateRange?.[0]);
 
   const actionColumn = {
     title: "Actions",
@@ -246,34 +194,6 @@ const TrashDrawer = ({
           Items here were soft-deleted. Restore them to bring them back, or permanently delete to remove forever.
         </p>
 
-        {/* Search / filter toolbar */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <Input
-            prefix={<SearchOutlined style={{ color: "var(--color-text-secondary)" }} />}
-            placeholder={searchPlaceholder}
-            value={searchVal}
-            onChange={handleSearchChange}
-            allowClear
-            style={{ flex: 1, minWidth: 180, maxWidth: 300 }}
-          />
-
-          {showDateFilter && (
-            <RangePicker
-              value={dateRange}
-              onChange={handleDateChange}
-              style={{ flex: 1, minWidth: 220 }}
-              format="DD-MM-YYYY"
-              allowClear
-            />
-          )}
-
-          {hasActiveFilter && (
-            <AppButton size="small" onClick={handleClearFilters}>
-              Clear Filters
-            </AppButton>
-          )}
-        </div>
-
         <Table
           rowKey={rowKey}
           columns={[...columns, actionColumn]}
@@ -285,7 +205,7 @@ const TrashDrawer = ({
             current: page,
             pageSize,
             total,
-            onChange: (p) => { setPage(p); load(p, searchRef.current, dateRef.current); },
+            onChange: (p) => { setPage(p); load(p); },
             showTotal: (t) => `${t} trashed record${t !== 1 ? "s" : ""}`,
             size: "small",
           }}
@@ -293,7 +213,7 @@ const TrashDrawer = ({
             emptyText: (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={hasActiveFilter ? "No results match your search" : "Trash is empty"}
+                description="Trash is empty"
               />
             ),
           }}

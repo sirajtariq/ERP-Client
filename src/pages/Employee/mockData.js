@@ -187,3 +187,48 @@ export const MOCK_ADVANCES = [
   { id: 3, employeeId: 3, date: "2026-04-15", amount: 20000, reason: "Home Renovation",   paymentMethod: "Bank Transfer", deductedAmount: 10000, status: "partial" },
   { id: 4, employeeId: 5, date: "2026-05-20", amount: 8000,  reason: "Personal Need",     paymentMethod: "Cash",          deductedAmount: 0,     status: "pending" },
 ];
+
+// ── Attendance ──────────────────────────────────────────────────────────────
+// Generates working-day attendance (Mon–Sat; Sun = weekly off) up to Aug 12 2026.
+const _genAttendance = () => {
+  const records = [];
+  let id = 1;
+  const cap = new Date(2026, 7, 12); // Aug 12 2026
+
+  const add = (empId, year, month, statusMap = {}, remarkMap = {}) => {
+    const dim = new Date(year, month, 0).getDate(); // days in month (month is 1-based)
+    for (let day = 1; day <= dim; day++) {
+      const d = new Date(year, month - 1, day); // local time – no TZ issue
+      if (d > cap) return;
+      if (d.getDay() === 5) continue; // Friday weekly off
+      const st = statusMap[day] || "present";
+      records.push({
+        id: id++,
+        employeeId: empId,
+        date: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+        status: st,
+        remarks: remarkMap[day] || "",
+      });
+    }
+  };
+
+  // Ahmad Raza (1) — mostly present
+  add(1, 2026, 7, { 8: "absent", 15: "half_paid", 22: "leave_paid" }, { 22: "Personal work" });
+  add(1, 2026, 8, { 5: "absent" });
+
+  // Sara Khan (2) — very regular
+  add(2, 2026, 7, { 4: "leave_paid" }, { 4: "Sick leave" });
+  add(2, 2026, 8);
+
+  // Usman Ali (3) — some absences
+  add(3, 2026, 7, { 3: "absent", 10: "absent", 17: "half_unpaid", 24: "absent" });
+  add(3, 2026, 8, { 6: "absent" });
+
+  // Fatima Malik (4) — perfect attendance
+  add(4, 2026, 7);
+  add(4, 2026, 8);
+
+  return records;
+};
+
+export const MOCK_ATTENDANCE = _genAttendance();

@@ -134,12 +134,14 @@ const LedgerDrawer = ({ open, onClose, onSubmit, editingVendor }) => {
           <Controller
             name="phone"
             control={control}
+            rules={supplierLedgerSchema.phone}
             render={({ field }) => (
               <AppInput
                 {...field}
                 label="Phone"
                 name="phone"
                 placeholder="e.g. 0321-1234567"
+                required
                 errors={errors}
               />
             )}
@@ -196,7 +198,7 @@ const LedgerDrawer = ({ open, onClose, onSubmit, editingVendor }) => {
               <AppInput
                 {...field}
                 inputType="number"
-                label="Opening Balance"
+                label="Opening Payable"
                 name="openingPayable"
                 placeholder="0.00"
                 min={0}

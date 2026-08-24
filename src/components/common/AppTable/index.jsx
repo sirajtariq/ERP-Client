@@ -53,7 +53,6 @@ const AppTable = ({
             pageSize={page.size || 10}
             total={page.total || 0}
             showSizeChanger
-            showTotal={(total) => `Total ${total} records`}
             size="small"
             onChange={(current) => handlePagination(current)}
             onShowSizeChange={(_, size) => handlePagination(1, size)}

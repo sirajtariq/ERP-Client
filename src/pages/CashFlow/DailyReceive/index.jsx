@@ -201,9 +201,6 @@ const DailyReceive = () => {
           restoreFn={restorePayment}
           onSuccess={() => fetchPayments(page.current, page.size, searchText, appliedFilters.startDate, appliedFilters.endDate)}
           rowKey="id"
-          searchPlaceholder="Search by name..."
-          showDateFilter
-
           columns={[
             { title: "Receipt #", key: "rec", width: 120, render: (_, r) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{r.receiptNumber || r.receipt_number || "-"}</span> },
             { title: "Customer",  dataIndex: "customerName", key: "customerName", ellipsis: true },

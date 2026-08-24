@@ -1,75 +1,73 @@
-import { useState, useEffect, useMemo } from "react";
-import { Modal, Table, Row, Col, Divider, Popconfirm, message } from "antd";
-import { RiseOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Modal, Row, Col, message, DatePicker } from "antd";
+import { RiseOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { AppButton, AppInput } from "@/components/common";
-import { formatCurrency, formatDate } from "@/utils";
+import { formatCurrency } from "@/utils";
+import { getEmployeeIncrementsTab, createEmployeeIncrement } from "@/services/employeeService";
 import styles from "./styles.module.css";
 
-const emptyForm = { effectiveDate: "", incrementAmount: "", reason: "", approvedBy: "" };
+const emptyForm = { effectiveDate: null, incrementAmount: "", reason: "", approvedBy: "" };
 
-const IncrementModal = ({ open, onClose, employee, increments, onAddIncrement, onDeleteIncrement }) => {
-  const [form, setForm] = useState(emptyForm);
+const IncrementModal = ({ open, onClose, onSuccess, employee }) => {
+  const [form,           setForm]           = useState(emptyForm);
+  const [summary,        setSummary]        = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [submitLoading,  setSubmitLoading]  = useState(false);
+
+  const isValid = form.effectiveDate && Number(form.incrementAmount) > 0 && form.reason.trim();
+  const newSalary = (summary?.currentSalary ?? employee?.currentSalary ?? 0) + (Number(form.incrementAmount) || 0);
+
+  const fetchSummary = async () => {
+    if (!employee?.id) return;
+    setSummaryLoading(true);
+    try {
+      const res = await getEmployeeIncrementsTab(employee.id, 1);
+      setSummary(res.summary || null);
+    } catch {
+      setSummary(null);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (open) setForm(emptyForm);
-  }, [open]);
+    if (open) {
+      setForm(emptyForm);
+      fetchSummary();
+    }
+  }, [open, employee?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const empIncrements = useMemo(
-    () => (increments || []).filter((i) => i.employeeId === employee?.id)
-         .sort((a, b) => new Date(b.effectiveDate) - new Date(a.effectiveDate)),
-    [increments, employee]
-  );
-
-  const newSalary = (employee?.currentSalary || 0) + (Number(form.incrementAmount) || 0);
-
-  const totalIncrement = useMemo(() => {
-    if (!employee) return 0;
-    return (employee.currentSalary || 0) - (employee.basicSalary || 0);
-  }, [employee]);
-
-  const handleAdd = () => {
-    if (!form.effectiveDate) { message.warning("Please select effective date"); return; }
-    if (!Number(form.incrementAmount) || Number(form.incrementAmount) <= 0) { message.warning("Enter a valid increment amount"); return; }
-    if (!form.reason) { message.warning("Please enter reason for increment"); return; }
-
-    const record = {
-      id: Date.now(),
-      employeeId: employee.id,
-      effectiveDate: form.effectiveDate,
-      previousSalary: employee.currentSalary,
-      incrementAmount: Number(form.incrementAmount),
-      newSalary,
-      reason: form.reason,
-      approvedBy: form.approvedBy || "—",
-    };
-    onAddIncrement(record);
-    message.success(`Increment of ${formatCurrency(Number(form.incrementAmount))} added`);
-    setForm(emptyForm);
+  const handleAdd = async () => {
+    if (!isValid) return;
+    setSubmitLoading(true);
+    try {
+      await createEmployeeIncrement(employee.id, {
+        effectiveDate:   dayjs(form.effectiveDate).format("YYYY-MM-DD"),
+        incrementAmount: String(Number(form.incrementAmount)),
+        approvedBy:      form.approvedBy || "",
+        reason:          form.reason,
+      });
+      message.success(`Increment of ${formatCurrency(Number(form.incrementAmount))} added`);
+      onSuccess?.();
+    } catch (err) {
+      message.error(err?.response?.data?.detail || "Failed to add increment");
+    } finally {
+      setSubmitLoading(false);
+    }
   };
 
   if (!employee) return null;
 
-  const columns = [
-    { title: "Effective Date",   dataIndex: "effectiveDate",   key: "date",    width: "14%", render: (v) => <span style={{ fontWeight: 600 }}>{formatDate(v)}</span> },
-    { title: "Previous Salary",  dataIndex: "previousSalary",  key: "prev",    width: "15%", render: (v) => <span style={{ color: "#64748b" }}>{formatCurrency(v)}</span> },
-    { title: "Increment",        dataIndex: "incrementAmount",  key: "inc",     width: "13%", render: (v) => <span style={{ fontWeight: 700, color: "#22c55e" }}>+{formatCurrency(v)}</span> },
-    { title: "New Salary",       dataIndex: "newSalary",       key: "new",     width: "15%", render: (v) => <span style={{ fontWeight: 800, color: "#7c5cfc", fontSize: 13 }}>{formatCurrency(v)}</span> },
-    { title: "Reason",           dataIndex: "reason",          key: "reason",  ellipsis: true, render: (v) => <span style={{ color: "var(--color-text-secondary)" }}>{v}</span> },
-    { title: "Approved By",      dataIndex: "approvedBy",      key: "appr",    width: "13%", render: (v) => <span style={{ color: "var(--color-text-secondary)" }}>{v || "—"}</span> },
-    {
-      title: "", key: "action", width: "5%",
-      render: (_, r) => (
-        <Popconfirm title="Delete this increment?" onConfirm={() => onDeleteIncrement(r.id)} okText="Delete" cancelText="No" okType="danger">
-          <AppButton type="text" size="small" icon={<DeleteOutlined />} danger />
-        </Popconfirm>
-      ),
-    },
-  ];
+  const basicSalary     = summary?.basicSalary      ?? employee.basicSalary   ?? 0;
+  const currentSalary   = summary?.currentSalary    ?? employee.currentSalary ?? 0;
+  const totalIncremented = summary?.totalIncremented ?? 0;
+  const noOfIncrements  = summary?.noOfIncrements   ?? 0;
 
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={860} centered destroyOnClose closable={false} className={styles.modal}
       styles={{ body: { padding: 0, overflow: "hidden", maxHeight: "90vh", display: "flex", flexDirection: "column" } }}>
-      {/* Sticky header */}
+
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}><RiseOutlined style={{ marginRight: 8, color: "#3b82f6" }} />Salary Increment</h2>
@@ -78,19 +76,18 @@ const IncrementModal = ({ open, onClose, employee, increments, onAddIncrement, o
         <button className={styles.closeBtn} onClick={onClose}>✕</button>
       </div>
 
-      {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
-        {/* Current salary info */}
+        {/* Cards */}
         <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
           {[
-            { label: "Basic Salary",       value: formatCurrency(employee.basicSalary || 0),   color: "#64748b", bg: "rgba(100,116,139,0.07)", border: "rgba(100,116,139,0.2)" },
-            { label: "Current Salary",     value: formatCurrency(employee.currentSalary || 0), color: "#7c5cfc", bg: "rgba(124,92,252,0.07)",  border: "rgba(124,92,252,0.2)" },
-            { label: "Total Incremented",  value: formatCurrency(totalIncrement),              color: "#22c55e", bg: "rgba(34,197,94,0.07)",   border: "rgba(34,197,94,0.2)" },
-            { label: "No. of Increments",  value: empIncrements.length,                        color: "#3b82f6", bg: "rgba(59,130,246,0.07)",  border: "rgba(59,130,246,0.2)" },
+            { label: "Basic Salary",      value: formatCurrency(basicSalary),      color: "#64748b", bg: "rgba(100,116,139,0.07)", border: "rgba(100,116,139,0.2)" },
+            { label: "Current Salary",    value: formatCurrency(currentSalary),    color: "#7c5cfc", bg: "rgba(124,92,252,0.07)",  border: "rgba(124,92,252,0.2)" },
+            { label: "Total Incremented", value: formatCurrency(totalIncremented), color: "#22c55e", bg: "rgba(34,197,94,0.07)",   border: "rgba(34,197,94,0.2)" },
+            { label: "No. of Increments", value: noOfIncrements,                  color: "#3b82f6", bg: "rgba(59,130,246,0.07)",  border: "rgba(59,130,246,0.2)" },
           ].map(({ label, value, color, bg, border }) => (
-            <div key={label} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, background: bg, border: `1px solid ${border}` }}>
+            <div key={label} style={{ flex: 1, padding: "12px 16px", borderRadius: 10, background: summaryLoading ? "var(--color-bg-secondary)" : bg, border: `1px solid ${border}`, transition: "all 0.2s" }}>
               <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color, letterSpacing: "0.5px" }}>{label}</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color, marginTop: 4 }}>{value}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color, marginTop: 4 }}>{summaryLoading ? "—" : value}</div>
             </div>
           ))}
         </div>
@@ -100,12 +97,19 @@ const IncrementModal = ({ open, onClose, employee, increments, onAddIncrement, o
           <h3 className={styles.sectionTitle}>Add New Increment</h3>
           <Row gutter={16}>
             <Col span={6}>
-              <AppInput
-                inputType="date"
-                label="Effective Date *"
-                value={form.effectiveDate}
-                onChange={(e) => setForm(f => ({ ...f, effectiveDate: e.target.value }))}
-              />
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, marginBottom: 6, color: "var(--color-text)" }}>
+                  Effective Date <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <DatePicker
+                  value={form.effectiveDate ? dayjs(form.effectiveDate) : null}
+                  onChange={(date) => setForm(f => ({ ...f, effectiveDate: date ? date.format("YYYY-MM-DD") : null }))}
+                  format="DD MMMM YYYY"
+                  allowClear={false}
+                  style={{ width: "100%", height: 40 }}
+                  placeholder="Select date"
+                />
+              </div>
             </Col>
             <Col span={6}>
               <AppInput
@@ -137,24 +141,19 @@ const IncrementModal = ({ open, onClose, employee, increments, onAddIncrement, o
             onChange={(e) => setForm(f => ({ ...f, reason: e.target.value }))}
           />
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-            <AppButton type="primary" icon={<RiseOutlined />} onClick={handleAdd} className="btn-dark" style={{ minWidth: 150 }}>
+            <AppButton
+              type="primary"
+              icon={<RiseOutlined />}
+              onClick={handleAdd}
+              className="btn-dark"
+              style={{ minWidth: 150 }}
+              disabled={!isValid}
+              loading={submitLoading}
+            >
               Add Increment
             </AppButton>
           </div>
         </div>
-
-        <Divider style={{ margin: "20px 0" }} />
-
-        <h3 className={styles.sectionTitle} style={{ marginBottom: 12 }}>Increment History</h3>
-        <Table
-          columns={columns}
-          dataSource={empIncrements}
-          rowKey="id"
-          size="small"
-          pagination={{ pageSize: 6, showSizeChanger: false, size: "small" }}
-          locale={{ emptyText: "No increments recorded yet" }}
-          style={{ border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}
-        />
       </div>
     </Modal>
   );

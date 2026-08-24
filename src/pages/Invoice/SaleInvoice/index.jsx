@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import _ from "lodash";
-import { message, Typography } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { message, Typography, Modal, Input } from "antd";
+import { PlusOutlined, DeleteOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { AppTable, AppButton, AppModal, PageHeader, FilterPanel, TrashDrawer } from "@/components/common";
 import { useSearch } from "@/context/SearchContext";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +25,7 @@ const SaleInvoice = () => {
   const [viewLoadingId, setViewLoadingId]   = useState(null);
   const [editLoadingId, setEditLoadingId]   = useState(null);
   const [saveLoadingId, setSaveLoadingId]   = useState(null);
+  const [saveModal, setSaveModal]           = useState({ open: false, record: null, amount: "" });
   const [appliedFilters, setAppliedFilters]     = useState({});
   const { searchText, setPlaceholder, clearSearch } = useSearch();
   const { userRole } = useAuth();
@@ -123,11 +124,36 @@ const SaleInvoice = () => {
     setDeleteModal({ open: true, invoice: record });
   };
 
-  const handleSaveDraft = async (record) => {
+  const handleSaveDraft = (record) => {
+    setSaveModal({ open: true, record, amount: "" });
+  };
+
+  const handleSaveConfirm = async () => {
+    const { record, amount } = saveModal;
+    const entered     = parseFloat(amount) || 0;
+    const pending     = record.pending ?? 0;
+    const paymentTerm = entered >= pending ? "Cash" : "Credit";
     setSaveLoadingId(record.id);
     try {
-      await updateSaleInvoiceStatus(record.id, "Saved");
+      const full = await getSaleInvoiceById(record.id);
+      const cd   = full.customer_data || {};
+      const body = {
+        invoiceStatus: "Saved",
+        payment_term:  paymentTerm,
+        customer_data: cd,
+        items: (full.items || []).map((item) => ({
+          name:      item.name      || item.itemName || "",
+          units:     item.units     || item.unit     || "",
+          quantity:  String(Math.max(parseFloat(item.quantity || item.qty) || 0, 0)),
+          unitPrice: String(Math.max(parseFloat(item.unitPrice || item.rate) || 0, 0)),
+          discount:  String(parseFloat(item.discount) || 0),
+          ...(item.itemId ? { itemId: item.itemId, itemCode: item.itemCode || "" } : {}),
+        })),
+      };
+      if (entered > 0) body.paid_amount = String(entered);
+      await updateSaleInvoiceStatus(record.id, body);
       message.success(`"${record.invoiceNo}" marked as Saved`);
+      setSaveModal({ open: false, record: null, amount: "" });
       fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate);
     } catch (err) {
       message.error(err.response?.data?.detail || "Failed to update invoice status");
@@ -257,6 +283,95 @@ const SaleInvoice = () => {
         onRefresh={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate)}
       />
 
+      {/* Mark as Saved modal */}
+      {saveModal.open && (() => {
+        const rec       = saveModal.record;
+        const isWalkin  = rec?.customerType === "walkin";
+        const pending   = rec?.pending ?? 0;
+        const entered   = parseFloat(saveModal.amount) || 0;
+        const canSave   = isWalkin ? entered >= pending : true;
+        return (
+          <Modal
+            open
+            onCancel={() => setSaveModal({ open: false, record: null, amount: "" })}
+            footer={null}
+            width={420}
+            centered
+            destroyOnClose
+            title={
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <CheckCircleOutlined style={{ color: "#22c55e" }} />
+                Mark as Saved
+              </span>
+            }
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "8px 0" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ background: "var(--color-bg-secondary)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "10px 14px" }}>
+                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 2 }}>Invoice</div>
+                  <div style={{ fontWeight: 700, color: "#7c5cfc" }}>{rec.invoiceNo}</div>
+                </div>
+                <div style={{ background: "var(--color-bg-secondary)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "10px 14px" }}>
+                  <div style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 2 }}>Customer</div>
+                  <div style={{ fontWeight: 700, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rec.customerName}</div>
+                </div>
+              </div>
+
+              <div style={{ background: pending > 0 ? "rgba(239,68,68,0.06)" : "rgba(34,197,94,0.06)", border: `1px solid ${pending > 0 ? "rgba(239,68,68,0.25)" : "rgba(34,197,94,0.25)"}`, borderRadius: 8, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: "var(--color-text-secondary)", fontWeight: 600 }}>Pending Amount</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: pending > 0 ? "#ef4444" : "#22c55e" }}>
+                  Rs {pending.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)", marginBottom: 6 }}>
+                  Amount Paid{isWalkin ? <span style={{ color: "#ef4444" }}> *</span> : <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: 12 }}> (optional)</span>}
+                </div>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder={isWalkin ? `Enter ${pending.toFixed(2)} to save` : "Enter amount (optional)"}
+                  value={saveModal.amount}
+                  onChange={(e) => setSaveModal((prev) => ({ ...prev, amount: e.target.value }))}
+                  prefix="Rs"
+                  size="large"
+                  style={{ borderRadius: 8 }}
+                  status={isWalkin && saveModal.amount !== "" && entered < pending ? "error" : ""}
+                />
+                {isWalkin && saveModal.amount !== "" && entered < pending && (
+                  <div style={{ fontSize: 12, color: "#ef4444", marginTop: 4 }}>
+                    Walk-in customer must pay the full pending amount to save.
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setSaveModal({ open: false, record: null, amount: "" })}
+                  style={{ padding: "8px 18px", borderRadius: 8, border: "1px solid var(--color-border)", background: "transparent", color: "var(--color-text)", cursor: "pointer", fontWeight: 600, fontSize: 13 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveConfirm}
+                  disabled={!canSave || saveLoadingId === rec.id}
+                  style={{
+                    padding: "8px 22px", borderRadius: 8, border: "none",
+                    background: canSave ? "linear-gradient(135deg, #22c55e, #16a34a)" : "#cbd5e1",
+                    color: "#fff", cursor: canSave ? "pointer" : "not-allowed",
+                    fontWeight: 700, fontSize: 13,
+                    opacity: saveLoadingId === rec.id ? 0.7 : 1,
+                  }}
+                >
+                  {saveLoadingId === rec.id ? "Saving…" : "Mark as Saved"}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        );
+      })()}
+
       {isAdmin && (
         <TrashDrawer
           open={trashOpen}
@@ -267,9 +382,6 @@ const SaleInvoice = () => {
           permanentDeleteFn={permanentDeleteSaleInvoice}
           onSuccess={() => fetchInvoices(page.current, page.size, searchText, appliedFilters.invoiceNumber, appliedFilters.status, appliedFilters.startDate, appliedFilters.endDate)}
           rowKey="id"
-          searchPlaceholder="Search by name..."
-          showDateFilter
-
           columns={[
             { title: "Invoice #", key: "inv", width: 130, render: (_, r) => <span style={{ fontWeight: 600, color: "#7c5cfc" }}>{r.invoiceNumber || r.invoice_number || "-"}</span> },
             { title: "Customer",  key: "cust", ellipsis: true, render: (_, r) => (r.customerData || r.customer_data)?.customerName || r.customerName || "-" },
