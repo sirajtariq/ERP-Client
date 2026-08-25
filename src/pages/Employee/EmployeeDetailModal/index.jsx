@@ -8,7 +8,7 @@ import {
   PrinterOutlined,
 } from "@ant-design/icons";
 import { AppButton } from "@/components/common";
-import { getEmployeeAdvancesTab, getEmployeeIncrementsTab, getEmployeeSalariesTab, getEmployeeAttendance, saveBulkAttendance, updateAttendance, getSalaryPayslip } from "@/services/employeeService";
+import { getEmployeeAdvancesTab, getEmployeeIncrementsTab, getEmployeeSalariesTab, getEmployeeAttendance, createAttendance, updateAttendance, getSalaryPayslip } from "@/services/employeeService";
 import { formatCurrency, formatDate } from "@/utils";
 import SalarySlipModal from "../SalarySlipModal";
 import styles from "./styles.module.css";
@@ -633,7 +633,7 @@ const EmployeeDetailModal = ({
           <div style={{ border: "1px solid var(--color-border)", borderRadius: 10, padding: 12, marginBottom: 14 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4, textAlign: "center" }}>
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                <div key={day} style={{ fontSize: 10, fontWeight: 700, color: day === "Fri" ? "#ef4444" : "var(--color-text-secondary)", padding: "2px 0" }}>{day}</div>
+                <div key={day} style={{ fontSize: 10, fontWeight: 700, color: "var(--color-text-secondary)", padding: "2px 0" }}>{day}</div>
               ))}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
@@ -935,7 +935,13 @@ const EmployeeDetailModal = ({
                       if (editDay.logId) {
                         await updateAttendance(editDay.logId, { employee: employee.id, date: editDay.date, status: apiStatus, ...(subType && { subType }), remarks: editDay.remarks });
                       } else {
-                        await saveBulkAttendance({ date: editDay.date, records: [{ employeeId: employee.id, status: apiStatus, ...(subType && { subType }), remarks: editDay.remarks }] });
+                        await createAttendance({
+                          employee: employee.id,
+                          date: editDay.date,
+                          status: apiStatus,
+                          ...(subType && { subType }),
+                          remarks: editDay.remarks,
+                        });
                       }
                       setEditDay(null);
                       fetchAttendance(attMonth);
@@ -963,3 +969,4 @@ const EmployeeDetailModal = ({
 };
 
 export default EmployeeDetailModal;
+
