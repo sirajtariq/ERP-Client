@@ -22,23 +22,23 @@ const calcWorkingDays = (month, year, basis, offDays) => {
 };
 
 const MONTHS = [
-  { value: 1, label: "January" },  { value: 2,  label: "February" },
-  { value: 3, label: "March" },    { value: 4,  label: "April" },
-  { value: 5, label: "May" },      { value: 6,  label: "June" },
-  { value: 7, label: "July" },     { value: 8,  label: "August" },
-  { value: 9, label: "September" },{ value: 10, label: "October" },
-  { value: 11, label: "November" },{ value: 12, label: "December" },
+  { value: 1, label: "January" }, { value: 2, label: "February" },
+  { value: 3, label: "March" }, { value: 4, label: "April" },
+  { value: 5, label: "May" }, { value: 6, label: "June" },
+  { value: 7, label: "July" }, { value: 8, label: "August" },
+  { value: 9, label: "September" }, { value: 10, label: "October" },
+  { value: 11, label: "November" }, { value: 12, label: "December" },
 ];
 
 const PAYMENT_METHODS = [
   { value: "Bank Transfer", label: "Bank Transfer" },
-  { value: "Cash",          label: "Cash" },
-  { value: "Cheque",        label: "Cheque" },
+  { value: "Cash", label: "Cash" },
+  { value: "Cheque", label: "Cheque" },
 ];
 
-const now        = new Date();
+const now = new Date();
 const THIS_MONTH = now.getMonth() + 1;
-const THIS_YEAR  = now.getFullYear();
+const THIS_YEAR = now.getFullYear();
 
 const freshSalaryForm = {
   month: THIS_MONTH, year: THIS_YEAR,
@@ -55,21 +55,21 @@ const freshAddForm = {
 };
 
 const STATUS_CONFIG = {
-  paid:    { color: "#22c55e", bg: "rgba(34,197,94,0.08)",   border: "rgba(34,197,94,0.3)",   icon: <CheckCircleOutlined />,       label: "Paid" },
-  partial: { color: "#f97316", bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.3)",  icon: <ExclamationCircleOutlined />, label: "Partial" },
-  pending: { color: "#ef4444", bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.3)",   icon: <ClockCircleOutlined />,       label: "Pending" },
+  paid: { color: "#22c55e", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.3)", icon: <CheckCircleOutlined />, label: "Paid" },
+  partial: { color: "#f97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.3)", icon: <ExclamationCircleOutlined />, label: "Partial" },
+  pending: { color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.3)", icon: <ClockCircleOutlined />, label: "Pending" },
 };
 
 const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
-  const [salaryForm,    setSalaryForm]    = useState(freshSalaryForm);
-  const [addForm,       setAddForm]       = useState(freshAddForm);
-  const [apiRecords,    setApiRecords]    = useState([]);
-  const [apiSummary,    setApiSummary]    = useState(null);
-  const [loadingData,   setLoadingData]   = useState(false);
+  const [salaryForm, setSalaryForm] = useState(freshSalaryForm);
+  const [addForm, setAddForm] = useState(freshAddForm);
+  const [apiRecords, setApiRecords] = useState([]);
+  const [apiSummary, setApiSummary] = useState(null);
+  const [loadingData, setLoadingData] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [confirmOpen,   setConfirmOpen]   = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const advanceBalance = employee?.advanceBalance ?? 0;
+  const advanceBalance = apiSummary?.advanceBalance ?? (employee?.advanceBalance ?? 0);
 
   const fetchData = async () => {
     if (!employee?.id) return;
@@ -77,18 +77,22 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
     try {
       const res = await getEmployeeSalariesTab(employee.id, 1);
       setApiSummary(res.summary || null);
+
+      const latestAdvance = res.summary?.advanceBalance ?? employee?.advanceBalance ?? 0;
+      setSalaryForm((f) => ({ ...f, advanceDeduction: latestAdvance }));
+
       const raw = Array.isArray(res) ? res : (res.results ?? []);
       setApiRecords(raw.map((r) => ({
-        id:               r.id,
-        month:            r.month,
-        year:             r.year,
-        netSalary:        parseFloat(r.netSalary    ?? r.net_salary)  || 0,
-        bonus:            parseFloat(r.bonus)                         || 0,
-        amountPaid:       parseFloat(r.amountPaid   ?? r.amount_paid) || 0,
-        advanceDeduction: parseFloat(r.advanceDeduction)              || 0,
-        deductions:       parseFloat(r.deductions)                    || 0,
-        status:           r.status                                    || "pending",
-        payments:         r.payments                                  || [],
+        id: r.id,
+        month: r.month,
+        year: r.year,
+        netSalary: parseFloat(r.netSalary ?? r.net_salary) || 0,
+        bonus: parseFloat(r.bonus) || 0,
+        amountPaid: parseFloat(r.amountPaid ?? r.amount_paid) || 0,
+        advanceDeduction: parseFloat(r.advanceDeduction) || 0,
+        deductions: parseFloat(r.deductions) || 0,
+        status: r.status || "pending",
+        payments: r.payments || [],
       })));
     } catch {
       setApiRecords([]);
@@ -98,9 +102,13 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
     }
   };
 
+  // will fix it later Siraj Jugaar
   useEffect(() => {
     if (open) {
-      setSalaryForm(freshSalaryForm);
+      setSalaryForm({
+        ...freshSalaryForm,
+        advanceDeduction: employee?.advanceBalance || 0,
+      });
       setAddForm(freshAddForm);
       fetchData();
     }
@@ -108,7 +116,7 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
 
   const pendingRecords = useMemo(
     () => [...apiRecords].filter((r) => r.status !== "paid")
-         .sort((a, b) => (b.year * 12 + b.month) - (a.year * 12 + a.month)),
+      .sort((a, b) => (b.year * 12 + b.month) - (a.year * 12 + a.month)),
     [apiRecords]
   );
 
@@ -118,8 +126,8 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
   );
 
   const info = getCompanyInfo();
-  const salaryBasis   = info.salaryBasis   || info.salary_calculation_basis || null;
-  const weeklyOffDays = info.weeklyOffDays || info.weekly_off_days          || [];
+  const salaryBasis = info.salaryBasis || info.salary_calculation_basis || null;
+  const weeklyOffDays = info.weeklyOffDays || info.weekly_off_days || [];
   const workingDays = salaryBasis
     ? calcWorkingDays(salaryForm.month, salaryForm.year, salaryBasis, weeklyOffDays)
     : null;
@@ -130,7 +138,7 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
     - (Number(salaryForm.deductions) || 0)
     - (Number(salaryForm.advanceDeduction) || 0)
   );
-  const payingNow  = salaryForm.paymentType === "full" ? netDue : (Number(salaryForm.partialAmount) || 0);
+  const payingNow = salaryForm.paymentType === "full" ? netDue : (Number(salaryForm.partialAmount) || 0);
   const willRemain = Math.max(0, netDue - payingNow);
 
   const remaining = existingRecord ? (existingRecord.netSalary - (existingRecord.amountPaid || 0)) : 0;
@@ -152,17 +160,17 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
     setSubmitLoading(true);
     try {
       await createEmployeeSalary(employee.id, {
-        month:            salaryForm.month,
-        year:             salaryForm.year,
+        month: salaryForm.month,
+        year: salaryForm.year,
         ...(workingDays !== null && { workingDays }),
-        bonus:            String(Number(salaryForm.bonus)            || 0),
-        deductions:       String(Number(salaryForm.deductions)       || 0),
+        bonus: String(Number(salaryForm.bonus) || 0),
+        deductions: String(Number(salaryForm.deductions) || 0),
         advanceDeduction: String(Number(salaryForm.advanceDeduction) || 0),
-        amount:           String(payingNow),
-        paymentDate:      (salaryForm.paymentDate || dayjs()).format("YYYY-MM-DD"),
-        paymentMethod:    salaryForm.paymentMethod,
-        paidBy:           salaryForm.paidBy,
-        remarks:          salaryForm.remarks,
+        amount: String(payingNow),
+        paymentDate: (salaryForm.paymentDate || dayjs()).format("YYYY-MM-DD"),
+        paymentMethod: salaryForm.paymentMethod,
+        paidBy: salaryForm.paidBy,
+        remarks: salaryForm.remarks,
       });
       const monthName = MONTHS.find((m) => m.value === salaryForm.month)?.label;
       message.success(`${monthName} ${salaryForm.year} salary recorded — ${formatCurrency(payingNow)} paid`);
@@ -181,13 +189,13 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
     setSubmitLoading(true);
     try {
       await createEmployeeSalary(employee.id, {
-        month:         existingRecord.month,
-        year:          existingRecord.year,
-        amount:        String(addAmount),
-        paymentDate:   dayjs().format("YYYY-MM-DD"),
+        month: existingRecord.month,
+        year: existingRecord.year,
+        amount: String(addAmount),
+        paymentDate: (addForm.paymentDate || dayjs()).format("YYYY-MM-DD"),
         paymentMethod: addForm.paymentMethod,
-        paidBy:        addForm.paidBy,
-        remarks:       addForm.remarks,
+        paidBy: addForm.paidBy,
+        remarks: addForm.remarks,
       });
       message.success(`Payment of ${formatCurrency(addAmount)} added`);
       onSuccess?.();
@@ -215,27 +223,37 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
     </div>
   );
 
-  const pendingSalary  = apiSummary?.pendingSalary  ?? 0;
+  const pendingSalary = apiSummary?.pendingSalary ?? 0;
   const partialPending = apiSummary?.partialPendingCount ?? pendingRecords.length;
-  const totalRecords   = apiRecords.length;
+  const totalRecords = apiRecords.length;
 
-  const totalEarned      = apiSummary?.totalEarned            ?? 0;
-  const baseSalaryVal    = apiSummary?.baseSalary              ?? 0;
-  const netSettlement    = apiSummary?.netSettlementAmount     ?? 0;
-  const daysWorked       = apiSummary?.currentMonthDaysWorked  ?? 0;
-  const accruedThisMonth = apiSummary?.currentMonthAccrued     ?? 0;
+  const totalEarned = apiSummary?.totalEarned ?? 0;
+  const baseSalaryVal = apiSummary?.baseSalary ?? 0;
+  const netSettlement = apiSummary?.netSettlementAmount ?? 0;
+  const daysWorked = apiSummary?.currentMonthDaysWorked ?? 0;
+  const accruedThisMonth = apiSummary?.currentMonthAccrued ?? 0;
 
   // ── Pay Tab rendering ──
   const renderPayTab = () => {
     const monthYearPicker = (
       <div style={{ marginBottom: 16 }}>
-        <label className={styles.fieldLabel}>Payment Date <span style={{ color: "#ef4444" }}>*</span></label>
+        <label className={styles.fieldLabel}>
+          Salary Month <span style={{ color: "#ef4444" }}>*</span>
+        </label>
         <DatePicker
-          value={salaryForm.paymentDate}
+          picker="month"
+          value={dayjs().year(salaryForm.year).month(salaryForm.month - 1)}
           onChange={(date) => {
-            if (date) setSalaryForm((f) => ({ ...f, paymentDate: date, month: date.month() + 1, year: date.year() }));
+            if (date) {
+              setSalaryForm((f) => ({
+                ...f,
+                month: date.month() + 1,
+                year: date.year(),
+                paymentDate: dayjs(),
+              }));
+            }
           }}
-          format="DD MMMM YYYY"
+          format="MMMM YYYY"
           allowClear={false}
           style={{ width: "100%", height: 40 }}
         />
@@ -272,9 +290,9 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
               <strong style={{ color: sc.color }}>{monthLabel} — {sc.label}</strong>
               <div style={{ display: "flex", gap: 20, marginTop: 6, flexWrap: "wrap" }}>
                 {[
-                  { l: "Net Salary", v: formatCurrency(existingRecord.netSalary),          c: "var(--color-text)" },
-                  { l: "Paid",       v: formatCurrency(existingRecord.amountPaid || 0),    c: "#22c55e" },
-                  { l: "Remaining",  v: formatCurrency(remaining),                         c: "#ef4444" },
+                  { l: "Net Salary", v: formatCurrency(existingRecord.netSalary), c: "var(--color-text)" },
+                  { l: "Paid", v: formatCurrency(existingRecord.amountPaid || 0), c: "#22c55e" },
+                  { l: "Remaining", v: formatCurrency(remaining), c: "#ef4444" },
                 ].map(({ l, v, c }) => (
                   <div key={l}>
                     <div style={{ fontSize: 11, color: "var(--color-text-secondary)", fontWeight: 600, textTransform: "uppercase" }}>{l}</div>
@@ -419,133 +437,133 @@ const SalaryModal = ({ open, onClose, onSuccess, employee }) => {
 
   return (
     <>
-    <Modal
-      open={confirmOpen}
-      onCancel={() => setConfirmOpen(false)}
-      centered
-      width={420}
-      title={null}
-      footer={null}
-      destroyOnClose
-    >
-      <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
-        <div style={{
-          width: 52, height: 52, borderRadius: "50%", margin: "0 auto 14px",
-          background: "rgba(124,92,252,0.1)", border: "2px solid rgba(124,92,252,0.3)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22,
-        }}>
-          <DollarOutlined style={{ color: "#7c5cfc" }} />
-        </div>
-        <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 4px", color: "var(--color-text)" }}>
-          Confirm Salary Payment
-        </h3>
-        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 20px" }}>
-          {monthName} {salaryForm.year} ki salary pay kar rahe hain
-        </p>
-        <div style={{
-          background: "var(--color-surface)", border: "1px solid var(--color-border)",
-          borderRadius: 10, padding: "14px 18px", marginBottom: 20, textAlign: "left",
-        }}>
-          {[
-            { label: "Employee",       value: employee.name },
-            { label: "Month",          value: `${monthName} ${salaryForm.year}` },
-            { label: "Net Salary",     value: formatCurrency(netDue) },
-            { label: "Paying Now",     value: formatCurrency(payingNow), color: "#22c55e" },
-            salaryForm.paymentType === "partial" && { label: "Remaining", value: formatCurrency(willRemain), color: "#ef4444" },
-            Number(salaryForm.advanceDeduction) > 0 && { label: "Advance Deducted", value: formatCurrency(Number(salaryForm.advanceDeduction)), color: "#f97316" },
-            { label: "Payment Method", value: salaryForm.paymentMethod },
-            { label: "Paid By",        value: salaryForm.paidBy },
-          ].filter(Boolean).map(({ label, value, color }) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--color-border)" }}>
-              <span style={{ fontSize: 12, color: "var(--color-text-secondary)", fontWeight: 600 }}>{label}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: color || "var(--color-text)" }}>{value}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <AppButton style={{ flex: 1 }} onClick={() => setConfirmOpen(false)}>
-            Cancel
-          </AppButton>
-          <AppButton type="primary" className="btn-dark" style={{ flex: 1 }} loading={submitLoading} onClick={handleConfirmedSubmit}>
-            Confirm & Pay
-          </AppButton>
-        </div>
-      </div>
-    </Modal>
-
-    <Modal open={open} onCancel={onClose} footer={null} width={1000} centered destroyOnClose className={styles.modal} closable={false}
-      styles={{ body: { padding: 0, overflow: "hidden", maxHeight: "90vh", display: "flex", flexDirection: "column" } }}>
-
-      <div className={styles.header}>
-        <div className={styles.empCard}>
-          <div className={styles.avatar}>{employee.name?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</div>
-          <div>
-            <h2 className={styles.empName}>{employee.name}</h2>
-            <p className={styles.empSub}>{employee.designation} &nbsp;·&nbsp; {employee.department} &nbsp;·&nbsp; {employee.empNo}</p>
-            <p className={styles.empSub}>Joined: {employee.joiningDate ? formatDate(employee.joiningDate) : "—"}</p>
+      <Modal
+        open={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        centered
+        width={420}
+        title={null}
+        footer={null}
+        destroyOnClose
+      >
+        <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: "50%", margin: "0 auto 14px",
+            background: "rgba(124,92,252,0.1)", border: "2px solid rgba(124,92,252,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22,
+          }}>
+            <DollarOutlined style={{ color: "#7c5cfc" }} />
           </div>
-        </div>
-        <button className={styles.closeBtn} onClick={onClose}>✕</button>
-      </div>
-
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        <Spin spinning={loadingData}>
-          {/* Stats */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "18px 24px 0" }}>
-            {statCard("Current Salary",      formatCurrency(employee.currentSalary || 0), "#7c5cfc", "rgba(124,92,252,0.07)", "rgba(124,92,252,0.2)")}
-            {statCard("Advance Outstanding", formatCurrency(advanceBalance),               "#f97316", "rgba(249,115,22,0.07)", "rgba(249,115,22,0.2)")}
-            {statCard("Pending Salary",      formatCurrency(pendingSalary),                pendingSalary > 0 ? "#ef4444" : "#22c55e", pendingSalary > 0 ? "rgba(239,68,68,0.07)" : "rgba(34,197,94,0.07)", pendingSalary > 0 ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)")}
-            {statCard("Partial / Pending",   partialPending,                               partialPending > 0 ? "#f97316" : "#22c55e", partialPending > 0 ? "rgba(249,115,22,0.07)" : "rgba(34,197,94,0.07)", partialPending > 0 ? "rgba(249,115,22,0.2)" : "rgba(34,197,94,0.2)")}
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "12px 24px 16px" }}>
-            {statCard("Total Earned",              formatCurrency(totalEarned),      "#22c55e", "rgba(34,197,94,0.07)",    "rgba(34,197,94,0.2)")}
-            {statCard("Base Salary",               formatCurrency(baseSalaryVal),    "#0ea5e9", "rgba(14,165,233,0.07)",   "rgba(14,165,233,0.2)")}
-            {statCard("Net Settlement",            formatCurrency(netSettlement),    "#f97316", "rgba(249,115,22,0.07)",   "rgba(249,115,22,0.2)")}
-            {statCard("Days Worked (This Month)",  daysWorked,                       "#64748b", "rgba(100,116,139,0.07)",  "rgba(100,116,139,0.2)")}
-            {statCard("Accrued (This Month)",      formatCurrency(accruedThisMonth), "#7c5cfc", "rgba(124,92,252,0.07)",   "rgba(124,92,252,0.2)")}
-          </div>
-
-          {/* Pending months */}
-          {pendingRecords.length > 0 && (
-            <div style={{ padding: "0 24px 14px" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 8 }}>
-                ⚠ Unpaid from Previous Months
+          <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 4px", color: "var(--color-text)" }}>
+            Confirm Salary Payment
+          </h3>
+          <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 20px" }}>
+            {monthName} {salaryForm.year} ki salary pay kar rahe hain
+          </p>
+          <div style={{
+            background: "var(--color-surface)", border: "1px solid var(--color-border)",
+            borderRadius: 10, padding: "14px 18px", marginBottom: 20, textAlign: "left",
+          }}>
+            {[
+              { label: "Employee", value: employee.name },
+              { label: "Month", value: `${monthName} ${salaryForm.year}` },
+              { label: "Net Salary", value: formatCurrency(netDue) },
+              { label: "Paying Now", value: formatCurrency(payingNow), color: "#22c55e" },
+              salaryForm.paymentType === "partial" && { label: "Remaining", value: formatCurrency(willRemain), color: "#ef4444" },
+              Number(salaryForm.advanceDeduction) > 0 && { label: "Advance Deducted", value: formatCurrency(Number(salaryForm.advanceDeduction)), color: "#f97316" },
+              { label: "Payment Method", value: salaryForm.paymentMethod },
+              { label: "Paid By", value: salaryForm.paidBy },
+            ].filter(Boolean).map(({ label, value, color }) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid var(--color-border)" }}>
+                <span style={{ fontSize: 12, color: "var(--color-text-secondary)", fontWeight: 600 }}>{label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: color || "var(--color-text)" }}>{value}</span>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {pendingRecords.map((r) => {
-                  const rem = r.netSalary - (r.amountPaid || 0);
-                  const monthName = MONTHS.find((m) => m.value === r.month)?.label;
-                  const sc = STATUS_CONFIG[r.status] || STATUS_CONFIG.pending;
-                  const isSelected = salaryForm.month === r.month && salaryForm.year === r.year;
-                  return (
-                    <div
-                      key={r.id}
-                      onClick={() => setSalaryForm((f) => ({ ...f, month: r.month, year: r.year, paymentDate: dayjs().year(r.year).month(r.month - 1).date(1) }))}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 10,
-                        padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-                        border: `1.5px solid ${isSelected ? sc.color : sc.border}`,
-                        background: isSelected ? sc.bg : "var(--color-surface)",
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      <span style={{ fontSize: 13, fontWeight: 700, color: sc.color }}>{monthName} {r.year}</span>
-                      <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>Remaining:</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: sc.color }}>{formatCurrency(rem)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div style={{ padding: "0 24px 24px" }}>
-            {renderPayTab()}
+            ))}
           </div>
-        </Spin>
-      </div>
-    </Modal>
+          <div style={{ display: "flex", gap: 10 }}>
+            <AppButton style={{ flex: 1 }} onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </AppButton>
+            <AppButton type="primary" className="btn-dark" style={{ flex: 1 }} loading={submitLoading} onClick={handleConfirmedSubmit}>
+              Confirm & Pay
+            </AppButton>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={open} onCancel={onClose} footer={null} width={1000} centered destroyOnClose className={styles.modal} closable={false}
+        styles={{ body: { padding: 0, overflow: "hidden", maxHeight: "90vh", display: "flex", flexDirection: "column" } }}>
+
+        <div className={styles.header}>
+          <div className={styles.empCard}>
+            <div className={styles.avatar}>{employee.name?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}</div>
+            <div>
+              <h2 className={styles.empName}>{employee.name}</h2>
+              <p className={styles.empSub}>{employee.designation} &nbsp;·&nbsp; {employee.department} &nbsp;·&nbsp; {employee.empNo}</p>
+              <p className={styles.empSub}>Joined: {employee.joiningDate ? formatDate(employee.joiningDate) : "—"}</p>
+            </div>
+          </div>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          <Spin spinning={loadingData}>
+            {/* Stats */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "18px 24px 0" }}>
+              {statCard("Current Salary", formatCurrency(employee.currentSalary || 0), "#7c5cfc", "rgba(124,92,252,0.07)", "rgba(124,92,252,0.2)")}
+              {statCard("Advance Outstanding", formatCurrency(advanceBalance), "#f97316", "rgba(249,115,22,0.07)", "rgba(249,115,22,0.2)")}
+              {statCard("Pending Salary", formatCurrency(pendingSalary), pendingSalary > 0 ? "#ef4444" : "#22c55e", pendingSalary > 0 ? "rgba(239,68,68,0.07)" : "rgba(34,197,94,0.07)", pendingSalary > 0 ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)")}
+              {statCard("Partial / Pending", partialPending, partialPending > 0 ? "#f97316" : "#22c55e", partialPending > 0 ? "rgba(249,115,22,0.07)" : "rgba(34,197,94,0.07)", partialPending > 0 ? "rgba(249,115,22,0.2)" : "rgba(34,197,94,0.2)")}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "12px 24px 16px" }}>
+              {statCard("Total Earned", formatCurrency(totalEarned), "#22c55e", "rgba(34,197,94,0.07)", "rgba(34,197,94,0.2)")}
+              {statCard("Base Salary", formatCurrency(baseSalaryVal), "#0ea5e9", "rgba(14,165,233,0.07)", "rgba(14,165,233,0.2)")}
+              {statCard("Net Settlement", formatCurrency(netSettlement), "#f97316", "rgba(249,115,22,0.07)", "rgba(249,115,22,0.2)")}
+              {statCard("Days Worked (This Month)", daysWorked, "#64748b", "rgba(100,116,139,0.07)", "rgba(100,116,139,0.2)")}
+              {statCard("Accrued (This Month)", formatCurrency(accruedThisMonth), "#7c5cfc", "rgba(124,92,252,0.07)", "rgba(124,92,252,0.2)")}
+            </div>
+
+            {/* Pending months */}
+            {pendingRecords.length > 0 && (
+              <div style={{ padding: "0 24px 14px" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 8 }}>
+                  ⚠ Unpaid from Previous Months
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {pendingRecords.map((r) => {
+                    const rem = r.netSalary - (r.amountPaid || 0);
+                    const monthName = MONTHS.find((m) => m.value === r.month)?.label;
+                    const sc = STATUS_CONFIG[r.status] || STATUS_CONFIG.pending;
+                    const isSelected = salaryForm.month === r.month && salaryForm.year === r.year;
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => setSalaryForm((f) => ({ ...f, month: r.month, year: r.year, paymentDate: dayjs().year(r.year).month(r.month - 1).date(1) }))}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 10,
+                          padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+                          border: `1.5px solid ${isSelected ? sc.color : sc.border}`,
+                          background: isSelected ? sc.bg : "var(--color-surface)",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 700, color: sc.color }}>{monthName} {r.year}</span>
+                        <span style={{ fontSize: 11, color: "var(--color-text-secondary)" }}>Remaining:</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: sc.color }}>{formatCurrency(rem)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div style={{ padding: "0 24px 24px" }}>
+              {renderPayTab()}
+            </div>
+          </Spin>
+        </div>
+      </Modal>
     </>
   );
 };
